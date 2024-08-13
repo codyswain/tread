@@ -8,8 +8,22 @@ const EditorContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden; // Prevent overflow
 `;
 
+const ContentContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; // Enable vertical scrolling
+`;
+
+const SaveButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem;
+  background-color: ${({ theme }) => theme.cardBackground};
+`;
 const StyledTextarea = styled.textarea`
   flex: 1;
   padding: 1rem;
@@ -78,19 +92,23 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
 
   return (
     <EditorContainer>
-      <Input 
-        type="text" 
-        value={title} 
-        onChange={handleTitleChange} 
-        placeholder="Note Title"
-      />
-      <StyledTextarea value={content} onChange={handleContentChange} />
-      <PreviewContainer>
-        <ReactMarkdown>{content}</ReactMarkdown>
-      </PreviewContainer>
-      <SaveButton onClick={handleSave}>
-        <FaSave /> Save
-      </SaveButton>
+      <ContentContainer>
+        <Input 
+          type="text" 
+          value={title} 
+          onChange={handleTitleChange} 
+          placeholder="Note Title"
+        />
+        <StyledTextarea value={content} onChange={handleContentChange} />
+        <PreviewContainer>
+          <ReactMarkdown>{content}</ReactMarkdown>
+        </PreviewContainer>
+      </ContentContainer>
+      <SaveButtonContainer>
+        <SaveButton onClick={handleSave}>
+          <FaSave /> Save
+        </SaveButton>
+      </SaveButtonContainer>
     </EditorContainer>
   );
 };
