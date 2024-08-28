@@ -1,14 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
-import { StarterKit } from '@tiptap/starter-kit';
-import { Highlight } from '@tiptap/extension-highlight'
-import { TextAlign } from '@tiptap/extension-text-align';
-import { Underline } from '@tiptap/extension-underline';
-import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, 
-         AlignLeft, AlignCenter, AlignRight, Code, Quote, Highlighter } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
+import React, { useState, useEffect, useCallback } from "react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import { StarterKit } from "@tiptap/starter-kit";
+import { Highlight } from "@tiptap/extension-highlight";
+import { TextAlign } from "@tiptap/extension-text-align";
+import { Underline } from "@tiptap/extension-underline";
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  List,
+  ListOrdered,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Code,
+  Quote,
+  Highlighter,
+} from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/Tabs";
 
 interface Note {
   id: string;
@@ -27,79 +38,78 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Highlight.configure({ multicolor: true }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      Highlight,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
     ],
     content: note.content,
-    onUpdate: ({ editor }) => {
-      onSave({ ...note, title, content: editor.getHTML() });
+    editorProps: {
+      attributes: {
+        class: "prose dark:prose-invert max-w-none focus:outline-none",
+      },
     },
   });
 
   useEffect(() => {
-    setTitle(note.title);
     if (editor && note.content !== editor.getHTML()) {
       editor.commands.setContent(note.content);
     }
-  }, [editor, note]);
+    setTitle(note.title);
+  }, [note, editor]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value;
-    setTitle(newTitle);
-    onSave({ ...note, title: newTitle, content: editor?.getHTML() || note.content });
+    setTitle(e.target.value);
   };
 
-  const applyFormat = useCallback((format: string) => {
+  const handleSave = useCallback(() => {
+    if (editor) {
+      onSave({
+        ...note,
+        title,
+        content: editor.getHTML(),
+      });
+    }
+  }, [editor, note, onSave, title]);
+
+  useEffect(() => {
+    const saveInterval = setInterval(handleSave, 5000);
+    return () => clearInterval(saveInterval);
+  }, [handleSave]);
+
+  const applyFormat = (format: string) => {
     if (editor) {
       switch (format) {
-        case 'bold':
-          editor.chain().focus().toggleBold().run();
+        case "bold":
+        case "italic":
+        case "underline":
+        case "bulletList":
+        case "orderedList":
+        case "codeBlock":
+        case "blockquote":
+        case "highlight":
+          editor.chain().focus()[format]().run();
           break;
-        case 'italic':
-          editor.chain().focus().toggleItalic().run();
-          break;
-        case 'underline':
-          editor.chain().focus().toggleUnderline().run();
-          break;
-        case 'bulletList':
-          editor.chain().focus().toggleBulletList().run();
-          break;
-        case 'orderedList':
-          editor.chain().focus().toggleOrderedList().run();
-          break;
-        case 'alignLeft':
-          editor.chain().focus().setTextAlign('left').run();
-          break;
-        case 'alignCenter':
-          editor.chain().focus().setTextAlign('center').run();
-          break;
-        case 'alignRight':
-          editor.chain().focus().setTextAlign('right').run();
-          break;
-        case 'codeBlock':
-          editor.chain().focus().toggleCodeBlock().run();
-          break;
-        case 'blockquote':
-          editor.chain().focus().toggleBlockquote().run();
-          break;
-        case 'highlight':
-          editor.chain().focus().toggleHighlight().run();
-          break;
-        default:
+        case "alignLeft":
+        case "alignCenter":
+        case "alignRight":
+          editor
+            .chain()
+            .focus()
+            .setTextAlign(format.replace("align", "").toLowerCase())
+            .run();
           break;
       }
     }
-  }, [editor]);
+  };
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background text-foreground">
       <Input
         type="text"
         value={title}
         onChange={handleTitleChange}
         placeholder="Note Title"
-        className="text-2xl font-semibold border-none focus:ring-0 mb-4"
+        className="text-2xl font-semibold border-none focus:ring-0 mb-4 bg-background text-foreground"
       />
       <Tabs defaultValue="edit" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
@@ -108,44 +118,118 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
         </TabsList>
         <TabsContent value="edit" className="border-none p-0">
           <div className="flex flex-wrap gap-2 mb-4">
-            <Button variant="outline" size="icon" onClick={() => applyFormat('bold')} className={editor?.isActive('bold') ? 'bg-accent' : ''}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("bold")}
+              className={editor?.isActive("bold") ? "bg-accent" : ""}
+            >
               <Bold className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('italic')} className={editor?.isActive('italic') ? 'bg-accent' : ''}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("italic")}
+              className={editor?.isActive("italic") ? "bg-accent" : ""}
+            >
               <Italic className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('underline')} className={editor?.isActive('underline') ? 'bg-accent' : ''}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("underline")}
+              className={editor?.isActive("underline") ? "bg-accent" : ""}
+            >
               <UnderlineIcon className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('bulletList')} className={editor?.isActive('bulletList') ? 'bg-accent' : ''}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("bulletList")}
+              className={editor?.isActive("bulletList") ? "bg-accent" : ""}
+            >
               <List className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('orderedList')} className={editor?.isActive('orderedList') ? 'bg-accent' : ''}>
-              <ListOrdered className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('alignLeft')} className={editor?.isActive({ textAlign: 'left' }) ? 'bg-accent' : ''}>
-              <AlignLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('alignCenter')} className={editor?.isActive({ textAlign: 'center' }) ? 'bg-accent' : ''}>
-              <AlignCenter className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('alignRight')} className={editor?.isActive({ textAlign: 'right' }) ? 'bg-accent' : ''}>
-              <AlignRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('codeBlock')} className={editor?.isActive('codeBlock') ? 'bg-accent' : ''}>
-              <Code className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('blockquote')} className={editor?.isActive('blockquote') ? 'bg-accent' : ''}>
-              <Quote className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => applyFormat('highlight')} className={editor?.isActive('highlight') ? 'bg-accent' : ''}>
-              <Highlighter className="h-4 w-4" />
-            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("orderedList")}
+              className={editor?.isActive("orderedList") ? "bg-accent" : ""}
+            >
+              {" "}
+              <ListOrdered className="h-4 w-4" />{" "}
+            </Button>{" "}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("alignLeft")}
+              className={
+                editor?.isActive({ textAlign: "left" }) ? "bg-accent" : ""
+              }
+            >
+              {" "}
+              <AlignLeft className="h-4 w-4" />{" "}
+            </Button>{" "}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("alignCenter")}
+              className={
+                editor?.isActive({ textAlign: "center" }) ? "bg-accent" : ""
+              }
+            >
+              {" "}
+              <AlignCenter className="h-4 w-4" />{" "}
+            </Button>{" "}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("alignRight")}
+              className={
+                editor?.isActive({ textAlign: "right" }) ? "bg-accent" : ""
+              }
+            >
+              {" "}
+              <AlignRight className="h-4 w-4" />{" "}
+            </Button>{" "}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("codeBlock")}
+              className={editor?.isActive("codeBlock") ? "bg-accent" : ""}
+            >
+              {" "}
+              <Code className="h-4 w-4" />{" "}
+            </Button>{" "}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("blockquote")}
+              className={editor?.isActive("blockquote") ? "bg-accent" : ""}
+            >
+              {" "}
+              <Quote className="h-4 w-4" />{" "}
+            </Button>{" "}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => applyFormat("highlight")}
+              className={editor?.isActive("highlight") ? "bg-accent" : ""}
+            >
+              {" "}
+              <Highlighter className="h-4 w-4" />{" "}
+            </Button>{" "}
           </div>
-          <EditorContent editor={editor} className="prose max-w-none" />
+          <EditorContent
+            editor={editor}
+            className="prose dark:prose-invert max-w-none focus:outline-none"
+          />
         </TabsContent>
         <TabsContent value="preview" className="border-none p-0">
-          <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: editor?.getHTML() || '' }} />
+          <div
+            className="prose dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }}
+          />
         </TabsContent>
       </Tabs>
     </div>

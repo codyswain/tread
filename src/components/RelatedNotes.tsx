@@ -1,38 +1,27 @@
-import React from 'react';
-import styled from 'styled-components';
-
-const RelatedNotesContainer = styled.div`
-  width: 200px;
-  background-color: ${({ theme }) => theme.background};
-  border-left: 1px solid ${({ theme }) => theme.text};
-  padding: 1rem;
-`;
-
-const RelatedNotesList = styled.ul`
-  list-style-type: none;
-  padding: 0;
-`;
-
-const RelatedNoteItem = styled.li`
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  background-color: ${({ theme }) => theme.background};
-  border: 1px solid ${({ theme }) => theme.text};
-`;
+import React from "react";
 
 const RelatedNotes: React.FC = () => {
-  // This is just a placeholder. In the future, you'll implement logic to show actually related notes.
-  const placeholderNotes = ['', '', ''];
+  // Placeholder
+  const placeholderNotes = [
+    "Related Note 1",
+    "Related Note 2",
+    "Related Note 3",
+  ];
 
   return (
-    <RelatedNotesContainer>
-      <h3>Related Notes</h3>
-      <RelatedNotesList>
+    <div className="w-64 bg-background border-l border-border p-4">
+      <h3 className="text-lg font-semibold mb-4">Related Notes</h3>
+      <ul className="space-y-2">
         {placeholderNotes.map((note, index) => (
-          <RelatedNoteItem key={index}>{note}</RelatedNoteItem>
+          <li
+            key={index}
+            className="p-2 bg-card text-card-foreground border border-border rounded"
+          >
+            {note}
+          </li>
         ))}
-      </RelatedNotesList>
-    </RelatedNotesContainer>
+      </ul>
+    </div>
   );
 };
 

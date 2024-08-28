@@ -17,7 +17,6 @@ interface SidebarProps {
   onCreateNote: () => void;
   onDeleteNote: (id: string) => void;
 }
-
 const Sidebar: React.FC<SidebarProps> = ({
   notes,
   selectedNote,
@@ -26,12 +25,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onDeleteNote,
 }) => {
   return (
-    <div className="w-64 bg-zinc-100 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 h-full flex flex-col">
+    <div className="w-64 bg-background border-r border-border h-full flex flex-col">
       <div className="p-4">
-        <Button
-          onClick={onCreateNote}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-        >
+        <Button onClick={onCreateNote} className="w-full">
           <FaPlus className="mr-2 h-4 w-4" /> New Note
         </Button>
       </div>
@@ -42,10 +38,10 @@ const Sidebar: React.FC<SidebarProps> = ({
               key={note.id}
               onClick={() => onSelectNote(note.id)}
               className={cn(
-                "w-full justify-start text-left font-normal mb-1 hover:bg-zinc-200 dark:hover:bg-zinc-800",
+                "w-full justify-start text-left font-normal mb-1",
                 selectedNote === note.id
-                  ? "bg-zinc-200 dark:bg-zinc-800"
-                  : "bg-transparent"
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-transparent hover:bg-accent/50"
               )}
               variant="ghost"
             >
