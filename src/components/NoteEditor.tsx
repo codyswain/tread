@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
-import { StarterKit } from "@tiptap/starter-kit";
-import { Highlight } from "@tiptap/extension-highlight";
-import { TextAlign } from "@tiptap/extension-text-align";
-import { Underline } from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
+import Highlight from "@tiptap/extension-highlight";
+import TextAlign from "@tiptap/extension-text-align";
+import Underline from "@tiptap/extension-underline";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import ListItem from "@tiptap/extension-list-item";
 import {
   Bold,
   Italic,
@@ -41,12 +44,22 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       Highlight,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
+      BulletList,
+      OrderedList,
+      ListItem,
     ],
     content: note.content,
     editorProps: {
       attributes: {
         class: "prose dark:prose-invert max-w-none focus:outline-none",
       },
+    },
+    onUpdate: ({ editor }) => {
+      onSave({
+        ...note,
+        title,
+        content: editor.getHTML(),
+      });
     },
   });
 
@@ -75,27 +88,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
 
   useEffect(() => {
     if (editor) {
-      editor.on('update', handleContentChange);
+      editor.on("update", handleContentChange);
       return () => {
-        editor.off('update', handleContentChange);
+        editor.off("update", handleContentChange);
       };
     }
   }, [editor, handleContentChange]);
-
-  // const handleSave = useCallback(() => {
-  //   if (editor) {
-  //     onSave({
-  //       ...note,
-  //       title,
-  //       content: editor.getHTML(),
-  //     });
-  //   }
-  // }, [editor, note, onSave, title]);
-
-  // useEffect(() => {
-  //   const saveInterval = setInterval(handleSave, 5000);
-  //   return () => clearInterval(saveInterval);
-  // }, [handleSave]);
 
   const applyFormat = (format: string) => {
     if (editor) {
@@ -103,12 +101,22 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
         case "bold":
         case "italic":
         case "underline":
+          editor.chain().focus().toggleMark(format).run();
+          break;
         case "bulletList":
+          editor.chain().focus().toggleBulletList().run();
+          break;
         case "orderedList":
+          editor.chain().focus().toggleOrderedList().run();
+          break;
         case "codeBlock":
+          editor.chain().focus().toggleCodeBlock().run();
+          break;
         case "blockquote":
+          editor.chain().focus().toggleBlockquote().run();
+          break;
         case "highlight":
-          editor.chain().focus()[format]().run();
+          editor.chain().focus().toggleHighlight().run();
           break;
         case "alignLeft":
         case "alignCenter":
@@ -124,7 +132,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-backgrounfd text-foreground">
+    <div className="flex flex-col h-full bg-background text-foreground">
       <Input
         type="text"
         value={title}
@@ -177,9 +185,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
               onClick={() => applyFormat("orderedList")}
               className={editor?.isActive("orderedList") ? "bg-accent" : ""}
             >
-              {" "}
-              <ListOrdered className="h-4 w-4" />{" "}
-            </Button>{" "}
+              <ListOrdered className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
@@ -188,9 +195,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
                 editor?.isActive({ textAlign: "left" }) ? "bg-accent" : ""
               }
             >
-              {" "}
-              <AlignLeft className="h-4 w-4" />{" "}
-            </Button>{" "}
+              <AlignLeft className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
@@ -199,9 +205,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
                 editor?.isActive({ textAlign: "center" }) ? "bg-accent" : ""
               }
             >
-              {" "}
-              <AlignCenter className="h-4 w-4" />{" "}
-            </Button>{" "}
+              <AlignCenter className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
@@ -210,36 +215,32 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
                 editor?.isActive({ textAlign: "right" }) ? "bg-accent" : ""
               }
             >
-              {" "}
-              <AlignRight className="h-4 w-4" />{" "}
-            </Button>{" "}
+              <AlignRight className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => applyFormat("codeBlock")}
               className={editor?.isActive("codeBlock") ? "bg-accent" : ""}
             >
-              {" "}
-              <Code className="h-4 w-4" />{" "}
-            </Button>{" "}
+              <Code className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => applyFormat("blockquote")}
               className={editor?.isActive("blockquote") ? "bg-accent" : ""}
             >
-              {" "}
-              <Quote className="h-4 w-4" />{" "}
-            </Button>{" "}
+              <Quote className="h-4 w-4" />
+            </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => applyFormat("highlight")}
               className={editor?.isActive("highlight") ? "bg-accent" : ""}
             >
-              {" "}
-              <Highlighter className="h-4 w-4" />{" "}
-            </Button>{" "}
+              <Highlighter className="h-4 w-4" />
+            </Button>
           </div>
           <EditorContent
             editor={editor}
