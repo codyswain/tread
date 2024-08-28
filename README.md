@@ -33,7 +33,7 @@ npm install
 
 To start the application in development mode:
 ```
-npm run dev
+npm start
 ```
 
 
@@ -41,7 +41,7 @@ This will launch the Electron app with hot-reloading enabled.
 
 ## Building the Application
 
-To build the application for production:
+To build the application for production (this has not been tested):
 ```
 npm run make
 ```
