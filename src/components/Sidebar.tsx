@@ -1,5 +1,6 @@
 import React from "react";
 import { FaPlus } from "react-icons/fa";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ interface SidebarProps {
   onCreateNote: () => void;
   onDeleteNote: (id: string) => void;
 }
+
 const Sidebar: React.FC<SidebarProps> = ({
   notes,
   selectedNote,
@@ -34,19 +36,29 @@ const Sidebar: React.FC<SidebarProps> = ({
       <ScrollArea className="flex-grow">
         <div className="px-2">
           {notes.map((note) => (
-            <Button
+            <div
               key={note.id}
-              onClick={() => onSelectNote(note.id)}
               className={cn(
-                "w-full justify-start text-left font-normal mb-1",
+                "flex items-center justify-between p-2 rounded-md mb-1 cursor-pointer",
                 selectedNote === note.id
                   ? "bg-accent text-accent-foreground"
-                  : "bg-transparent hover:bg-accent/50"
+                  : "hover:bg-accent/50"
               )}
-              variant="ghost"
+              onClick={() => onSelectNote(note.id)}
             >
-              {note.title}
-            </Button>
+              <span className="truncate">{note.title}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteNote(note.id);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           ))}
         </div>
       </ScrollArea>

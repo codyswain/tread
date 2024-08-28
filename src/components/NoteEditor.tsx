@@ -58,10 +58,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   }, [note, editor]);
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+    onSave({ ...note, title: newTitle });
   };
 
-  const handleSave = useCallback(() => {
+  const handleContentChange = useCallback(() => {
     if (editor) {
       onSave({
         ...note,
@@ -72,9 +74,28 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   }, [editor, note, onSave, title]);
 
   useEffect(() => {
-    const saveInterval = setInterval(handleSave, 5000);
-    return () => clearInterval(saveInterval);
-  }, [handleSave]);
+    if (editor) {
+      editor.on('update', handleContentChange);
+      return () => {
+        editor.off('update', handleContentChange);
+      };
+    }
+  }, [editor, handleContentChange]);
+
+  // const handleSave = useCallback(() => {
+  //   if (editor) {
+  //     onSave({
+  //       ...note,
+  //       title,
+  //       content: editor.getHTML(),
+  //     });
+  //   }
+  // }, [editor, note, onSave, title]);
+
+  // useEffect(() => {
+  //   const saveInterval = setInterval(handleSave, 5000);
+  //   return () => clearInterval(saveInterval);
+  // }, [handleSave]);
 
   const applyFormat = (format: string) => {
     if (editor) {
@@ -103,7 +124,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-background text-foreground">
+    <div className="flex flex-col h-full bg-backgrounfd text-foreground">
       <Input
         type="text"
         value={title}
