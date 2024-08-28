@@ -1,6 +1,6 @@
 # Tread
 
-A hobby project for a modern note-taking app. 
+A hobby project for note-taking. 
 
 ## Features
 
@@ -10,6 +10,8 @@ A hobby project for a modern note-taking app.
 - Auto-save functionality
 - Sidebar for quick note navigation
 - Related notes suggestion
+- Feed ?
+- Infinitely nested abstract data structure ?
 
 ## Prerequisites
 
@@ -67,10 +69,6 @@ This will create distributable packages for your current platform in the `out` d
 - Styled Components
 - React Router
 - React Markdown
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
