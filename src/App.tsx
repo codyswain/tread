@@ -4,7 +4,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Notes from './pages/Notes';
 import MediaGallery from './pages/MediaGallery';
-import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import useLocalStorage from './hooks/useLocalStorage';
 
 import GlobalStyles from './styles/GlobalStyles';
@@ -18,12 +18,12 @@ const App: React.FC = () => {
       <Router>
         <div className="flex flex-col min-h-screen">
           <Navbar />
-          <main className="flex-grow pt-16"> {/* Add padding-top here */}
+          <main className="flex-grow pt-12">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/notes" element={<Notes />} />
               <Route path="/media" element={<MediaGallery />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>
         </div>

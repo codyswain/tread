@@ -10,19 +10,19 @@ const Navbar: React.FC = () => {
   const navItems = [
     { to: "/", icon: Home, text: "Home" },
     { to: "/notes", icon: Notebook, text: "Notes" },
-    { to: "/media", icon: Image, text: "Media" },
-    { to: "/profile", icon: User, text: "Profile" },
+    { to: "/media", icon: Image, text: "Files" },
+    { to: "/settings", icon: User, text: "Settings" },
   ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-b border-border z-50">
-      <div className="container flex items-center justify-between h-16">
+      <div className="flex items-center justify-between h-12 px-2 sm:px-4">
         <ul className="flex space-x-1">
           {navItems.map(({ to, icon: Icon, text }) => (
             <li key={to}>
               <NavItem
                 to={to}
-                icon={<Icon className="h-4 w-4" />}
+                icon={<Icon className="h-3.5 w-3.5" />}
                 text={text}
                 isActive={location.pathname === to}
               />
