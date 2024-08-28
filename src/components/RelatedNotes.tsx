@@ -22,7 +22,7 @@ const RelatedNoteItem = styled.li`
 
 const RelatedNotes: React.FC = () => {
   // This is just a placeholder. In the future, you'll implement logic to show actually related notes.
-  const placeholderNotes = ['Related Note 1', 'Related Note 2', 'Related Note 3'];
+  const placeholderNotes = ['', '', ''];
 
   return (
     <RelatedNotesContainer>

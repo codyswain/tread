@@ -159,6 +159,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   });
 
   useEffect(() => {
+    setTitle(note.title);
     if (editor && note.content !== editor.getHTML()) {
       editor.commands.setContent(note.content);
     }
