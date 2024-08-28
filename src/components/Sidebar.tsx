@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { Button } from "@/components/ui/button"
-// import { ScrollArea } from "@/components/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
 interface Note {
@@ -26,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ notes, selectedNote, onSelectNote, on
           <FaPlus className="mr-2 h-4 w-4" /> New Note
         </Button>
       </div>
-      {/* <ScrollArea className="flex-grow"> */}
+      <ScrollArea className="flex-grow">
         <div className="px-2">
           {notes.map((note) => (
             <Button
@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ notes, selectedNote, onSelectNote, on
             </Button>
           ))}
         </div>
-      {/* </ScrollArea> */}
+      </ScrollArea>
     </div>
   );
 };
