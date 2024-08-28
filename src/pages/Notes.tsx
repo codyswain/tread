@@ -1,11 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import NoteEditor from '../components/NoteEditor';
-import Sidebar from '../components/Sidebar';
-import RelatedNotes from '../components/RelatedNotes';
-import { FaPlus, FaTrash } from 'react-icons/fa';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
+import React, { useState, useEffect } from "react";
+import styled from "styled-components";
+import NoteEditor from "../components/NoteEditor";
+import Sidebar from "../components/Sidebar";
+import RelatedNotes from "../components/RelatedNotes";
 
 const NotesContainer = styled.div`
   display: flex;
@@ -24,33 +21,6 @@ const MainContent = styled.div`
   border-radius: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin: 20px;
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  justify-content: flex-start;
-  padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
-`;
-
-const ActionButton = styled(Button)`
-  background-color: #007aff;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  margin-right: 10px;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-
-  svg {
-    margin-right: 5px;
-  }
 `;
 
 const EditorContainer = styled.div`
@@ -83,43 +53,49 @@ const Notes: React.FC = () => {
         setSelectedNote(loadedNotes[0].id);
       }
     } catch (error) {
-      console.error('Error loading notes:', error);
+      console.error("Error loading notes:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCreateNote = async () => {
-    const newNote = { id: Date.now().toString(), title: 'New Note', content: '' };
+    const newNote = {
+      id: Date.now().toString(),
+      title: "New Note",
+      content: "",
+    };
     try {
       await window.electron.saveNote(newNote);
-      setNotes(prevNotes => [...prevNotes, newNote]);
+      setNotes((prevNotes) => [...prevNotes, newNote]);
       setSelectedNote(newNote.id);
     } catch (error) {
-      console.error('Error creating note:', error);
+      console.error("Error creating note:", error);
     }
   };
 
   const handleSaveNote = async (updatedNote: Note) => {
     try {
       await window.electron.saveNote(updatedNote);
-      setNotes(prevNotes => prevNotes.map(note => 
-        note.id === updatedNote.id ? updatedNote : note
-      ));
+      setNotes((prevNotes) =>
+        prevNotes.map((note) =>
+          note.id === updatedNote.id ? updatedNote : note
+        )
+      );
     } catch (error) {
-      console.error('Error saving note:', error);
+      console.error("Error saving note:", error);
     }
   };
 
-  const handleDeleteNote = async () => {
-    if (selectedNote) {
-      try {
-        await window.electron.deleteNote(selectedNote);
-        setNotes(prevNotes => prevNotes.filter(note => note.id !== selectedNote));
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await window.electron.deleteNote(noteId);
+      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId));
+      if (selectedNote === noteId) {
         setSelectedNote(notes.length > 1 ? notes[0].id : null);
-      } catch (error) {
-        console.error('Error deleting note:', error);
       }
+    } catch (error) {
+      console.error("Error deleting note:", error);
     }
   };
 
@@ -129,26 +105,24 @@ const Notes: React.FC = () => {
 
   return (
     <NotesContainer>
-      <Sidebar 
-        notes={notes} 
-        selectedNote={selectedNote} 
-        onSelectNote={setSelectedNote} 
+      <Sidebar
+        notes={notes}
+        selectedNote={selectedNote}
+        onSelectNote={setSelectedNote}
+        onCreateNote={handleCreateNote}
+        onDeleteNote={handleDeleteNote}
       />
       <MainContent>
-        <ButtonContainer>
-          <ActionButton onClick={handleCreateNote}>
-            <FaPlus /> New Note
-          </ActionButton>
-          {selectedNote && (
-            <ActionButton onClick={handleDeleteNote}>
-              <FaTrash /> Delete
-            </ActionButton>
-          )}
-        </ButtonContainer>
         <EditorContainer>
           {selectedNote ? (
             <NoteEditor
-              note={notes.find(note => note.id === selectedNote) || { id: '', title: '', content: '' }}
+              note={
+                notes.find((note) => note.id === selectedNote) || {
+                  id: "",
+                  title: "",
+                  content: "",
+                }
+              }
               onSave={handleSaveNote}
             />
           ) : (

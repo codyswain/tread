@@ -1,135 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
-import { FaBold, FaItalic, FaUnderline, FaListUl, FaListOl, FaAlignLeft, FaAlignCenter, FaAlignRight, FaCode, FaQuoteRight, FaHighlighter } from 'react-icons/fa';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight'
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
-
-const EditorContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  background-color: #f5f5f7;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-`;
-
-const ContentContainer = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-`;
-
-const EditorToolbar = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  padding: 8px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
-`;
-
-const ToolbarButton = styled.button<{ active?: boolean }>`
-  margin-right: 8px;
-  margin-bottom: 8px;
-  padding: 8px;
-  font-size: 14px;
-  background-color: ${({ active }) => active ? '#007aff' : '#f0f0f0'};
-  color: ${({ active }) => active ? '#ffffff' : '#333333'};
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    background-color: ${({ active }) => active ? '#0056b3' : '#e0e0e0'};
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.5);
-  }
-`;
-
-const StyledEditorContent = styled(EditorContent)`
-  .ProseMirror {
-    flex: 1;
-    padding: 16px;
-    font-size: 16px;
-    line-height: 1.5;
-    color: #333333;
-    background-color: #ffffff;
-    border: none;
-    border-radius: 0 0 10px 10px;
-    outline: none;
-
-    &:focus {
-      outline: none;
-    }
-
-    p {
-      margin-bottom: 1em;
-    }
-
-    ul, ol {
-      padding-left: 1.5em;
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-      line-height: 1.2;
-      margin-top: 1.5em;
-      margin-bottom: 0.5em;
-    }
-
-    code {
-      background-color: #f0f0f0;
-      color: #333333;
-      padding: 2px 4px;
-      border-radius: 4px;
-    }
-
-    pre {
-      background: #f5f5f7;
-      color: #333333;
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-      padding: 12px 16px;
-      border-radius: 6px;
-      overflow-x: auto;
-
-      code {
-        color: inherit;
-        padding: 0;
-        background: none;
-        font-size: 14px;
-      }
-    }
-
-    blockquote {
-      border-left: 4px solid #007aff;
-      margin-left: 0;
-      padding-left: 16px;
-      color: #666666;
-    }
-  }
-`;
-
-const TitleInput = styled.input`
-  width: 100%;
-  padding: 16px;
-  font-size: 24px;
-  font-weight: 600;
-  color: #333333;
-  background-color: transparent;
-  border: none;
-  outline: none;
-
-  &::placeholder {
-    color: #999999;
-  }
-`;
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, 
+         AlignLeft, AlignCenter, AlignRight, Code, Quote, Highlighter } from 'lucide-react';
 
 interface Note {
   id: string;
@@ -214,52 +93,62 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   }, [editor]);
 
   return (
-    <EditorContainer>
-      <ContentContainer>
-        <TitleInput 
-          type="text" 
-          value={title} 
-          onChange={handleTitleChange} 
-          placeholder="Note Title"
-        />
-        <EditorToolbar>
-          <ToolbarButton onClick={() => applyFormat('bold')} active={editor?.isActive('bold')}>
-            <FaBold />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('italic')} active={editor?.isActive('italic')}>
-            <FaItalic />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('underline')} active={editor?.isActive('underline')}>
-            <FaUnderline />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('bulletList')} active={editor?.isActive('bulletList')}>
-            <FaListUl />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('orderedList')} active={editor?.isActive('orderedList')}>
-            <FaListOl />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('alignLeft')} active={editor?.isActive({ textAlign: 'left' })}>
-            <FaAlignLeft />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('alignCenter')} active={editor?.isActive({ textAlign: 'center' })}>
-            <FaAlignCenter />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('alignRight')} active={editor?.isActive({ textAlign: 'right' })}>
-            <FaAlignRight />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('codeBlock')} active={editor?.isActive('codeBlock')}>
-            <FaCode />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('blockquote')} active={editor?.isActive('blockquote')}>
-            <FaQuoteRight />
-          </ToolbarButton>
-          <ToolbarButton onClick={() => applyFormat('highlight')} active={editor?.isActive('highlight')}>
-            <FaHighlighter />
-          </ToolbarButton>
-        </EditorToolbar>
-        <StyledEditorContent editor={editor} />
-      </ContentContainer>
-    </EditorContainer>
+    <div className="flex flex-col h-full bg-background">
+      <Input
+        type="text"
+        value={title}
+        onChange={handleTitleChange}
+        placeholder="Note Title"
+        className="text-2xl font-semibold border-none focus:ring-0 mb-4"
+      />
+      <Tabs defaultValue="edit" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="edit">Edit</TabsTrigger>
+          <TabsTrigger value="preview">Preview</TabsTrigger>
+        </TabsList>
+        <TabsContent value="edit" className="border-none p-0">
+          <div className="flex flex-wrap gap-2 mb-4">
+            <Button variant="outline" size="icon" onClick={() => applyFormat('bold')} className={editor?.isActive('bold') ? 'bg-accent' : ''}>
+              <Bold className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('italic')} className={editor?.isActive('italic') ? 'bg-accent' : ''}>
+              <Italic className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('underline')} className={editor?.isActive('underline') ? 'bg-accent' : ''}>
+              <UnderlineIcon className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('bulletList')} className={editor?.isActive('bulletList') ? 'bg-accent' : ''}>
+              <List className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('orderedList')} className={editor?.isActive('orderedList') ? 'bg-accent' : ''}>
+              <ListOrdered className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('alignLeft')} className={editor?.isActive({ textAlign: 'left' }) ? 'bg-accent' : ''}>
+              <AlignLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('alignCenter')} className={editor?.isActive({ textAlign: 'center' }) ? 'bg-accent' : ''}>
+              <AlignCenter className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('alignRight')} className={editor?.isActive({ textAlign: 'right' }) ? 'bg-accent' : ''}>
+              <AlignRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('codeBlock')} className={editor?.isActive('codeBlock') ? 'bg-accent' : ''}>
+              <Code className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('blockquote')} className={editor?.isActive('blockquote') ? 'bg-accent' : ''}>
+              <Quote className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => applyFormat('highlight')} className={editor?.isActive('highlight') ? 'bg-accent' : ''}>
+              <Highlighter className="h-4 w-4" />
+            </Button>
+          </div>
+          <EditorContent editor={editor} className="prose max-w-none" />
+        </TabsContent>
+        <TabsContent value="preview" className="border-none p-0">
+          <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: editor?.getHTML() || '' }} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

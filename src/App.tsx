@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import useLocalStorage from './hooks/useLocalStorage';
 import { lightTheme, darkTheme, ThemeType } from './styles/theme';
 import GlobalStyles from './styles/GlobalStyles';
+import './index.css';
 
 const AppWrapper = styled.div`
   background-color: ${({ theme }) => theme.body};
