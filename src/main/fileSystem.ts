@@ -10,18 +10,21 @@ const NOTES_DIR = path.join(
 export const setupFileSystem = () => {
   ipcMain.handle("load-notes", async () => {
     try {
-      await fs.mkdir(NOTES_DIR, { recursive: true });
       const files = await fs.readdir(NOTES_DIR);
       const notes = await Promise.all(
-        files.map(async (file) => {
-          const content = await fs.readFile(
-            path.join(NOTES_DIR, file),
-            "utf-8"
-          );
-          return JSON.parse(content);
-        })
+        files
+          .filter(file => file.endsWith('.json') && !file.endsWith('.embedding.json'))
+          .map(async (file) => {
+            const filePath = path.join(NOTES_DIR, file);
+            const stats = await fs.stat(filePath);
+            if (stats.isFile()) {
+              const content = await fs.readFile(filePath, "utf-8");
+              return JSON.parse(content);
+            }
+            return null;
+          })
       );
-      return notes;
+      return notes.filter(note => note !== null);
     } catch (error) {
       console.error("Error loading notes:", error);
       throw error;
