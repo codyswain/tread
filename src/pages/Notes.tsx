@@ -124,7 +124,7 @@ const Notes: React.FC = () => {
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
       />
-      <main className={`flex-grow transition-all duration-300 p-6 ${isLeftSidebarOpen ? 'ml-64' : 'ml-10'} ${isRightSidebarOpen ? 'mr-64' : 'mr-10'}`}>
+      <main className={`flex-grow transition-all duration-300 p-4 ${isLeftSidebarOpen ? 'ml-64' : 'ml-10'} ${isRightSidebarOpen ? 'mr-64' : 'mr-10'}`}>
         {selectedNote ? (
           <NoteEditor
             note={
