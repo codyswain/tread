@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import NoteEditor from "../components/NoteEditor";
 import LeftSidebar from "../components/LeftSidebar";
 import RightSidebar from "../components/RightSidebar";
-import { Button } from "../components/ui/Button";
-import { PanelLeft, PanelLeftClose, PanelRight, PanelRightClose } from "lucide-react";
+import Navbar from "../components/Navbar";
 
 interface Note {
   id: string;
@@ -92,30 +91,12 @@ const Notes: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-14 left-2 z-50 h-8 w-8"
-        onClick={toggleLeftSidebar}
-      >
-        {isLeftSidebarOpen ? (
-          <PanelLeftClose className="h-4 w-4" />
-        ) : (
-          <PanelLeft className="h-4 w-4" />
-        )}
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-14 right-2 z-50 h-8 w-8"
-        onClick={toggleRightSidebar}
-      >
-        {isRightSidebarOpen ? (
-          <PanelRightClose className="h-4 w-4" />
-        ) : (
-          <PanelRight className="h-4 w-4" />
-        )}
-      </Button>
+      <Navbar
+        isLeftSidebarOpen={isLeftSidebarOpen}
+        isRightSidebarOpen={isRightSidebarOpen}
+        toggleLeftSidebar={toggleLeftSidebar}
+        toggleRightSidebar={toggleRightSidebar}
+      />
       <LeftSidebar
         isOpen={isLeftSidebarOpen}
         notes={notes}
@@ -124,7 +105,7 @@ const Notes: React.FC = () => {
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
       />
-      <main className={`flex-grow transition-all duration-300 p-4 ${isLeftSidebarOpen ? 'ml-64' : 'ml-10'} ${isRightSidebarOpen ? 'mr-64' : 'mr-10'}`}>
+      <main className={`flex-grow transition-all duration-300 p-4 pt-12 ${isLeftSidebarOpen ? 'ml-64' : 'ml-10'} ${isRightSidebarOpen ? 'mr-64' : 'mr-10'}`}>
         {selectedNote ? (
           <NoteEditor
             note={

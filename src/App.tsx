@@ -11,12 +11,23 @@ import './index.css';
 import { ThemeProvider } from './components/ThemeProvider';
 
 const App: React.FC = () => {
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+
+  const toggleLeftSidebar = () => setIsLeftSidebarOpen(!isLeftSidebarOpen);
+  const toggleRightSidebar = () => setIsRightSidebarOpen(!isRightSidebarOpen);
+
   return (
     <ThemeProvider>
       <GlobalStyles />
       <Router>
         <div className="flex flex-col min-h-screen">
-          <Navbar />
+          <Navbar
+            isLeftSidebarOpen={isLeftSidebarOpen}
+            isRightSidebarOpen={isRightSidebarOpen}
+            toggleLeftSidebar={toggleLeftSidebar}
+            toggleRightSidebar={toggleRightSidebar}
+          />
           <main className="flex-grow pt-12">
             <Routes>
               <Route path="/" element={<Home />} />
