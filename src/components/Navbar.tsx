@@ -1,6 +1,6 @@
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
-import { Home, Notebook, Image, User, PanelLeft, PanelLeftClose, PanelRight, PanelRightClose } from "lucide-react";
+import { Home, Notebook, Image, Settings, PanelLeft, PanelRight, Minus, Square, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -23,75 +23,76 @@ const Navbar: React.FC<NavbarProps> = ({
     { to: "/", icon: Home, text: "Home" },
     { to: "/notes", icon: Notebook, text: "Notes" },
     { to: "/media", icon: Image, text: "Files" },
-    { to: "/settings", icon: User, text: "Settings" },
   ];
 
+  const handleMinimize = () => {
+    window.electron.minimize();
+  };
+
+  const handleMaximize = () => {
+    window.electron.maximize();
+  };
+
+  const handleClose = () => {
+    window.electron.close();
+  };
+
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-background/90 backdrop-blur-md border-b border-border z-50 h-12">
-      <div className="flex items-center justify-between h-full px-4">
+    <nav className="flex items-center justify-between h-10 bg-background/90 backdrop-blur-md border-b border-border z-50 px-2">
+      <div className="flex items-center space-x-2 no-drag">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
+          <X className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleMinimize}>
+          <Minus className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleMaximize}>
+          <Square className="h-4 w-4" />
+        </Button>
+      </div>
+      <ul className="flex items-center space-x-2 no-drag mx-auto">
+        {navItems.map(({ to, icon: Icon, text }) => (
+          <li key={to}>
+            <Link
+              to={to}
+              className={`flex items-center px-3 py-1 rounded-md text-sm ${
+                location.pathname === to
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/50"
+              }`}
+            >
+              <Icon className="h-4 w-4 mr-2" />
+              {text}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <div className="flex items-center space-x-2 no-drag">
+        <ThemeToggle />
         <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8"
           onClick={toggleLeftSidebar}
         >
-          {isLeftSidebarOpen ? (
-            <PanelLeftClose className="h-4 w-4" />
-          ) : (
-            <PanelLeft className="h-4 w-4" />
-          )}
+          <PanelLeft className="h-4 w-4" />
         </Button>
-        <ul className="flex space-x-2 mx-auto">
-          {navItems.map(({ to, icon: Icon, text }) => (
-            <li key={to}>
-              <NavItem
-                to={to}
-                icon={<Icon className="h-4 w-4" />}
-                text={text}
-                isActive={location.pathname === to}
-              />
-            </li>
-          ))}
-        </ul>
-        <div className="flex items-center space-x-2">
-          <ThemeToggle />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={toggleRightSidebar}
-          >
-            {isRightSidebarOpen ? (
-              <PanelRightClose className="h-4 w-4" />
-            ) : (
-              <PanelRight className="h-4 w-4" />
-            )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={toggleRightSidebar}
+        >
+          <PanelRight className="h-4 w-4" />
+        </Button>
+        <Link to="/settings">
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Settings className="h-4 w-4" />
           </Button>
-        </div>
+        </Link>
       </div>
     </nav>
   );
 };
-
-interface NavItemProps {
-  to: string;
-  icon: React.ReactNode;
-  text: string;
-  isActive: boolean;
-}
-
-const NavItem: React.FC<NavItemProps> = ({ to, icon, text, isActive }) => (
-  <Button
-    asChild
-    variant={isActive ? "secondary" : "ghost"}
-    size="sm"
-    className="h-8 px-3 text-sm font-medium"
-  >
-    <Link to={to} className="flex items-center space-x-2">
-      {icon}
-      <span>{text}</span>
-    </Link>
-  </Button>
-);
 
 export default Navbar;

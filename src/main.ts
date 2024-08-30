@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { setupFileSystem } from './main/fileSystem';
 
@@ -7,11 +7,13 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+let mainWindow: BrowserWindow | null = null;
+
 const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -28,6 +30,23 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
+
+  // Set up IPC listeners for window controls
+  ipcMain.on('minimize-window', () => {
+    mainWindow?.minimize();
+  });
+
+  ipcMain.on('maximize-window', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+
+  ipcMain.on('close-window', () => {
+    mainWindow?.close();
+  });
 };
 
 // This method will be called when Electron has finished
@@ -53,6 +72,5 @@ app.on('activate', () => {
 });
 
 app.whenReady().then(() => {
-  createWindow();
   setupFileSystem();
 });

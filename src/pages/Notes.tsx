@@ -2,20 +2,23 @@ import React, { useState, useEffect } from "react";
 import NoteEditor from "../components/NoteEditor";
 import LeftSidebar from "../components/LeftSidebar";
 import RightSidebar from "../components/RightSidebar";
-import Navbar from "../components/Navbar";
 
-interface Note {
-  id: string;
-  title: string;
-  content: string;
+interface NotesProps {
+  isLeftSidebarOpen: boolean;
+  isRightSidebarOpen: boolean;
+  toggleLeftSidebar: () => void;
+  toggleRightSidebar: () => void;
 }
 
-const Notes: React.FC = () => {
+const Notes: React.FC<NotesProps> = ({
+  isLeftSidebarOpen,
+  isRightSidebarOpen,
+  toggleLeftSidebar,
+  toggleRightSidebar
+}) => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
 
 
   useEffect(() => {
@@ -77,26 +80,12 @@ const Notes: React.FC = () => {
     }
   };
 
-  const toggleLeftSidebar = () => {
-    setIsLeftSidebarOpen(!isLeftSidebarOpen);
-  };
-
-  const toggleRightSidebar = () => {
-    setIsRightSidebarOpen(!isRightSidebarOpen);
-  };
-
   if (isLoading) {
     return <div className="flex items-center justify-center h-full">Loading notes...</div>;
   }
 
   return (
     <div className="flex h-screen bg-background text-foreground">
-      <Navbar
-        isLeftSidebarOpen={isLeftSidebarOpen}
-        isRightSidebarOpen={isRightSidebarOpen}
-        toggleLeftSidebar={toggleLeftSidebar}
-        toggleRightSidebar={toggleRightSidebar}
-      />
       <LeftSidebar
         isOpen={isLeftSidebarOpen}
         notes={notes}

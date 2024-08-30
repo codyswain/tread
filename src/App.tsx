@@ -21,17 +21,24 @@ const App: React.FC = () => {
     <ThemeProvider>
       <GlobalStyles />
       <Router>
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col h-screen">
           <Navbar
             isLeftSidebarOpen={isLeftSidebarOpen}
             isRightSidebarOpen={isRightSidebarOpen}
             toggleLeftSidebar={toggleLeftSidebar}
             toggleRightSidebar={toggleRightSidebar}
           />
-          <main className="flex-grow pt-12">
+          <main className="flex-grow pt-10">
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/notes" element={<Notes />} />
+              <Route path="/notes" element={
+                <Notes
+                  isLeftSidebarOpen={isLeftSidebarOpen}
+                  isRightSidebarOpen={isRightSidebarOpen}
+                  toggleLeftSidebar={toggleLeftSidebar}
+                  toggleRightSidebar={toggleRightSidebar}
+                />
+              } />
               <Route path="/media" element={<MediaGallery />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
