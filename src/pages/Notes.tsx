@@ -1,33 +1,9 @@
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
 import NoteEditor from "../components/NoteEditor";
-import Sidebar from "../components/Sidebar";
-import RelatedNotes from "../components/RelatedNotes";
-
-const NotesContainer = styled.div`
-  display: flex;
-  height: 100vh;
-  width: 100%;
-  background-color: #f5f5f7;
-  color: #1d1d1f;
-`;
-
-const MainContent = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin: 20px;
-`;
-
-const EditorContainer = styled.div`
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-`;
+import LeftSidebar from "../components/LeftSidebar";
+import RightSidebar from "../components/RightSidebar";
+import { Button } from "../components/ui/Button";
+import { PanelLeft, PanelLeftClose, PanelRight, PanelRightClose } from "lucide-react";
 
 interface Note {
   id: string;
@@ -39,6 +15,9 @@ const Notes: React.FC = () => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+
 
   useEffect(() => {
     loadNotes();
@@ -99,39 +78,72 @@ const Notes: React.FC = () => {
     }
   };
 
+  const toggleLeftSidebar = () => {
+    setIsLeftSidebarOpen(!isLeftSidebarOpen);
+  };
+
+  const toggleRightSidebar = () => {
+    setIsRightSidebarOpen(!isRightSidebarOpen);
+  };
+
   if (isLoading) {
-    return <div>Loading notes...</div>;
+    return <div className="flex items-center justify-center h-full">Loading notes...</div>;
   }
 
   return (
-    <NotesContainer>
-      <Sidebar
+    <div className="flex h-screen bg-background text-foreground">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-14 left-2 z-50 h-8 w-8"
+        onClick={toggleLeftSidebar}
+      >
+        {isLeftSidebarOpen ? (
+          <PanelLeftClose className="h-4 w-4" />
+        ) : (
+          <PanelLeft className="h-4 w-4" />
+        )}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed top-14 right-2 z-50 h-8 w-8"
+        onClick={toggleRightSidebar}
+      >
+        {isRightSidebarOpen ? (
+          <PanelRightClose className="h-4 w-4" />
+        ) : (
+          <PanelRight className="h-4 w-4" />
+        )}
+      </Button>
+      <LeftSidebar
+        isOpen={isLeftSidebarOpen}
         notes={notes}
         selectedNote={selectedNote}
         onSelectNote={setSelectedNote}
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
       />
-      <MainContent>
-        <EditorContainer>
-          {selectedNote ? (
-            <NoteEditor
-              note={
-                notes.find((note) => note.id === selectedNote) || {
-                  id: "",
-                  title: "",
-                  content: "",
-                }
+      <main className={`flex-grow transition-all duration-300 p-6 ${isLeftSidebarOpen ? 'ml-64' : 'ml-10'} ${isRightSidebarOpen ? 'mr-64' : 'mr-10'}`}>
+        {selectedNote ? (
+          <NoteEditor
+            note={
+              notes.find((note) => note.id === selectedNote) || {
+                id: "",
+                title: "",
+                content: "",
               }
-              onSave={handleSaveNote}
-            />
-          ) : (
-            <p>Select a note or create a new one</p>
-          )}
-        </EditorContainer>
-      </MainContent>
-      <RelatedNotes />
-    </NotesContainer>
+            }
+            onSave={handleSaveNote}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-center text-gray-500">Select a note or create a new one</p>
+          </div>
+        )}
+      </main>
+      <RightSidebar isOpen={isRightSidebarOpen} />
+    </div>
   );
 };
 

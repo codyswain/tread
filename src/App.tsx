@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Notes from './pages/Notes';
 import MediaGallery from './pages/MediaGallery';
 import Settings from './pages/Settings';
-import useLocalStorage from './hooks/useLocalStorage';
 
 import GlobalStyles from './styles/GlobalStyles';
 import './index.css';

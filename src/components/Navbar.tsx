@@ -15,14 +15,14 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-background/80 backdrop-blur-xl border-b border-border z-50">
-      <div className="flex items-center justify-between h-12 px-2 sm:px-4">
-        <ul className="flex space-x-1">
+    <nav className="fixed top-0 left-0 right-0 bg-background/90 backdrop-blur-md border-b border-border z-50 h-12">
+      <div className="flex items-center justify-between h-full px-4">
+        <ul className="flex space-x-2">
           {navItems.map(({ to, icon: Icon, text }) => (
             <li key={to}>
               <NavItem
                 to={to}
-                icon={<Icon className="h-3.5 w-3.5" />}
+                icon={<Icon className="h-4 w-4" />}
                 text={text}
                 isActive={location.pathname === to}
               />
@@ -47,11 +47,11 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, text, isActive }) => (
     asChild
     variant={isActive ? "secondary" : "ghost"}
     size="sm"
-    className="gap-2"
+    className="h-8 px-3 text-sm font-medium"
   >
-    <Link to={to}>
+    <Link to={to} className="flex items-center space-x-2">
       {icon}
-      <span className="sr-only sm:not-sr-only">{text}</span>
+      <span>{text}</span>
     </Link>
   </Button>
 );
