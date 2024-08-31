@@ -14,16 +14,27 @@ const Notes: React.FC<NotesProps> = ({
   isLeftSidebarOpen,
   isRightSidebarOpen,
   toggleLeftSidebar,
-  toggleRightSidebar
+  toggleRightSidebar,
 }) => {
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
   const [selectedNote, setSelectedNote] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(256);
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(256);
 
   useEffect(() => {
     loadNotes();
   }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setLeftSidebarWidth(isLeftSidebarOpen ? 256 : 0);
+      setRightSidebarWidth(isRightSidebarOpen ? 256 : 0);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isLeftSidebarOpen, isRightSidebarOpen]);
 
   const loadNotes = async () => {
     setIsLoading(true);
@@ -81,8 +92,20 @@ const Notes: React.FC<NotesProps> = ({
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-full">Loading notes...</div>;
+    return (
+      <div className="flex items-center justify-center h-full">
+        Loading notes...
+      </div>
+    );
   }
+
+  const handleLeftSidebarResize = (width: number) => {
+    setLeftSidebarWidth(width);
+  };
+
+  const handleRightSidebarResize = (width: number) => {
+    setRightSidebarWidth(width);
+  };
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -93,8 +116,15 @@ const Notes: React.FC<NotesProps> = ({
         onSelectNote={setSelectedNote}
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
+        onResize={handleLeftSidebarResize}
       />
-      <main className={`flex-grow transition-all duration-300 p-4 pt-12 ${isLeftSidebarOpen ? 'ml-64' : 'ml-10'} ${isRightSidebarOpen ? 'mr-64' : 'mr-10'}`}>
+      <main
+        className={`flex-grow transition-all duration-300 p-4 pt-12`}
+        style={{
+          marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0',
+          marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : '0',
+        }}
+      >
         {selectedNote ? (
           <NoteEditor
             note={
@@ -108,11 +138,17 @@ const Notes: React.FC<NotesProps> = ({
           />
         ) : (
           <div className="flex items-center justify-center h-full">
-            <p className="text-center text-gray-500">Select a note or create a new one</p>
+            <p className="text-center text-gray-500">
+              Select a note or create a new one
+            </p>
           </div>
         )}
-      </main>
-      <RightSidebar isOpen={isRightSidebarOpen} />
+     </main>
+      <RightSidebar
+        isOpen={isRightSidebarOpen}
+        onResize={handleRightSidebarResize}
+        onClose={toggleRightSidebar}
+      />
     </div>
   );
 };
