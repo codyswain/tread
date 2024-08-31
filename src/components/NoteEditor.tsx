@@ -319,8 +319,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
           dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }}
         />
       )}
-      <Button onClick={handleRunPythonScript}>DEV BUTTON ONLY - CLICK TO TEST PYTHON PROCESS EXECUTION</Button>
-      {pythonResult && <p className="text-sm text-muted-foreground bg-white">Python Result: {pythonResult}</p>}
+      {/* <Button onClick={handleRunPythonScript}>DEV BUTTON ONLY - CLICK TO TEST PYTHON PROCESS EXECUTION</Button>
+      {pythonResult && <p className="text-sm text-muted-foreground bg-white">Python Result: {pythonResult}</p>} */}
     </div>
   );
 };
