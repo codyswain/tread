@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { setupFileSystem } from './main/fileSystem';
+import { runPythonScript } from './main/pythonBridge';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -81,4 +82,14 @@ app.on('activate', () => {
 process.on('uncaughtException', (error) => {
   console.error('Uncaught exception:', error);
   // Optionally, you can quit the app or show an error dialog
+});
+
+ipcMain.handle('run-python-script', async (_, scriptName: string, args: string[]) => {
+  try {
+    const result = await runPythonScript(scriptName, args);
+    return result;
+  } catch (error) {
+    console.error('Error running Python script:', error);
+    throw error;
+  }
 });

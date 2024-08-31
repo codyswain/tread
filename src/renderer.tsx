@@ -35,6 +35,7 @@ import './index.css';
 declare global {
   interface Window {
     electron: {
+      runPythonScript: (scriptName: string, args: string[]) => Promise<any>;
       loadNotes: () => Promise<any[]>;
       saveNote: (note: any) => Promise<void>;
       deleteNote: (noteId: string) => Promise<void>;

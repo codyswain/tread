@@ -41,6 +41,16 @@ interface NoteEditorProps {
 const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   const [title, setTitle] = useState(note.title);
   const [isEditing, setIsEditing] = useState(true);
+  const [pythonResult, setPythonResult] = useState<string | null>(null);
+
+  const handleRunPythonScript = async () => {
+    try {
+      const result = await window.electron.runPythonScript('hello_world', []);
+      setPythonResult(result.result);
+    } catch (error) {
+      console.error('Error running Python script:', error);
+    }
+  };
 
   const editor = useEditor({
     extensions: [
@@ -98,7 +108,6 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       };
     }
   }, [editor, handleContentChange]);
-
   const applyFormat = (format: string) => {
     if (editor) {
       switch (format) {
@@ -310,6 +319,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
           dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }}
         />
       )}
+      <Button onClick={handleRunPythonScript}>DEV BUTTON ONLY - CLICK TO TEST PYTHON PROCESS EXECUTION</Button>
+      {pythonResult && <p className="text-sm text-muted-foreground bg-white">Python Result: {pythonResult}</p>}
     </div>
   );
 };
