@@ -66,6 +66,7 @@
     "highlight.js": "^11.10.0",
     "lowlight": "^3.1.0",
     "lucide-react": "^0.436.0",
+    "python-shell": "^5.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.2.1",

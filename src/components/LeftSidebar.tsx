@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Pencil, FolderPlus, Trash2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { FixedSizeList as List } from "react-window";
+import { useResizableSidebar } from "@/hooks/useResizableSidebar";
+import ContextMenu from "./ContextMenu";
 
 interface Note {
   id: string;
@@ -18,6 +20,7 @@ interface LeftSidebarProps {
   onCreateNote: () => void;
   onDeleteNote: (id: string) => void;
   onResize: (width: number) => void;
+  onClose: () => void;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -28,48 +31,52 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onCreateNote,
   onDeleteNote,
   onResize,
+  onClose,
 }) => {
-  const [width, setWidth] = useState(256);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const resizeRef = useRef<HTMLDivElement>(null);
-  const isResizing = useRef(false);
+  const { width, sidebarRef, startResizing } = useResizableSidebar({
+    minWidth: 100,
+    maxWidth: 400,
+    defaultWidth: 256,
+    isOpen,
+    onResize,
+    onClose,
+    side: "left",
+  });
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    noteId: string;
+  } | null>(null);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing.current) return;
-      const newWidth = e.clientX;
-      if (newWidth >= 100 && newWidth <= 400) {
-        setWidth(newWidth);
-        onResize(newWidth);
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (contextMenu && !event.defaultPrevented) {
+        closeContextMenu();
       }
     };
 
-    const handleMouseUp = () => {
-      isResizing.current = false;
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      if (resizeRef.current) {
-        resizeRef.current.classList.remove("bg-accent");
-      }
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
+    document.addEventListener('click', handleClickOutside);
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener('click', handleClickOutside);
     };
-  }, [onResize]);
+  }, [contextMenu]);
 
-  const startResizing = () => {
-    isResizing.current = true;
-    if (resizeRef.current) {
-      resizeRef.current.classList.add("bg-accent");
-    }
+  const handleContextMenu = (e: React.MouseEvent, noteId: string) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, noteId });
   };
 
-  const renderNoteItem = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+  const closeContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  const renderNoteItem = ({
+    index,
+    style,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+  }) => {
     const note = notes[index];
     return (
       <div
@@ -82,19 +89,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             : "hover:bg-accent/50"
         )}
         onClick={() => onSelectNote(note.id)}
+        onContextMenu={(e) => handleContextMenu(e, note.id)}
       >
         <span className="truncate">{note.title}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDeleteNote(note.id);
-          }}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
       </div>
     );
   };
@@ -108,6 +105,15 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       )}
       style={{ width: isOpen ? width : 0 }}
     >
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onDelete={() => onDeleteNote(contextMenu.noteId)}
+          onClose={closeContextMenu}
+          noteId={contextMenu.noteId}
+        />
+      )}
       <div className="flex justify-between items-center p-2 h-10 border-b border-border">
         <span className="font-semibold text-sm">Files</span>
         <div className="flex">
@@ -144,16 +150,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => console.log("Open")}
+          onClick={() => console.log("Open settings")}
           title="Settings"
         >
           <Settings className="h-4 w-4" />
         </Button>
       </div>
       <div
-        ref={resizeRef}
         onMouseDown={startResizing}
         className="absolute top-0 right-0 w-1 h-full cursor-ew-resize hover:bg-accent/50"
+        style={{ right: "-1px" }} // Add this line
       />
     </div>
   );

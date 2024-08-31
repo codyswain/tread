@@ -156,6 +156,7 @@ const Notes: React.FC<NotesProps> = ({
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
         onResize={handleLeftSidebarResize}
+        onClose={toggleLeftSidebar}
       />
       <main
         className={`flex-grow transition-all duration-300 flex flex-col`}
