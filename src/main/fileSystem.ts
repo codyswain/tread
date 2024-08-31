@@ -51,4 +51,10 @@ export const setupFileSystem = () => {
       throw error;
     }
   });
+
+  ipcMain.handle("get-note-path", async (_, noteId) => {
+    return path.join(NOTES_DIR, `${noteId}.json`);
+  });
 };
+
+

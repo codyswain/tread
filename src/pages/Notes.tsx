@@ -53,6 +53,8 @@ const Notes: React.FC<NotesProps> = ({
       content: "",
     };
     try {
+      // Save the new note immediately
+      await window.electron.saveNote(newNote);
       setNotes((prevNotes) => [...prevNotes, newNote]);
       setOpenNotes((prevOpen) => [...prevOpen, newNote.id]);
       setActiveNote(newNote.id);
@@ -90,6 +92,18 @@ const Notes: React.FC<NotesProps> = ({
       console.error("Error deleting note:", error);
     }
   };
+
+  const handleCopyFilePath = async (noteId: string) => {
+    try {
+      const filePath = await window.electron.getNotePath(noteId);
+      await navigator.clipboard.writeText(filePath);
+      // Optionally, you can show a toast notification that the path has been copied
+      console.log('File path copied to clipboard:', filePath);
+    } catch (error) {
+      console.error('Error copying file path:', error);
+    }
+  };
+
 
   const handleTabClick = (noteId: string) => {
     setActiveNote(noteId);
@@ -145,6 +159,7 @@ const Notes: React.FC<NotesProps> = ({
     <div className="flex h-screen bg-background text-foreground pt-2">
       <LeftSidebar
         isOpen={isLeftSidebarOpen}
+        onCopyFilePath={handleCopyFilePath}
         notes={notes}
         selectedNote={activeNote}
         onSelectNote={(id) => {

@@ -21,6 +21,7 @@ interface LeftSidebarProps {
   onDeleteNote: (id: string) => void;
   onResize: (width: number) => void;
   onClose: () => void;
+  onCopyFilePath: (noteId: string) => void;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -32,6 +33,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onDeleteNote,
   onResize,
   onClose,
+  onCopyFilePath
 }) => {
   const { width, sidebarRef, startResizing } = useResizableSidebar({
     minWidth: 100,
@@ -105,13 +107,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       )}
       style={{ width: isOpen ? width : 0 }}
     >
-      {contextMenu && (
+       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
           onDelete={() => onDeleteNote(contextMenu.noteId)}
           onClose={closeContextMenu}
           noteId={contextMenu.noteId}
+          onCopyFilePath={onCopyFilePath}
         />
       )}
       <div className="flex justify-between items-center p-2 h-10 border-b border-border">

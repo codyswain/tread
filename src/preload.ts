@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('electron', {
   maximize: () => ipcRenderer.send('maximize-window'),
   close: () => ipcRenderer.send('close-window'),
   runPythonScript: (scriptName: string, args: string[]) => ipcRenderer.invoke('run-python-script', scriptName, args),
+  getNotePath: (noteId: string) => ipcRenderer.invoke('get-note-path', noteId),
 });
