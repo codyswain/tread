@@ -2,6 +2,9 @@
 
 A hobby project for note-taking. 
 
+<img width="1512" alt="image" src="https://github.com/user-attachments/assets/17814277-406c-4cee-98db-c41d30400985">
+
+
 ## Features
 
 - Create, edit, and delete notes
