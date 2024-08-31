@@ -18,6 +18,7 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
     },
   });
 
@@ -28,31 +29,36 @@ const createWindow = () => {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
-
-  // Set up IPC listeners for window controls
-  ipcMain.on('minimize-window', () => {
-    mainWindow?.minimize();
-  });
-
-  ipcMain.on('maximize-window', () => {
-    if (mainWindow?.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow?.maximize();
-    }
-  });
-
-  ipcMain.on('close-window', () => {
-    mainWindow?.close();
-  });
+  // Open the DevTools only in development mode
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.openDevTools();
+  }
 };
+
+// Set up IPC listeners for window controls
+ipcMain.on('minimize-window', () => {
+  mainWindow?.minimize();
+});
+
+ipcMain.on('maximize-window', () => {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize();
+  } else {
+    mainWindow?.maximize();
+  }
+});
+
+ipcMain.on('close-window', () => {
+  mainWindow?.close();
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.whenReady().then(async () => {
+  await setupFileSystem();
+  createWindow();
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -71,6 +77,8 @@ app.on('activate', () => {
   }
 });
 
-app.whenReady().then(() => {
-  setupFileSystem();
+// Add error handling
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+  // Optionally, you can quit the app or show an error dialog
 });
