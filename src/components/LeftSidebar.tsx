@@ -1,9 +1,8 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Pencil, FolderPlus, Trash2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { FixedSizeList as List } from "react-window";
-import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 
 interface Note {
   id: string;
@@ -30,14 +29,45 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onDeleteNote,
   onResize,
 }) => {
-  const { width, sidebarRef, startResizing } = useResizableSidebar({
-    minWidth: 100,
-    maxWidth: 400,
-    defaultWidth: 256,
-    isOpen,
-    onResize,
-    onClose: () => onResize(0),
-  });
+  const [width, setWidth] = useState(256);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const resizeRef = useRef<HTMLDivElement>(null);
+  const isResizing = useRef(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const newWidth = e.clientX;
+      if (newWidth >= 100 && newWidth <= 400) {
+        setWidth(newWidth);
+        onResize(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      isResizing.current = false;
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      if (resizeRef.current) {
+        resizeRef.current.classList.remove("bg-accent");
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [onResize]);
+
+  const startResizing = () => {
+    isResizing.current = true;
+    if (resizeRef.current) {
+      resizeRef.current.classList.add("bg-accent");
+    }
+  };
 
   const renderNoteItem = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const note = notes[index];
@@ -102,9 +132,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
       </div>
       <List
-        height={window.innerHeight - 48 - 40} // Subtract navbar and header heights
+        height={window.innerHeight - 48 - 40}
         itemCount={notes.length}
-        itemSize={35} // Adjust this value based on your item height
+        itemSize={35}
         width={width}
       >
         {renderNoteItem}
@@ -114,15 +144,16 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => console.log("Open settings modal")}
+          onClick={() => console.log("Open")}
           title="Settings"
         >
           <Settings className="h-4 w-4" />
         </Button>
       </div>
       <div
+        ref={resizeRef}
         onMouseDown={startResizing}
-        className="absolute top-0 right-0 w-1 h-full cursor-ew-resize"
+        className="absolute top-0 right-0 w-1 h-full cursor-ew-resize hover:bg-accent/50"
       />
     </div>
   );

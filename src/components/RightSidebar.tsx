@@ -1,9 +1,8 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/utils";
 import { Settings } from "lucide-react";
-import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 
 interface RightSidebarProps {
   isOpen: boolean;
@@ -12,14 +11,45 @@ interface RightSidebarProps {
 }
 
 const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onResize, onClose }) => {
-  const { width, sidebarRef, startResizing } = useResizableSidebar({
-    minWidth: 100,
-    maxWidth: 400,
-    defaultWidth: 256,
-    isOpen,
-    onResize,
-    onClose,
-  });
+  const [width, setWidth] = useState(256);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const resizeRef = useRef<HTMLDivElement>(null);
+  const isResizing = useRef(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const newWidth = window.innerWidth - e.clientX;
+      if (newWidth >= 100 && newWidth <= 400) {
+        setWidth(newWidth);
+        onResize(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      isResizing.current = false;
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      if (resizeRef.current) {
+        resizeRef.current.classList.remove("bg-accent");
+      }
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [onResize]);
+
+  const startResizing = () => {
+    isResizing.current = true;
+    if (resizeRef.current) {
+      resizeRef.current.classList.add("bg-accent");
+    }
+  };
 
   return (
     <div
@@ -50,8 +80,9 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ isOpen, onResize, onClose }
         </Button>
       </div>
       <div
+        ref={resizeRef}
         onMouseDown={startResizing}
-        className="absolute top-0 left-0 w-1 h-full cursor-ew-resize"
+        className="absolute top-0 left-0 w-1 h-full cursor-ew-resize hover:bg-accent/50"
       />
     </div>
   );
