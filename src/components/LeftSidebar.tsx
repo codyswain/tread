@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { FixedSizeList as List } from "react-window";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 import ContextMenu from "./ContextMenu";
+import { toast } from "@/components/ui/Toast";
 
 interface Note {
   id: string;
@@ -72,6 +73,18 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     setContextMenu(null);
   };
 
+  const handleCreateFolder = () => {
+    toast("Create folder feature is not implemented yet", {
+      description: "This feature will be available in a future update.",
+    });
+  };
+
+  const handleSettingsClick = () => {
+    toast("Settings feature is not implemented yet", {
+      description: "This feature will be available in a future update.",
+    });
+  };
+
   const renderNoteItem = ({
     index,
     style,
@@ -133,7 +146,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => console.log("Create folder - to be implemented")}
+            onClick={handleCreateFolder}
             title="New Folder"
           >
             <FolderPlus className="h-4 w-4" />
@@ -153,7 +166,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => console.log("Open settings")}
+          onClick={handleSettingsClick}
           title="Settings"
         >
           <Settings className="h-4 w-4" />
@@ -162,7 +175,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       <div
         onMouseDown={startResizing}
         className="absolute top-0 right-0 w-1 h-full cursor-ew-resize hover:bg-accent/50"
-        style={{ right: "-1px" }} // Add this line
+        style={{ right: "-1px" }}
       />
     </div>
   );

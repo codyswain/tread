@@ -6,6 +6,7 @@ import Notes from "./pages/Notes";
 import MediaGallery from "./pages/MediaGallery";
 import Settings from "./pages/Settings";
 import { TooltipProvider } from "@/components/ui/Tooltip";
+import { Toaster } from "@/components/ui/Toast";
 
 import GlobalStyles from "./styles/GlobalStyles";
 import "./index.css";
@@ -22,6 +23,7 @@ const App: React.FC = () => {
     <ThemeProvider>
       <TooltipProvider>
         <GlobalStyles />
+        <Toaster />
         <Router>
           <div className="flex flex-col h-screen">
             <Navbar

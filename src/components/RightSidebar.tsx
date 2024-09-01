@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/utils";
 import { Loader2, Settings } from "lucide-react";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
+import { toast } from "@/components/ui/Toast";
 
 export interface SimilarNote {
   id: string;
@@ -43,7 +44,13 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   });
 
   const handleOpenNote = (noteId: string) => {
-    onOpenNote(noteId); // Replace the navigate function with this
+    onOpenNote(noteId);
+  };
+
+  const handleSettingsClick = () => {
+    toast("Settings feature is not implemented yet", {
+      description: "This feature will be available in a future update.",
+    });
   };
 
   return (
@@ -94,7 +101,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => console.log("Open settings modal")}
+          onClick={handleSettingsClick}
           title="Settings"
         >
           <Settings className="h-4 w-4" />

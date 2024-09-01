@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
+import { toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import {
   Bold,
@@ -20,6 +21,7 @@ import {
   Pencil,
   Eye,
   Save,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -44,6 +46,7 @@ interface NoteEditorProps {
 const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   const [title, setTitle] = useState(note.title);
   const [isEditing, setIsEditing] = useState(true);
+  const [isSavingEmbedding, setIsSavingEmbedding] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -92,8 +95,23 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
 
   const handleSaveEmbedding = useCallback(async () => {
     if (editor) {
-      const content = editor.getHTML();
-      await window.electron.saveEmbedding(note.id, content);
+      setIsSavingEmbedding(true);
+      try {
+        const content = editor.getHTML();
+        await window.electron.saveEmbedding(note.id, content);
+        toast("Embedding saved successfully", {
+          description:
+            "The note's embedding has been updated for similarity search.",
+        });
+      } catch (error) {
+        console.error("Error saving embedding:", error);
+        toast("Error saving embedding", {
+          description:
+            "An error occurred while saving the embedding. Please try again.",
+        });
+      } finally {
+        setIsSavingEmbedding(false);
+      }
     }
   }, [editor, note.id]);
 
@@ -160,8 +178,13 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
                 size="icon"
                 onClick={handleSaveEmbedding}
                 className="h-10 w-10"
+                disabled={isSavingEmbedding}
               >
-                <Save className="h-4 w-4" />
+                {isSavingEmbedding ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
