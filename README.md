@@ -1,9 +1,8 @@
 # Tread
 
-A hobby project for note-taking. 
+A hobby project for note-taking.
 
 <img width="1512" alt="image" src="https://github.com/user-attachments/assets/17814277-406c-4cee-98db-c41d30400985">
-
 
 ## Features
 
@@ -24,33 +23,60 @@ A hobby project for note-taking.
 ## Installation
 
 1. Clone the repository:
-```
+
+```bash
 git clone https://github.com/codyswain/tread.git
 cd tread
 ```
 
-2. Install dependencies:
-```
+2. Install Node.js dependencies:
+
+```bash
 npm install
+```
+
+3. Set up Python virtual environment
+
+```bash
+python -m venv python_venv
+```
+
+4. Activate the Virtual Environment
+   On Windows:
+
+```bash
+python_venv\Scripts\activate
+```
+
+On macOS and Linux:
+
+```bash
+source python_venv/bin/activate
+```
+
+5. Install Python Dependencies
+
+```bash
+pip install -r python_requirements.txt
 ```
 
 ## Running the Application
 
 To start the application in development mode:
-```
+
+```bash
 npm start
 ```
-
 
 This will launch the Electron app with hot-reloading enabled.
 
 ## Building the Application
 
 To build the application for production (this has not been tested):
+
 ```
 npm run make
 ```
-
 
 This will create distributable packages for your current platform in the `out` directory.
 
