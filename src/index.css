@@ -10,8 +10,8 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 0 0% 0%; /* Changed to black */
+    --primary-foreground: 0 0% 100%; /* Changed to white */
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
@@ -27,25 +27,25 @@
   }
  
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 0 0% 0%; /* Pure black for background */
+    --foreground: 0 0% 90%; /* Light gray for primary text */
+    --card: 0 0% 7%; /* Very dark gray for cards */
+    --card-foreground: 0 0% 90%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 0 0% 80%; /* Light gray for primary elements like buttons */
+    --primary-foreground: 0 0% 0%; /* Black text on primary elements */
+    --secondary: 0 0% 15%; /* Dark gray for secondary elements */
+    --secondary-foreground: 0 0% 90%;
+    --muted: 0 0% 20%; /* Medium gray for muted areas */
+    --muted-foreground: 0 0% 60%; /* Darker gray for muted text */
+    --accent: 0 0% 25%; /* Slightly lighter gray for accents */
+    --accent-foreground: 0 0% 90%;
+    --destructive: 0 100% 40%; /* Kept vibrant red for destructive actions */
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 30%; /* Medium gray for borders */
+    --input: 0 0% 30%;
+    --ring: 0 0% 80%; /* Light gray for focus rings, matching primary */
   }
 }
 

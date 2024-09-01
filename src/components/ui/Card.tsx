@@ -1,8 +1,14 @@
-import { styled } from "styled-components";
+import React from "react";
 
-export const Card = styled.div`
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-`;
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export const Card: React.FC<CardProps> = ({ children, className, ...props }) => {
+  return (
+    <div 
+      className={`bg-card text-card-foreground rounded-lg shadow-sm ${className || ''}`}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
