@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NoteEditor from "../components/NoteEditor";
 import LeftSidebar from "../components/LeftSidebar";
-import RightSidebar from "../components/RightSidebar";
+import RightSidebar, { SimilarNote } from "../components/RightSidebar";
 import TabBar from "../components/TabBar";
 
 interface NotesProps {
@@ -26,6 +26,9 @@ const Notes: React.FC<NotesProps> = ({
   const [splitScreen, setSplitScreen] = useState(false);
   const [secondaryNote, setSecondaryNote] = useState<string | null>(null);
 
+  const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
+  const [isSimilarNotesLoading, setIsSimilarNotesLoading] = useState(false);
+
   useEffect(() => {
     loadNotes();
   }, []);
@@ -41,6 +44,7 @@ const Notes: React.FC<NotesProps> = ({
       }
     } catch (error) {
       console.error("Error loading notes:", error);
+      // Consider adding user-friendly error handling here
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +57,6 @@ const Notes: React.FC<NotesProps> = ({
       content: "",
     };
     try {
-      // Save the new note immediately
       await window.electron.saveNote(newNote);
       setNotes((prevNotes) => [...prevNotes, newNote]);
       setOpenNotes((prevOpen) => [...prevOpen, newNote.id]);
@@ -97,7 +100,6 @@ const Notes: React.FC<NotesProps> = ({
     try {
       const filePath = await window.electron.getNotePath(noteId);
       await navigator.clipboard.writeText(filePath);
-      // Optionally, you can show a toast notification that the path has been copied
       console.log("File path copied to clipboard:", filePath);
     } catch (error) {
       console.error("Error copying file path:", error);
@@ -138,10 +140,29 @@ const Notes: React.FC<NotesProps> = ({
     }
   };
 
-  const handleOpenNote = (noteId: string) => {
+  const handleOpenNote = async (noteId: string) => {
     setActiveNote(noteId);
     if (!openNotes.includes(noteId)) {
       setOpenNotes((prevOpen) => [...prevOpen, noteId]);
+    }
+  };
+
+  const findSimilarNotes = async (noteId: string) => {
+    setIsSimilarNotesLoading(true);
+    try {
+      const note = notes.find((n) => n.id === noteId);
+      if (note) {
+        const similar = await handleFindSimilarNotes(note.content);
+        setSimilarNotes(similar);
+      } else {
+        setSimilarNotes([]);
+      }
+    } catch (error) {
+      console.error("Error finding similar notes:", error);
+      setSimilarNotes([]);
+      // Consider adding user-friendly error handling here
+    } finally {
+      setIsSimilarNotesLoading(false);
     }
   };
 
@@ -156,9 +177,9 @@ const Notes: React.FC<NotesProps> = ({
   const handleFindSimilarNotes = async (content: string) => {
     try {
       const similarNoteIds = await window.electron.findSimilarNotes(content);
-      const uniqueNoteIds = [...new Set(similarNoteIds)]; // Remove duplicates
+      const uniqueNoteIds = [...new Set(similarNoteIds)];
       const similarNotes = uniqueNoteIds
-        .filter((noteId) => noteId !== activeNote) // Exclude the currently open note
+        .filter((noteId) => noteId !== activeNote)
         .map((noteId) => {
           const note = notes.find((n) => n.id === noteId);
           return note
@@ -169,14 +190,20 @@ const Notes: React.FC<NotesProps> = ({
               }
             : null;
         })
-        .filter(Boolean); // Remove any null entries
+        .filter(Boolean);
 
-      return similarNotes;
+      return similarNotes as SimilarNote[];
     } catch (error) {
       console.error("Error finding similar notes:", error);
       return [];
     }
   };
+
+  useEffect(() => {
+    if (activeNote && !isLoading) {
+      findSimilarNotes(activeNote);
+    }
+  }, [activeNote, isLoading]);
 
   if (isLoading) {
     return (
@@ -187,7 +214,7 @@ const Notes: React.FC<NotesProps> = ({
   }
 
   return (
-    <div className="flex h-screen bg-background text-foreground pt-2">
+    <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <LeftSidebar
         isOpen={isLeftSidebarOpen}
         onCopyFilePath={handleCopyFilePath}
@@ -205,25 +232,27 @@ const Notes: React.FC<NotesProps> = ({
         onClose={toggleLeftSidebar}
       />
       <main
-        className={`flex-grow transition-all duration-300 flex flex-col`}
+        className={`flex-grow flex flex-col overflow-hidden transition-all duration-300`}
         style={{
           marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : "0",
           marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : "0",
         }}
       >
-        <TabBar
-          tabs={openNotes.map((id) => ({
-            id,
-            title: notes.find((note) => note.id === id)?.title || "Untitled",
-          }))}
-          activeTab={activeNote || ""}
-          onTabClick={handleTabClick}
-          onTabClose={handleTabClose}
-          onTabDragStart={handleTabDragStart}
-        />
-        <div className="flex-grow flex">
+        <div className="flex-shrink-0">
+          <TabBar
+            tabs={openNotes.map((id) => ({
+              id,
+              title: notes.find((note) => note.id === id)?.title || "Untitled",
+            }))}
+            activeTab={activeNote || ""}
+            onTabClick={handleTabClick}
+            onTabClose={handleTabClose}
+            onTabDragStart={handleTabDragStart}
+          />
+        </div>
+        <div className="flex-grow flex overflow-hidden">
           <div
-            className="flex-1"
+            className="flex-1 overflow-hidden"
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, "main")}
           >
@@ -242,7 +271,7 @@ const Notes: React.FC<NotesProps> = ({
           </div>
           {splitScreen && (
             <div
-              className="flex-1 border-l border-border"
+              className="flex-1 border-l border-border overflow-hidden"
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, "secondary")}
             >
@@ -271,7 +300,9 @@ const Notes: React.FC<NotesProps> = ({
           notes.find((note) => note.id === activeNote)?.content || ""
         }
         onFindSimilarNotes={handleFindSimilarNotes}
-        onOpenNote={handleOpenNote} // Add this line
+        onOpenNote={handleOpenNote}
+        isSimilarNotesLoading={isSimilarNotesLoading}
+        similarNotes={similarNotes}
       />
     </div>
   );

@@ -24,7 +24,7 @@ const TabBar: React.FC<TabBarProps> = ({
   onTabDragStart,
 }) => {
   return (
-    <div className="flex bg-background border-b border-border overflow-x-auto">
+    <div className="flex bg-background border-b border-border overflow-x-auto mt-2">
       {tabs.map((tab) => (
         <div
           key={tab.id}

@@ -46,6 +46,7 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
     "@radix-ui/react-toggle": "^1.1.0",
+    "@radix-ui/react-tooltip": "^1.1.2",
     "@tiptap/extension-bullet-list": "^2.6.6",
     "@tiptap/extension-code-block-lowlight": "^2.6.6",
     "@tiptap/extension-highlight": "^2.6.6",

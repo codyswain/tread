@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/utils";
-import { Settings } from "lucide-react";
+import { Loader2, Settings } from "lucide-react";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 
-interface SimilarNote {
+export interface SimilarNote {
   id: string;
   title: string;
   content: string;
@@ -17,7 +17,9 @@ interface RightSidebarProps {
   onClose: () => void;
   currentNoteContent: string;
   onFindSimilarNotes: (content: string) => Promise<SimilarNote[]>;
-  onOpenNote: (noteId: string) => void; // Add this line
+  onOpenNote: (noteId: string) => void;
+  isSimilarNotesLoading: boolean;
+  similarNotes: SimilarNote[];
 }
 
 const RightSidebar: React.FC<RightSidebarProps> = ({
@@ -26,9 +28,10 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   onClose,
   currentNoteContent,
   onFindSimilarNotes,
-  onOpenNote, // Add this line
+  onOpenNote,
+  similarNotes,
+  isSimilarNotesLoading,
 }) => {
-  const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
   const { width, sidebarRef, startResizing } = useResizableSidebar({
     minWidth: 100,
     maxWidth: 400,
@@ -38,11 +41,6 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
     onClose,
     side: "right",
   });
-
-  const handleFindSimilarNotes = async () => {
-    const similar = await onFindSimilarNotes(currentNoteContent);
-    setSimilarNotes(similar);
-  };
 
   const handleOpenNote = (noteId: string) => {
     onOpenNote(noteId); // Replace the navigate function with this
@@ -62,27 +60,32 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
       </div>
       <ScrollArea className="h-[calc(100%-5rem)]">
         <div className="p-4">
-          <Button onClick={handleFindSimilarNotes} className="mb-4 w-full">
-            Find Similar Notes
-          </Button>
-          {similarNotes.length > 0 ? (
-            <ul className="space-y-4">
-              {similarNotes.map((note) => (
-                <li
-                  key={note.id}
-                  className="cursor-pointer hover:bg-accent/10 p-2 rounded"
-                  onClick={() => handleOpenNote(note.id)}
-                >
-                  <h3 className="font-semibold mb-1">{note.title}</h3>
-                  <div
-                    className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
-                    dangerouslySetInnerHTML={{ __html: note.content }}
-                  />
-                </li>
-              ))}
-            </ul>
+          {isSimilarNotesLoading ? (
+            <div className="flex items-center justify-center h-20">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
           ) : (
-            <p>No similar notes found</p>
+            <>
+              {similarNotes.length > 0 ? (
+                <ul className="space-y-4">
+                  {similarNotes.map((note) => (
+                    <li
+                      key={note.id}
+                      className="cursor-pointer hover:bg-accent/10 p-2 rounded"
+                      onClick={() => handleOpenNote(note.id)}
+                    >
+                      <h3 className="font-semibold mb-1">{note.title}</h3>
+                      <div
+                        className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
+                        dangerouslySetInnerHTML={{ __html: note.content }}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No similar notes found</p>
+              )}
+            </>
           )}
         </div>
       </ScrollArea>
