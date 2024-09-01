@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import { setupFileSystem } from './main/fileSystem';
-import { runPythonScript } from './main/pythonBridge';
+import { runEmbeddingScript, runPythonScript } from './main/pythonBridge';
+
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -78,6 +79,7 @@ app.on('activate', () => {
   }
 });
 
+
 // Add error handling
 process.on('uncaughtException', (error) => {
   console.error('Uncaught exception:', error);
@@ -90,6 +92,16 @@ ipcMain.handle('run-python-script', async (_, scriptName: string, args: string[]
     return result;
   } catch (error) {
     console.error('Error running Python script:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('find-similar-notes', async (_, query: string) => {
+  try {
+    const result = await runEmbeddingScript('find_similar', query);
+    return result.similar_notes;
+  } catch (error) {
+    console.error('Error finding similar notes:', error);
     throw error;
   }
 });

@@ -25,12 +25,12 @@
  *  });
  * ```
  */
- './index.css';
+"./index.css";
 
-import React, { StrictMode } from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './index.css';
+import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+import "./index.css";
 
 declare global {
   interface Window {
@@ -42,14 +42,21 @@ declare global {
       maximize: () => void;
       close: () => void;
       runPythonScript: (scriptName: string, args: string[]) => Promise<any>;
+      findSimilarNotes: (query: string) => Promise<any>;
+      saveEmbedding: (noteId: string, content: string) => Promise<any>;
+      getOpenAIKey: () => Promise<string>;
+      setOpenAIKey: (key: string) => Promise<void>;
+      getNotePath: () => Promise<string>;
     };
   }
 }
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
     <App />
   </StrictMode>
 );
 
-console.log('👋 This message is being logged by "renderer.tsx", included via Vite');
+console.log(
+  '👋 This message is being logged by "renderer.tsx", included via Vite'
+);

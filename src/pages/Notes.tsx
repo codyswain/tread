@@ -98,12 +98,11 @@ const Notes: React.FC<NotesProps> = ({
       const filePath = await window.electron.getNotePath(noteId);
       await navigator.clipboard.writeText(filePath);
       // Optionally, you can show a toast notification that the path has been copied
-      console.log('File path copied to clipboard:', filePath);
+      console.log("File path copied to clipboard:", filePath);
     } catch (error) {
-      console.error('Error copying file path:', error);
+      console.error("Error copying file path:", error);
     }
   };
-
 
   const handleTabClick = (noteId: string) => {
     setActiveNote(noteId);
@@ -139,12 +138,44 @@ const Notes: React.FC<NotesProps> = ({
     }
   };
 
+  const handleOpenNote = (noteId: string) => {
+    setActiveNote(noteId);
+    if (!openNotes.includes(noteId)) {
+      setOpenNotes((prevOpen) => [...prevOpen, noteId]);
+    }
+  };
+
   const handleLeftSidebarResize = (width: number) => {
     setLeftSidebarWidth(width);
   };
 
   const handleRightSidebarResize = (width: number) => {
     setRightSidebarWidth(width);
+  };
+
+  const handleFindSimilarNotes = async (content: string) => {
+    try {
+      const similarNoteIds = await window.electron.findSimilarNotes(content);
+      const uniqueNoteIds = [...new Set(similarNoteIds)]; // Remove duplicates
+      const similarNotes = uniqueNoteIds
+        .filter((noteId) => noteId !== activeNote) // Exclude the currently open note
+        .map((noteId) => {
+          const note = notes.find((n) => n.id === noteId);
+          return note
+            ? {
+                id: noteId,
+                title: note.title || "Untitled",
+                content: note.content || "",
+              }
+            : null;
+        })
+        .filter(Boolean); // Remove any null entries
+
+      return similarNotes;
+    } catch (error) {
+      console.error("Error finding similar notes:", error);
+      return [];
+    }
   };
 
   if (isLoading) {
@@ -176,8 +207,8 @@ const Notes: React.FC<NotesProps> = ({
       <main
         className={`flex-grow transition-all duration-300 flex flex-col`}
         style={{
-          marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0',
-          marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : '0',
+          marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : "0",
+          marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : "0",
         }}
       >
         <TabBar
@@ -198,7 +229,13 @@ const Notes: React.FC<NotesProps> = ({
           >
             {activeNote && (
               <NoteEditor
-                note={notes.find((note) => note.id === activeNote) || { id: "", title: "", content: "" }}
+                note={
+                  notes.find((note) => note.id === activeNote) || {
+                    id: "",
+                    title: "",
+                    content: "",
+                  }
+                }
                 onSave={handleSaveNote}
               />
             )}
@@ -211,7 +248,13 @@ const Notes: React.FC<NotesProps> = ({
             >
               {secondaryNote && (
                 <NoteEditor
-                  note={notes.find((note) => note.id === secondaryNote) || { id: "", title: "", content: "" }}
+                  note={
+                    notes.find((note) => note.id === secondaryNote) || {
+                      id: "",
+                      title: "",
+                      content: "",
+                    }
+                  }
                   onSave={handleSaveNote}
                 />
               )}
@@ -223,6 +266,12 @@ const Notes: React.FC<NotesProps> = ({
         isOpen={isRightSidebarOpen}
         onResize={handleRightSidebarResize}
         onClose={toggleRightSidebar}
+        currentNoteId={activeNote || ""}
+        currentNoteContent={
+          notes.find((note) => note.id === activeNote)?.content || ""
+        }
+        onFindSimilarNotes={handleFindSimilarNotes}
+        onOpenNote={handleOpenNote} // Add this line
       />
     </div>
   );

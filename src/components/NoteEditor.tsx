@@ -4,9 +4,6 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
-import BulletList from "@tiptap/extension-bullet-list";
-import OrderedList from "@tiptap/extension-ordered-list";
-import ListItem from "@tiptap/extension-list-item";
 import { cn } from "@/lib/utils";
 import {
   Bold,
@@ -41,16 +38,6 @@ interface NoteEditorProps {
 const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   const [title, setTitle] = useState(note.title);
   const [isEditing, setIsEditing] = useState(true);
-  const [pythonResult, setPythonResult] = useState<string | null>(null);
-
-  const handleRunPythonScript = async () => {
-    try {
-      const result = await window.electron.runPythonScript('hello_world', []);
-      setPythonResult(result.result);
-    } catch (error) {
-      console.error('Error running Python script:', error);
-    }
-  };
 
   const editor = useEditor({
     extensions: [
@@ -58,9 +45,6 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       Highlight,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
-      BulletList,
-      OrderedList,
-      ListItem,
     ],
     content: note.content,
     editorProps: {
@@ -99,6 +83,13 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       });
     }
   }, [editor, note, onSave, title]);
+
+  const handleSaveEmbedding = useCallback(async () => {
+    if (editor) {
+      const content = editor.getHTML();
+      await window.electron.saveEmbedding(note.id, content);
+    }
+  }, [editor, note.id]);
 
   useEffect(() => {
     if (editor) {
@@ -319,8 +310,9 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
           dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }}
         />
       )}
-      <Button onClick={handleRunPythonScript}>DEV BUTTON ONLY - CLICK TO TEST PYTHON PROCESS EXECUTION</Button>
-      {pythonResult && <p className="text-sm text-muted-foreground bg-white">Python Result: {pythonResult}</p>}
+      <Button onClick={handleSaveEmbedding} className="mt-4">
+        Save Embedding
+      </Button>
     </div>
   );
 };
