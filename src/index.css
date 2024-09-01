@@ -67,3 +67,13 @@
     background: linear-gradient(135deg, hsl(var(--gradient-start)), hsl(var(--gradient-end)));
   }
 }
+
+/* For making the navbar draggable */
+.drag-handle {
+  -webkit-app-region: drag;
+}
+
+.drag-handle button,
+.drag-handle a {
+  -webkit-app-region: no-drag;
+}

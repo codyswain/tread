@@ -38,7 +38,7 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-12 bg-background border-b border-border flex items-center justify-between px-4 z-20">
+    <nav className="fixed top-0 left-0 right-0 h-12 bg-background border-b border-border flex items-center justify-between px-4 z-20 drag-handle">
       <div className="flex items-center space-x-2 no-drag">
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
           <X className="h-4 w-4" />
