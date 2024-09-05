@@ -47,6 +47,8 @@ declare global {
       getOpenAIKey: () => Promise<string>;
       setOpenAIKey: (key: string) => Promise<void>;
       getNotePath: () => Promise<string>;
+      createDirectory: (dirName: string) => Promise<void>;
+      deleteDirectory: (dirName: string) => Promise<void>;
     };
   }
 }

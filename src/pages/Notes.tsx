@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from "react";
 import NoteEditor from "../components/NoteEditor";
-import LeftSidebar from "../components/LeftSidebar";
+import LeftSidebar, { Note } from "../components/LeftSidebar";
 import RightSidebar, { SimilarNote } from "../components/RightSidebar";
 import TabBar from "../components/TabBar";
+import { toast } from "@/components/ui/Toast";
+
+// Start of Selection
+
+interface DirectoryStructure {
+  directories: { [key: string]: { notes: Note[] } };
+  notes: Note[];
+}
 
 interface NotesProps {
   isLeftSidebarOpen: boolean;
   isRightSidebarOpen: boolean;
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
-  onOpenNoteInNewTab: (noteId: string) => void;
 }
 
 const Notes: React.FC<NotesProps> = ({
@@ -17,8 +24,9 @@ const Notes: React.FC<NotesProps> = ({
   isRightSidebarOpen,
   toggleLeftSidebar,
   toggleRightSidebar,
-  onOpenNoteInNewTab
 }) => {
+  const [directoryStructure, setDirectoryStructure] =
+    useState<DirectoryStructure>({ directories: {}, notes: [] });
   const [notes, setNotes] = useState<any[]>([]);
   const [openNotes, setOpenNotes] = useState<string[]>([]);
   const [activeNote, setActiveNote] = useState<string | null>(null);
@@ -38,11 +46,18 @@ const Notes: React.FC<NotesProps> = ({
   const loadNotes = async () => {
     setIsLoading(true);
     try {
-      const loadedNotes = await window.electron.loadNotes();
-      setNotes(loadedNotes);
-      if (loadedNotes.length > 0) {
-        setOpenNotes([loadedNotes[0].id]);
-        setActiveNote(loadedNotes[0].id);
+      const loadedStructure = await window.electron.loadNotes();
+      setDirectoryStructure(loadedStructure);
+      const allNotes = [
+        ...loadedStructure.notes,
+        ...Object.values(loadedStructure.directories).flatMap(
+          (dir) => dir.notes
+        ),
+      ];
+      setNotes(allNotes);
+      if (allNotes.length > 0) {
+        setOpenNotes([allNotes[0].id]);
+        setActiveNote(allNotes[0].id);
       }
     } catch (error) {
       console.error("Error loading notes:", error);
@@ -150,7 +165,7 @@ const Notes: React.FC<NotesProps> = ({
         return prevOpen;
       }
       // Replace the active note in the openNotes array
-      const activeIndex = prevOpen.indexOf(activeNote || '');
+      const activeIndex = prevOpen.indexOf(activeNote || "");
       if (activeIndex !== -1) {
         const newOpenNotes = [...prevOpen];
         newOpenNotes[activeIndex] = noteId;
@@ -220,6 +235,38 @@ const Notes: React.FC<NotesProps> = ({
     }
   };
 
+  const handleCreateDirectory = async (dirName: string) => {
+    try {
+      await window.electron.createDirectory(dirName);
+      await loadNotes(); // Reload the directory structure
+      toast("Directory created successfully", {
+        description: `The directory "${dirName}" has been created.`,
+      });
+    } catch (error) {
+      console.error("Error creating directory:", error);
+      toast("Error creating directory", {
+        description: "An error occurred while creating the directory. Please try again.",
+      });
+    }
+  };
+  
+  const handleDeleteDirectory = async (dirName: string) => {
+    if (confirm(`Are you sure you want to delete the directory "${dirName}" and all its contents?`)) {
+      try {
+        await window.electron.deleteDirectory(dirName);
+        await loadNotes(); // Reload the directory structure
+        toast("Directory deleted successfully", {
+          description: `The directory "${dirName}" has been deleted.`,
+        });
+      } catch (error) {
+        console.error("Error deleting directory:", error);
+        toast("Error deleting directory", {
+          description: "An error occurred while deleting the directory. Please try again.",
+        });
+      }
+    }
+  };
+
   useEffect(() => {
     if (activeNote && !isLoading) {
       findSimilarNotes(activeNote);
@@ -239,7 +286,7 @@ const Notes: React.FC<NotesProps> = ({
       <LeftSidebar
         isOpen={isLeftSidebarOpen}
         onCopyFilePath={handleCopyFilePath}
-        notes={notes}
+        directoryStructure={directoryStructure}
         selectedNote={activeNote}
         onSelectNote={handleOpenNote}
         onCreateNote={handleCreateNote}
@@ -247,6 +294,8 @@ const Notes: React.FC<NotesProps> = ({
         onResize={handleLeftSidebarResize}
         onClose={toggleLeftSidebar}
         onOpenNoteInNewTab={handleOpenNoteInNewTab}
+        onCreateDirectory={handleCreateDirectory}
+        onDeleteDirectory={handleDeleteDirectory}
       />
       <main
         className={`flex-grow flex flex-col overflow-hidden transition-all duration-300`}

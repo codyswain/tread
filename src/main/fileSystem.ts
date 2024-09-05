@@ -19,28 +19,31 @@ export const setupFileSystem = async () => {
     await fs.writeFile(CONFIG_FILE, JSON.stringify({}));
   }
 
+  // Modify the existing loadNotes function
   ipcMain.handle("load-notes", async () => {
     try {
-      const files = await fs.readdir(NOTES_DIR);
-      const notes = await Promise.all(
-        files
-          .filter(
-            (file) =>
-              file.endsWith(".json") && !file.endsWith(".embedding.json")
-          )
-          .map(async (file) => {
-            const filePath = path.join(NOTES_DIR, file);
-            const stats = await fs.stat(filePath);
-            if (stats.isFile()) {
-              const content = await fs.readFile(filePath, "utf-8");
-              return JSON.parse(content);
-            }
-            return null;
-          })
-      );
-      return notes.filter((note) => note !== null);
+      return await loadDirectoryStructure();
     } catch (error) {
       console.error("Error loading notes:", error);
+      throw error;
+    }
+  });
+
+  // Add new IPC handlers
+  ipcMain.handle("create-directory", async (_, dirName: string) => {
+    try {
+      await createDirectory(dirName);
+    } catch (error) {
+      console.error("Error creating directory:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle("delete-directory", async (_, dirName: string) => {
+    try {
+      await deleteDirectory(dirName);
+    } catch (error) {
+      console.error("Error deleting directory:", error);
       throw error;
     }
   });
@@ -108,4 +111,43 @@ export const getOpenAIKey = async (): Promise<string> => {
     console.error("Error reading OpenAI API key:", error);
     return "";
   }
+};
+
+const createDirectory = async (dirName: string) => {
+  const dirPath = path.join(NOTES_DIR, dirName);
+  await fs.mkdir(dirPath, { recursive: true });
+};
+
+const deleteDirectory = async (dirName: string) => {
+  const dirPath = path.join(NOTES_DIR, dirName);
+  await fs.rm(dirPath, { recursive: true, force: true });
+};
+
+const loadDirectoryStructure = async () => {
+  const structure = { directories: {}, notes: [] };
+  const readDir = async (dir: string, currentPath: string[] = []) => {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const newPath = [...currentPath, entry.name];
+        structure.directories[newPath.join("/")] = { notes: [] };
+        await readDir(path.join(dir, entry.name), newPath);
+      } else if (
+        entry.isFile() &&
+        entry.name.endsWith(".json") &&
+        !entry.name.endsWith(".embedding.json")
+      ) {
+        const filePath = path.join(dir, entry.name);
+        const content = await fs.readFile(filePath, "utf-8");
+        const note = JSON.parse(content);
+        if (currentPath.length === 0) {
+          structure.notes.push(note);
+        } else {
+          structure.directories[currentPath.join("/")].notes.push(note);
+        }
+      }
+    }
+  };
+  await readDir(NOTES_DIR);
+  return structure;
 };

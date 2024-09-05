@@ -16,4 +16,6 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("save-embedding", noteId, content),
   getOpenAIKey: () => ipcRenderer.invoke("get-openai-key"),
   setOpenAIKey: (key: string) => ipcRenderer.invoke("set-openai-key", key),
+  createDirectory: (dirName: string) => ipcRenderer.invoke("create-directory", dirName),
+  deleteDirectory: (dirName: string) => ipcRenderer.invoke("delete-directory", dirName),
 });
