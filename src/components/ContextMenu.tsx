@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Pencil, Trash2, Copy, FolderOpen } from 'lucide-react';
+import React, { useRef, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
+import { Pencil, Trash2, Copy, FolderOpen } from "lucide-react";
 
 interface ContextMenuProps {
   x: number;
@@ -9,21 +9,30 @@ interface ContextMenuProps {
   onClose: () => void;
   noteId: string;
   onCopyFilePath: (noteId: string) => void;
+  onOpenNoteInNewTab: (noteId: string) => void;
 }
 
-const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onDelete, onClose, noteId, onCopyFilePath }) => {
+const ContextMenu: React.FC<ContextMenuProps> = ({
+  x,
+  y,
+  onDelete,
+  onClose,
+  noteId,
+  onCopyFilePath,
+  onOpenNoteInNewTab,
+}) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         onClose();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose]);
 
@@ -46,15 +55,15 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onDelete, onClose, note
     <div
       ref={menuRef}
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: y,
         left: x,
         zIndex: 9999,
-        backgroundColor: 'hsl(var(--background) / 1)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius)',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        minWidth: '150px',
+        backgroundColor: "hsl(var(--background) / 1)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius)",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+        minWidth: "150px",
       }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -62,7 +71,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onDelete, onClose, note
         variant="ghost"
         className="w-full justify-start px-2 py-1.5 text-sm"
         onClick={() => {
-          console.log('Copy note ID', noteId);
+          console.log("Copy note ID", noteId);
           navigator.clipboard.writeText(noteId);
           onClose();
         }}
@@ -78,6 +87,16 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onDelete, onClose, note
         }}
       >
         <FolderOpen className="mr-2 h-4 w-4" /> Copy File Path
+      </Button>
+      <Button
+        variant="ghost"
+        className="w-full justify-start px-2 py-1.5 text-sm"
+        onClick={() => {
+          onOpenNoteInNewTab(noteId);
+          onClose();
+        }}
+      >
+        <Pencil className="mr-2 h-4 w-4" /> Open in New Tab
       </Button>
       <Button
         variant="ghost"

@@ -56,12 +56,6 @@ export function runPythonScript(
       return;
     }
 
-    if (!fs.existsSync(pythonPath)) {
-      console.error("Python interpreter not found at:", pythonPath);
-      reject(new Error(`Python interpreter not found: ${pythonPath}`));
-      return;
-    }
-
     PythonShell.run(scriptPath, { pythonPath, args, env })
       .then((results) => {
         console.log("Python script results:", results);

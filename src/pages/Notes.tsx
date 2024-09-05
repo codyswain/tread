@@ -9,6 +9,7 @@ interface NotesProps {
   isRightSidebarOpen: boolean;
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
+  onOpenNoteInNewTab: (noteId: string) => void;
 }
 
 const Notes: React.FC<NotesProps> = ({
@@ -16,6 +17,7 @@ const Notes: React.FC<NotesProps> = ({
   isRightSidebarOpen,
   toggleLeftSidebar,
   toggleRightSidebar,
+  onOpenNoteInNewTab
 }) => {
   const [notes, setNotes] = useState<any[]>([]);
   const [openNotes, setOpenNotes] = useState<string[]>([]);
@@ -141,10 +143,29 @@ const Notes: React.FC<NotesProps> = ({
   };
 
   const handleOpenNote = async (noteId: string) => {
+    // Replace the active note instead of adding a new tab
     setActiveNote(noteId);
+    setOpenNotes((prevOpen) => {
+      if (prevOpen.includes(noteId)) {
+        return prevOpen;
+      }
+      // Replace the active note in the openNotes array
+      const activeIndex = prevOpen.indexOf(activeNote || '');
+      if (activeIndex !== -1) {
+        const newOpenNotes = [...prevOpen];
+        newOpenNotes[activeIndex] = noteId;
+        return newOpenNotes;
+      }
+      // If there's no active note, add the new note to the end
+      return [...prevOpen, noteId];
+    });
+  };
+
+  const handleOpenNoteInNewTab = (noteId: string) => {
     if (!openNotes.includes(noteId)) {
       setOpenNotes((prevOpen) => [...prevOpen, noteId]);
     }
+    setActiveNote(noteId);
   };
 
   const findSimilarNotes = async (noteId: string) => {
@@ -220,16 +241,12 @@ const Notes: React.FC<NotesProps> = ({
         onCopyFilePath={handleCopyFilePath}
         notes={notes}
         selectedNote={activeNote}
-        onSelectNote={(id) => {
-          setActiveNote(id);
-          if (!openNotes.includes(id)) {
-            setOpenNotes((prevOpen) => [...prevOpen, id]);
-          }
-        }}
+        onSelectNote={handleOpenNote}
         onCreateNote={handleCreateNote}
         onDeleteNote={handleDeleteNote}
         onResize={handleLeftSidebarResize}
         onClose={toggleLeftSidebar}
+        onOpenNoteInNewTab={handleOpenNoteInNewTab}
       />
       <main
         className={`flex-grow flex flex-col overflow-hidden transition-all duration-300`}
