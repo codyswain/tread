@@ -1,8 +1,9 @@
 # Tread
 
-A hobby project for note-taking.
+Notes
 
-<img width="1512" alt="image" src="https://github.com/user-attachments/assets/17814277-406c-4cee-98db-c41d30400985">
+<img width="1512" alt="image" src="https://github.com/user-attachments/assets/5b140f51-6904-48a4-aa23-c43c7b97d5c5">
+
 
 ## Features
 
