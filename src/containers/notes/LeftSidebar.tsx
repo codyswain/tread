@@ -8,11 +8,11 @@ import {
   Folder,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 import ContextMenu from "./ContextMenu";
-import { toast } from "@/components/ui/Toast";
-import { Input } from "../../components/ui/Input";
 import { DirectoryStructure, Note, Directory } from "@/types";
 import { useFolderCreation } from "@/hooks/useFolderCreation";
 
