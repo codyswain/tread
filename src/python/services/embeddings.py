@@ -1,6 +1,7 @@
 import sys
 import json
 import os
+from typing import Dict, List
 import numpy as np
 import faiss
 from openai import OpenAI
@@ -15,49 +16,43 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 NOTES_DIR = sys.argv[1]
 
 
-def get_embedding(text):
+def get_embedding(text: str) -> List[float]:
     response = client.embeddings.create(model="text-embedding-ada-002", input=text)
     return response.data[0].embedding
 
 
-def compute_and_store_embedding(note_id, content):
+def compute_and_store_embedding(note_id: str, content: str) -> None:
     embedding = get_embedding(content)
 
-    # Save the embedding
     embedding_path = os.path.join(NOTES_DIR, f"{note_id}.embedding.json")
     with open(embedding_path, "w") as f:
         json.dump({"embedding": embedding}, f)
 
 
-def find_similar_notes(query_embedding, top_k=5):
-    # Load all embeddings
-    embeddings = []
-    note_ids = []
+def find_similar_notes(query_embedding: List[float], top_k: int = 5) -> List[str]:
+    embeddings: List[List[float]] = []
+    note_ids: List[str] = []
     for filename in os.listdir(NOTES_DIR):
         if filename.endswith(".embedding.json"):
             note_id = filename.split(".")[0]
             with open(os.path.join(NOTES_DIR, filename), "r") as f:
-                data = json.load(f)
+                data: Dict[str, List[float]] = json.load(f)
                 embeddings.append(data["embedding"])
                 note_ids.append(note_id)
 
     if not embeddings:
         return []
 
-    # Convert to numpy array
     embeddings_array = np.array(embeddings).astype("float32")
 
-    # Create FAISS index
     dimension = len(embeddings[0])
     index = faiss.IndexFlatL2(dimension)
     index.add(embeddings_array)
 
-    # Perform similarity search
     distances, indices = index.search(
         np.array([query_embedding]).astype("float32"), top_k
     )
 
-    # Return similar note IDs
     return [note_ids[i] for i in indices[0]]
 
 

@@ -11,6 +11,21 @@ if (require('electron-squirrel-startup')) {
 
 let mainWindow: BrowserWindow | null = null;
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+const CSP = [
+  "default-src 'self'",
+  isDevelopment
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+    : "script-src 'self'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self' data:",
+  isDevelopment
+    ? "connect-src 'self' ws:"
+    : "connect-src 'self'",
+];
+
 const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 800,
@@ -22,6 +37,16 @@ const createWindow = () => {
       contextIsolation: true,
       sandbox: true,
     },
+  });
+
+  // Set Content Security Policy
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [CSP.join('; ')],
+      },
+    });
   });
 
   // Load the main page (which will contain the navigation)

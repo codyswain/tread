@@ -31,22 +31,23 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import { DirectoryStructure, Note } from "./types";
 
 declare global {
   interface Window {
     electron: {
-      loadNotes: () => Promise<any[]>;
-      saveNote: (note: any) => Promise<void>;
+      loadNotes: () => Promise<DirectoryStructure>;
+      saveNote: (note: Note) => Promise<void>;
       deleteNote: (noteId: string) => Promise<void>;
       minimize: () => void;
       maximize: () => void;
       close: () => void;
-      runPythonScript: (scriptName: string, args: string[]) => Promise<any>;
-      findSimilarNotes: (query: string) => Promise<any>;
-      saveEmbedding: (noteId: string, content: string) => Promise<any>;
+      runPythonScript: <T>(scriptName: string, args: string[]) => Promise<T>;
+      findSimilarNotes: (query: string) => Promise<string[]>;
+      saveEmbedding: (noteId: string, content: string) => Promise<void>;
       getOpenAIKey: () => Promise<string>;
       setOpenAIKey: (key: string) => Promise<void>;
-      getNotePath: () => Promise<string>;
+      getNotePath: (noteId: string) => Promise<string>;
       createDirectory: (dirName: string) => Promise<void>;
       deleteDirectory: (dirName: string) => Promise<void>;
     };

@@ -1,18 +1,14 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button } from "@/components/ui/Button";
 import { ScrollArea } from "@/components/ui/ScrollArea";
 import { cn } from "@/lib/utils";
 import { Loader2, Settings } from "lucide-react";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 import { toast } from "@/components/ui/Toast";
-
-export interface SimilarNote {
-  id: string;
-  title: string;
-  content: string;
-}
+import { SimilarNote } from "@/types";
 
 interface RightSidebarProps {
+  currentNoteId: string;
   isOpen: boolean;
   onResize: (width: number) => void;
   onClose: () => void;
@@ -27,8 +23,6 @@ const RightSidebar: React.FC<RightSidebarProps> = ({
   isOpen,
   onResize,
   onClose,
-  currentNoteContent,
-  onFindSimilarNotes,
   onOpenNote,
   similarNotes,
   isSimilarNotesLoading,

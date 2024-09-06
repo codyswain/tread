@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Pencil,
   FolderPlus,
-  Trash2,
   Settings,
   ChevronDown,
   ChevronRight,
@@ -10,26 +9,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { FixedSizeList as List } from "react-window";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 import ContextMenu from "./ContextMenu";
 import { toast } from "@/components/ui/Toast";
 import { Input } from "./ui/Input";
-
-export interface Note {
-  id: string;
-  title: string;
-  content: string;
-}
-
-interface Directory {
-  notes: Note[];
-}
-
-interface DirectoryStructure {
-  directories: { [key: string]: Directory };
-  notes: Note[];
-}
+import { DirectoryStructure, Note, Directory } from "@/types";
 
 interface LeftSidebarProps {
   isOpen: boolean;
@@ -46,6 +30,32 @@ interface LeftSidebarProps {
   onDeleteDirectory: (dirName: string) => void;
 }
 
+const useFolderCreation = (onCreateDirectory: (dirName: string) => void) => {
+  const [newFolderName, setNewFolderName] = useState<string>("");
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+
+  const handleCreateFolder = useCallback(() => {
+    setIsCreatingFolder(true);
+  }, []);
+
+  const confirmCreateFolder = useCallback(() => {
+    if (newFolderName) {
+      onCreateDirectory(newFolderName);
+      setNewFolderName("");
+    }
+    setIsCreatingFolder(false);
+  }, [newFolderName, onCreateDirectory]);
+
+  return {
+    newFolderName,
+    setNewFolderName,
+    isCreatingFolder,
+    setIsCreatingFolder,
+    handleCreateFolder,
+    confirmCreateFolder,
+  };
+};
+
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
   directoryStructure,
   isOpen,
@@ -58,7 +68,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onCopyFilePath,
   onOpenNoteInNewTab,
   onCreateDirectory,
-  onDeleteDirectory,
 }) => {
   const { width, sidebarRef, startResizing } = useResizableSidebar({
     minWidth: 100,
@@ -76,7 +85,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   } | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (contextMenu && !event.defaultPrevented) {
         closeContextMenu();
@@ -89,29 +98,26 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     };
   }, [contextMenu]);
 
-  const handleContextMenu = (e: React.MouseEvent, noteId: string) => {
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, noteId });
-  };
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent, noteId: string) => {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY, noteId });
+    },
+    []
+  );
 
-  const closeContextMenu = () => {
+  const closeContextMenu = useCallback(() => {
     setContextMenu(null);
-  };
+  }, []);
 
-  const [newFolderName, setNewFolderName] = useState<string>("");
-  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-
-  const handleCreateFolder = () => {
-    setIsCreatingFolder(true);
-  };
-
-  const confirmCreateFolder = () => {
-    if (newFolderName) {
-      onCreateDirectory(newFolderName);
-      setNewFolderName("");
-    }
-    setIsCreatingFolder(false);
-  };
+  const {
+    newFolderName,
+    setNewFolderName,
+    isCreatingFolder,
+    setIsCreatingFolder,
+    handleCreateFolder,
+    confirmCreateFolder,
+  } = useFolderCreation(onCreateDirectory);
 
   const handleSettingsClick = () => {
     toast("Settings feature is not implemented yet", {
@@ -135,7 +141,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     </div>
   );
 
-  const toggleDirectory = (dirPath: string) => {
+  const toggleDirectory = useCallback((dirPath: string) => {
     setExpandedDirs((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(dirPath)) {
@@ -145,47 +151,53 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const renderDirectoryStructure = (
-    structure: DirectoryStructure,
-    currentPath: string[] = []
-  ) => {
-    return (
-      <>
-        {structure.directories && Object.entries(structure.directories).map(([dirName, dir]) => {
-          const dirPath = [...currentPath, dirName].join("/");
-          const isExpanded = expandedDirs.has(dirPath);
-          return (
-            <div key={dirPath} className="ml-4">
-              <div
-                className="flex items-center cursor-pointer hover:bg-accent/50 py-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleDirectory(dirPath);
-                }}
-              >
-                {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 mr-1" />
-                )}
-                <Folder className="h-4 w-4 mr-1" />
-                <span>{dirName}</span>
-              </div>
-              {isExpanded && (
-                <div className="ml-4">
-                  {renderDirectoryStructure(dir, [...currentPath, dirName])}
-                  {dir.notes && dir.notes.map((note) => renderNoteItem(note))}
+  const renderDirectoryStructure = useMemo(() => {
+    const render = (
+      structure: DirectoryStructure | Directory,
+      currentPath: string[] = []
+    ) => {
+      return (
+        <>
+          {"directories" in structure &&
+            Object.entries(structure.directories).map(([dirName, dir]) => {
+              const dirPath = [...currentPath, dirName].join("/");
+              const isExpanded = expandedDirs.has(dirPath);
+              return (
+                <div key={dirPath} className="ml-4">
+                  <div
+                    className="flex items-center cursor-pointer hover:bg-accent/50 py-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleDirectory(dirPath);
+                    }}
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-4 w-4 mr-1" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 mr-1" />
+                    )}
+                    <Folder className="h-4 w-4 mr-1" />
+                    <span>{dirName}</span>
+                  </div>
+                  {isExpanded && (
+                    <div className="ml-4">
+                      {renderDirectoryStructure(dir, [...currentPath, dirName])}
+                      {dir.notes &&
+                        dir.notes.map((note) => renderNoteItem(note))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-        {structure.notes && structure.notes.map((note) => renderNoteItem(note))}
-      </>
-    );
-  };
+              );
+            })}
+          {structure.notes &&
+            structure.notes.map((note) => renderNoteItem(note))}
+        </>
+      );
+    };
+    return render;
+  }, [expandedDirs, selectedNote, onSelectNote, handleContextMenu]);
 
   return (
     <div
@@ -234,7 +246,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <div className="flex items-center mt-2">
           <Input
             value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewFolderName(e.target.value)}
             placeholder="New folder name"
             className="mr-2"
           />

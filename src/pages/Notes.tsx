@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from "react";
 import NoteEditor from "../components/NoteEditor";
-import LeftSidebar, { Note } from "../components/LeftSidebar";
-import RightSidebar, { SimilarNote } from "../components/RightSidebar";
+import LeftSidebar from "../components/LeftSidebar";
+import RightSidebar from "../components/RightSidebar";
 import TabBar from "../components/TabBar";
 import { toast } from "@/components/ui/Toast";
-
-// Start of Selection
-
-interface DirectoryStructure {
-  directories: { [key: string]: { notes: Note[] } };
-  notes: Note[];
-}
+import { DirectoryStructure, Note, SimilarNote, TabInfo } from "@/types";
 
 interface NotesProps {
   isLeftSidebarOpen: boolean;
@@ -27,7 +21,7 @@ const Notes: React.FC<NotesProps> = ({
 }) => {
   const [directoryStructure, setDirectoryStructure] =
     useState<DirectoryStructure>({ directories: {}, notes: [] });
-  const [notes, setNotes] = useState<any[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [openNotes, setOpenNotes] = useState<string[]>([]);
   const [activeNote, setActiveNote] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,7 +62,7 @@ const Notes: React.FC<NotesProps> = ({
   };
 
   const handleCreateNote = async () => {
-    const newNote = {
+    const newNote: Note = {
       id: Date.now().toString(),
       title: "New Note",
       content: "",
@@ -83,7 +77,7 @@ const Notes: React.FC<NotesProps> = ({
     }
   };
 
-  const handleSaveNote = async (updatedNote: any) => {
+  const handleSaveNote = async (updatedNote: Note) => {
     try {
       await window.electron.saveNote(updatedNote);
       setNotes((prevNotes) =>
@@ -210,25 +204,18 @@ const Notes: React.FC<NotesProps> = ({
     setRightSidebarWidth(width);
   };
 
-  const handleFindSimilarNotes = async (content: string) => {
+  const handleFindSimilarNotes = async (
+    content: string
+  ): Promise<SimilarNote[]> => {
     try {
       const similarNoteIds = await window.electron.findSimilarNotes(content);
       const uniqueNoteIds = [...new Set(similarNoteIds)];
       const similarNotes = uniqueNoteIds
         .filter((noteId) => noteId !== activeNote)
-        .map((noteId) => {
-          const note = notes.find((n) => n.id === noteId);
-          return note
-            ? {
-                id: noteId,
-                title: note.title || "Untitled",
-                content: note.content || "",
-              }
-            : null;
-        })
-        .filter(Boolean);
+        .map((noteId) => notes.find((n) => n.id === noteId))
+        .filter((note): note is Note => note !== undefined);
 
-      return similarNotes as SimilarNote[];
+      return similarNotes;
     } catch (error) {
       console.error("Error finding similar notes:", error);
       return [];
@@ -245,13 +232,18 @@ const Notes: React.FC<NotesProps> = ({
     } catch (error) {
       console.error("Error creating directory:", error);
       toast("Error creating directory", {
-        description: "An error occurred while creating the directory. Please try again.",
+        description:
+          "An error occurred while creating the directory. Please try again.",
       });
     }
   };
-  
+
   const handleDeleteDirectory = async (dirName: string) => {
-    if (confirm(`Are you sure you want to delete the directory "${dirName}" and all its contents?`)) {
+    if (
+      confirm(
+        `Are you sure you want to delete the directory "${dirName}" and all its contents?`
+      )
+    ) {
       try {
         await window.electron.deleteDirectory(dirName);
         await loadNotes(); // Reload the directory structure
@@ -261,7 +253,8 @@ const Notes: React.FC<NotesProps> = ({
       } catch (error) {
         console.error("Error deleting directory:", error);
         toast("Error deleting directory", {
-          description: "An error occurred while deleting the directory. Please try again.",
+          description:
+            "An error occurred while deleting the directory. Please try again.",
         });
       }
     }
@@ -306,10 +299,13 @@ const Notes: React.FC<NotesProps> = ({
       >
         <div className="flex-shrink-0">
           <TabBar
-            tabs={openNotes.map((id) => ({
-              id,
-              title: notes.find((note) => note.id === id)?.title || "Untitled",
-            }))}
+            tabs={openNotes.map(
+              (id): TabInfo => ({
+                id,
+                title:
+                  notes.find((note) => note.id === id)?.title || "Untitled",
+              })
+            )}
             activeTab={activeNote || ""}
             onTabClick={handleTabClick}
             onTabClose={handleTabClose}
