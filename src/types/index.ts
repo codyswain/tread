@@ -14,8 +14,10 @@ export interface Directory {
 }
 
 export interface DirectoryStructure {
-  directories: { [key: string]: Directory };
-  notes: Note[];
+  name: string;
+  type: 'directory' | 'note';
+  children?: DirectoryStructure[];
+  note?: Note;
 }
 
 // SimilarNote can be replaced with Note since they have the same structure

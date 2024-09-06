@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
 import NoteEditor from "./NoteEditor";
 import LeftSidebar from "./LeftSidebar";
 import RightSidebar from "./RightSidebar";
 import TabBar from "../../components/TabBar";
 import { toast } from "@/components/ui/Toast";
 import { DirectoryStructure, Note, SimilarNote, TabInfo } from "@/types";
+import { useNoteCreation } from "@/hooks/useNoteCreation";
 
 interface NotesProps {
   isLeftSidebarOpen: boolean;
@@ -20,7 +22,11 @@ const Notes: React.FC<NotesProps> = ({
   toggleRightSidebar,
 }) => {
   const [directoryStructure, setDirectoryStructure] =
-    useState<DirectoryStructure>({ directories: {}, notes: [] });
+    useState<DirectoryStructure>({
+      name: "root",
+      type: "directory",
+      children: [],
+    });
   const [notes, setNotes] = useState<Note[]>([]);
   const [openNotes, setOpenNotes] = useState<string[]>([]);
   const [activeNote, setActiveNote] = useState<string | null>(null);
@@ -29,9 +35,9 @@ const Notes: React.FC<NotesProps> = ({
   const [rightSidebarWidth, setRightSidebarWidth] = useState(256);
   const [splitScreen, setSplitScreen] = useState(false);
   const [secondaryNote, setSecondaryNote] = useState<string | null>(null);
-
   const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
   const [isSimilarNotesLoading, setIsSimilarNotesLoading] = useState(false);
+  const { isCreating, createNote } = useNoteCreation();
 
   useEffect(() => {
     loadNotes();
@@ -42,12 +48,7 @@ const Notes: React.FC<NotesProps> = ({
     try {
       const loadedStructure = await window.electron.loadNotes();
       setDirectoryStructure(loadedStructure);
-      const allNotes = [
-        ...loadedStructure.notes,
-        ...Object.values(loadedStructure.directories).flatMap(
-          (dir) => dir.notes
-        ),
-      ];
+      const allNotes = extractNotesFromStructure(loadedStructure);
       setNotes(allNotes);
       if (allNotes.length > 0) {
         setOpenNotes([allNotes[0].id]);
@@ -61,19 +62,51 @@ const Notes: React.FC<NotesProps> = ({
     }
   };
 
-  const handleCreateNote = async () => {
-    const newNote: Note = {
-      id: Date.now().toString(),
-      title: "New Note",
-      content: "",
-    };
-    try {
-      await window.electron.saveNote(newNote);
+  const extractNotesFromStructure = (structure: DirectoryStructure): Note[] => {
+    let notes: Note[] = [];
+    if (structure.type === "note" && structure.note) {
+      notes.push(structure.note);
+    }
+    if (structure.children) {
+      for (const child of structure.children) {
+        notes = notes.concat(extractNotesFromStructure(child));
+      }
+    }
+    return notes;
+  };
+
+  const handleCreateNote = async (dirPath = "") => {
+    const newNote = await createNote(dirPath);
+    if (newNote) {
+      setDirectoryStructure((prevStructure) => {
+        const updatedStructure = { ...prevStructure };
+        const targetDir = dirPath
+          .split("/")
+          .reduce(
+            (acc, curr) =>
+              acc.children?.find(
+                (child) => child.name === curr && child.type === "directory"
+              ) || acc,
+            updatedStructure
+          );
+
+        if (targetDir && targetDir.type === "directory") {
+          targetDir.children = [
+            ...(targetDir.children || []),
+            { name: newNote.title, type: "note", note: newNote },
+          ];
+        } else {
+          updatedStructure.children = [
+            ...(updatedStructure.children || []),
+            { name: newNote.title, type: "note", note: newNote },
+          ];
+        }
+
+        return updatedStructure;
+      });
       setNotes((prevNotes) => [...prevNotes, newNote]);
       setOpenNotes((prevOpen) => [...prevOpen, newNote.id]);
       setActiveNote(newNote.id);
-    } catch (error) {
-      console.error("Error creating note:", error);
     }
   };
 
@@ -90,9 +123,28 @@ const Notes: React.FC<NotesProps> = ({
     }
   };
 
-  const handleDeleteNote = async (noteId: string) => {
+  const handleDeleteNote = async (noteId: string, dirPath: string) => {
     try {
-      await window.electron.deleteNote(noteId);
+      await window.electron.deleteNote(noteId, dirPath);
+      setDirectoryStructure((prevStructure) => {
+        const updatedStructure = { ...prevStructure };
+        const pathParts = dirPath.split('/');
+        let currentLevel = updatedStructure;
+  
+        for (const part of pathParts) {
+          currentLevel = currentLevel.children?.find(
+            (child) => child.name === part && child.type === "directory"
+          ) || currentLevel;
+        }
+  
+        if (currentLevel.children) {
+          currentLevel.children = currentLevel.children.filter(
+            (child) => child.type !== "note" || child.note?.id !== noteId
+          );
+        }
+  
+        return updatedStructure;
+      });
       setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId));
       setOpenNotes((prevOpen) => prevOpen.filter((id) => id !== noteId));
       if (activeNote === noteId) {
@@ -104,6 +156,9 @@ const Notes: React.FC<NotesProps> = ({
       }
     } catch (error) {
       console.error("Error deleting note:", error);
+      toast("Error deleting note", {
+        description: "An error occurred while deleting the note. Please try again.",
+      });
     }
   };
 
@@ -238,17 +293,37 @@ const Notes: React.FC<NotesProps> = ({
     }
   };
 
-  const handleDeleteDirectory = async (dirName: string) => {
+  const handleDeleteDirectory = async (dirPath: string) => {
     if (
       confirm(
-        `Are you sure you want to delete the directory "${dirName}" and all its contents?`
+        `Are you sure you want to delete the directory "${dirPath}" and all its contents?`
       )
     ) {
       try {
-        await window.electron.deleteDirectory(dirName);
-        await loadNotes(); // Reload the directory structure
+        await window.electron.deleteDirectory(dirPath);
+        setDirectoryStructure((prevStructure) => {
+          const updatedStructure = { ...prevStructure };
+          const pathParts = dirPath.split("/");
+          let currentLevel = updatedStructure;
+
+          for (let i = 0; i < pathParts.length - 1; i++) {
+            currentLevel =
+              currentLevel.children?.find(
+                (child) =>
+                  child.name === pathParts[i] && child.type === "directory"
+              ) || currentLevel;
+          }
+
+          if (currentLevel.children) {
+            currentLevel.children = currentLevel.children.filter(
+              (child) => child.name !== pathParts[pathParts.length - 1]
+            );
+          }
+
+          return updatedStructure;
+        });
         toast("Directory deleted successfully", {
-          description: `The directory "${dirName}" has been deleted.`,
+          description: `The directory "${dirPath}" has been deleted.`,
         });
       } catch (error) {
         console.error("Error deleting directory:", error);

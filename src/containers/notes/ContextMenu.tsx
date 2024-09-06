@@ -1,21 +1,29 @@
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { Pencil, Trash2, Copy, FolderOpen } from "lucide-react";
+import { Pencil, Trash2, Copy, FolderPlus, FilePlus, Folder } from "lucide-react";
 
 const ContextMenu: React.FC<{
   x: number;
   y: number;
   onDelete: () => void;
+  onCreateFile: () => void;
+  onCreateFolder: () => void;
+  itemId: string;
+  itemType: 'note' | 'folder' | 'empty';
+  dirPath: string;
   onClose: () => void;
-  noteId: string;
-  onCopyFilePath: (noteId: string) => void;
-  onOpenNoteInNewTab: (noteId: string) => void;
+  onCopyFilePath?: (noteId: string) => void;
+  onOpenNoteInNewTab?: (noteId: string) => void;
 }> = ({
   x,
   y,
   onDelete,
+  onCreateFile,
+  onCreateFolder,
+  itemId,
+  itemType,
+  dirPath,
   onClose,
-  noteId,
   onCopyFilePath,
   onOpenNoteInNewTab,
 }) => {
@@ -65,47 +73,80 @@ const ContextMenu: React.FC<{
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      <Button
-        variant="ghost"
-        className="w-full justify-start px-2 py-1.5 text-sm"
-        onClick={() => {
-          console.log("Copy note ID", noteId);
-          navigator.clipboard.writeText(noteId);
-          onClose();
-        }}
-      >
-        <Copy className="mr-2 h-4 w-4" /> Copy ID
-      </Button>
-      <Button
-        variant="ghost"
-        className="w-full justify-start px-2 py-1.5 text-sm"
-        onClick={() => {
-          onCopyFilePath(noteId);
-          onClose();
-        }}
-      >
-        <FolderOpen className="mr-2 h-4 w-4" /> Copy File Path
-      </Button>
-      <Button
-        variant="ghost"
-        className="w-full justify-start px-2 py-1.5 text-sm"
-        onClick={() => {
-          onOpenNoteInNewTab(noteId);
-          onClose();
-        }}
-      >
-        <Pencil className="mr-2 h-4 w-4" /> Open in New Tab
-      </Button>
-      <Button
-        variant="ghost"
-        className="w-full justify-start px-2 py-1.5 text-sm text-destructive hover:text-destructive"
-        onClick={() => {
-          onDelete();
-          onClose();
-        }}
-      >
-        <Trash2 className="mr-2 h-4 w-4" /> Delete
-      </Button>
+      {(itemType === 'folder' || itemType === 'empty') && (
+        <>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-2 py-1.5 text-sm"
+            onClick={() => {
+              onCreateFile();
+              onClose();
+            }}
+          >
+            <FilePlus className="mr-2 h-4 w-4" /> New File
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-2 py-1.5 text-sm"
+            onClick={() => {
+              onCreateFolder();
+              onClose();
+            }}
+          >
+            <FolderPlus className="mr-2 h-4 w-4" /> New Folder
+          </Button>
+        </>
+      )}
+      {itemType !== 'empty' && (
+        <Button
+          variant="ghost"
+          className="w-full justify-start px-2 py-1.5 text-sm text-destructive"
+          onClick={() => {
+            onDelete();
+            onClose();
+          }}
+        >
+          <Trash2 className="mr-2 h-4 w-4" /> Delete
+        </Button>
+      )}
+      {itemType === 'note' && (
+        <>
+          <Button
+            variant="ghost"
+            className="w-full justify-start px-2 py-1.5 text-sm"
+            onClick={() => {
+              navigator.clipboard.writeText(itemId);
+              onClose();
+            }}
+          >
+            <Copy className="mr-2 h-4 w-4" /> Copy ID
+          </Button>
+          {onCopyFilePath && (
+            <Button
+              variant="ghost"
+              className="w-full justify-start px-2 py-1.5 text-sm"
+              onClick={() => {
+                onCopyFilePath(itemId);
+                onClose();
+              }}
+            >
+              <Folder className="mr-2 h-4 w-4" /> Copy File Path
+            </Button>
+          )}
+          {onOpenNoteInNewTab && (
+            <Button
+              variant="ghost"
+              className="w-full justify-start px-2 py-1.5 text-sm"
+              onClick={() => {
+                onOpenNoteInNewTab(itemId);
+                onClose();
+              }}
+            >
+              <Pencil className="mr-2 h-4 w-4" /> Open in New Tab
+            </Button>
+          )}
+        </>
+      )}
     </div>
   );
 };

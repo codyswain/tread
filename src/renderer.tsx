@@ -37,8 +37,8 @@ declare global {
   interface Window {
     electron: {
       loadNotes: () => Promise<DirectoryStructure>;
-      saveNote: (note: Note) => Promise<void>;
-      deleteNote: (noteId: string) => Promise<void>;
+      saveNote: (note: Note, dirPath: string) => Promise<void>;
+      deleteNote: (noteId: string, dirPath: string) => Promise<void>;
       minimize: () => void;
       maximize: () => void;
       close: () => void;

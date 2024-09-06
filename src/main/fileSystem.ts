@@ -2,6 +2,7 @@ import { ipcMain, app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import { runEmbeddingScript } from "./pythonBridge";
+import { DirectoryStructure, Note } from "@/types";
 
 export const NOTES_DIR = path.join(app.getPath("userData"), "notes");
 
@@ -39,21 +40,21 @@ export const setupFileSystem = async () => {
     }
   });
 
-  ipcMain.handle("delete-directory", async (_, dirName: string) => {
+  ipcMain.handle("delete-directory", async (_, dirPath: string) => {
     try {
-      await deleteDirectory(dirName);
+      await deleteDirectory(dirPath);
     } catch (error) {
       console.error("Error deleting directory:", error);
       throw error;
     }
   });
 
-  ipcMain.handle("save-note", async (_, note) => {
+  ipcMain.handle("save-note", async (_, note, dirPath = "") => {
     try {
-      await fs.writeFile(
-        path.join(NOTES_DIR, `${note.id}.json`),
-        JSON.stringify(note)
-      );
+      const notePath = path.join(NOTES_DIR, dirPath, `${note.id}.json`);
+      await fs.mkdir(path.dirname(notePath), { recursive: true });
+      await fs.writeFile(notePath, JSON.stringify(note));
+      return notePath;
     } catch (error) {
       console.error("Error saving note:", error);
       throw error;
@@ -69,9 +70,10 @@ export const setupFileSystem = async () => {
     }
   });
 
-  ipcMain.handle("delete-note", async (_, noteId) => {
+  ipcMain.handle("delete-note", async (_, noteId, dirPath = "") => {
     try {
-      await fs.unlink(path.join(NOTES_DIR, `${noteId}.json`));
+      const notePath = path.join(NOTES_DIR, dirPath, `${noteId}.json`);
+      await fs.unlink(notePath);
     } catch (error) {
       console.error("Error deleting note:", error);
       throw error;
@@ -113,25 +115,29 @@ export const getOpenAIKey = async (): Promise<string> => {
   }
 };
 
-const createDirectory = async (dirName: string) => {
-  const dirPath = path.join(NOTES_DIR, dirName);
-  await fs.mkdir(dirPath, { recursive: true });
+const createDirectory = async (dirPath: string) => {
+  const fullPath = path.join(NOTES_DIR, dirPath);
+  await fs.mkdir(fullPath, { recursive: true });
 };
 
-const deleteDirectory = async (dirName: string) => {
-  const dirPath = path.join(NOTES_DIR, dirName);
-  await fs.rm(dirPath, { recursive: true, force: true });
+const deleteDirectory = async (dirPath: string) => {
+  const fullPath = path.join(NOTES_DIR, dirPath);
+  await fs.rm(fullPath, { recursive: true, force: true });
 };
 
-const loadDirectoryStructure = async () => {
-  const structure = { directories: {}, notes: [] };
-  const readDir = async (dir: string, currentPath: string[] = []) => {
+const loadDirectoryStructure = async (): Promise<DirectoryStructure> => {
+  const readDir = async (dir: string): Promise<DirectoryStructure> => {
+    const name = path.basename(dir);
+    const structure: DirectoryStructure = {
+      name,
+      type: "directory",
+      children: [],
+    };
     const entries = await fs.readdir(dir, { withFileTypes: true });
+
     for (const entry of entries) {
       if (entry.isDirectory()) {
-        const newPath = [...currentPath, entry.name];
-        structure.directories[newPath.join("/")] = { notes: [] };
-        await readDir(path.join(dir, entry.name), newPath);
+        structure.children!.push(await readDir(path.join(dir, entry.name)));
       } else if (
         entry.isFile() &&
         entry.name.endsWith(".json") &&
@@ -139,15 +145,13 @@ const loadDirectoryStructure = async () => {
       ) {
         const filePath = path.join(dir, entry.name);
         const content = await fs.readFile(filePath, "utf-8");
-        const note = JSON.parse(content);
-        if (currentPath.length === 0) {
-          structure.notes.push(note);
-        } else {
-          structure.directories[currentPath.join("/")].notes.push(note);
-        }
+        const note: Note = JSON.parse(content);
+        structure.children!.push({ name: note.title, type: "note", note });
       }
     }
+
+    return structure;
   };
-  await readDir(NOTES_DIR);
-  return structure;
+
+  return await readDir(NOTES_DIR);
 };
