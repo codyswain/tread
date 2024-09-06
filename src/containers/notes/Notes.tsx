@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import NoteEditor from "../containers/notes/NoteEditor";
-import LeftSidebar from "../containers/notes/LeftSidebar";
-import RightSidebar from "../containers/notes/RightSidebar";
-import TabBar from "../components/TabBar";
+import NoteEditor from "./NoteEditor";
+import LeftSidebar from "./LeftSidebar";
+import RightSidebar from "./RightSidebar";
+import TabBar from "../../components/TabBar";
 import { toast } from "@/components/ui/Toast";
 import { DirectoryStructure, Note, SimilarNote, TabInfo } from "@/types";
 

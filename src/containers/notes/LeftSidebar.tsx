@@ -12,8 +12,9 @@ import { cn } from "@/lib/utils";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 import ContextMenu from "./ContextMenu";
 import { toast } from "@/components/ui/Toast";
-import { Input } from "./ui/Input";
+import { Input } from "../../components/ui/Input";
 import { DirectoryStructure, Note, Directory } from "@/types";
+import { useFolderCreation } from "@/hooks/useFolderCreation";
 
 interface LeftSidebarProps {
   isOpen: boolean;
@@ -29,32 +30,6 @@ interface LeftSidebarProps {
   onCreateDirectory: (dirName: string) => void;
   onDeleteDirectory: (dirName: string) => void;
 }
-
-const useFolderCreation = (onCreateDirectory: (dirName: string) => void) => {
-  const [newFolderName, setNewFolderName] = useState<string>("");
-  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
-
-  const handleCreateFolder = useCallback(() => {
-    setIsCreatingFolder(true);
-  }, []);
-
-  const confirmCreateFolder = useCallback(() => {
-    if (newFolderName) {
-      onCreateDirectory(newFolderName);
-      setNewFolderName("");
-    }
-    setIsCreatingFolder(false);
-  }, [newFolderName, onCreateDirectory]);
-
-  return {
-    newFolderName,
-    setNewFolderName,
-    isCreatingFolder,
-    setIsCreatingFolder,
-    handleCreateFolder,
-    confirmCreateFolder,
-  };
-};
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
   directoryStructure,

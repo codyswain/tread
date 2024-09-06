@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Home from "./pages/Home";
-import Notes from "./pages/Notes";
-import MediaGallery from "./pages/MediaGallery";
-import Settings from "./pages/Settings";
+import Home from "./containers/Home";
+import Notes from "./containers/notes/Notes";
+import MediaGallery from "./containers/MediaGallery";
+import Settings from "./containers/Settings";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import { Toaster } from "@/components/ui/Toast";
 

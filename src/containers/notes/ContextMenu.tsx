@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Pencil, Trash2, Copy, FolderOpen } from "lucide-react";
 
-interface ContextMenuProps {
+const ContextMenu: React.FC<{
   x: number;
   y: number;
   onDelete: () => void;
@@ -10,9 +10,7 @@ interface ContextMenuProps {
   noteId: string;
   onCopyFilePath: (noteId: string) => void;
   onOpenNoteInNewTab: (noteId: string) => void;
-}
-
-const ContextMenu: React.FC<ContextMenuProps> = ({
+}> = ({
   x,
   y,
   onDelete,
