@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Pencil,
   FolderPlus,
@@ -7,6 +7,8 @@ import {
   ChevronRight,
   Folder,
   File,
+  Plus,
+  Loader,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -14,10 +16,11 @@ import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 import ContextMenu from "./ContextMenu";
 import { toast } from "@/components/ui/Toast";
 import { Input } from "@/components/ui/Input";
-import { DirectoryStructure, Note } from "@/types";
+import { DirectoryStructure } from "@/types";
 import { useFolderCreation } from "@/hooks/useFolderCreation";
+import { ScrollArea } from "@/components/ui/ScrollArea";
 
-const LeftSidebar: React.FC<{
+interface LeftSidebarProps {
   isOpen: boolean;
   directoryStructure: DirectoryStructure;
   selectedNote: string | null;
@@ -30,7 +33,9 @@ const LeftSidebar: React.FC<{
   onOpenNoteInNewTab: (noteId: string) => void;
   onCreateDirectory: (dirPath: string) => void;
   onDeleteDirectory: (dirPath: string) => void;
-}> = ({
+}
+
+const LeftSidebar: React.FC<LeftSidebarProps> = ({
   directoryStructure,
   isOpen,
   selectedNote,
@@ -58,29 +63,56 @@ const LeftSidebar: React.FC<{
     x: number;
     y: number;
     itemId: string;
-    itemType: "note" | "folder";
+    itemType: "note" | "folder" | "topLevelFolder";
     dirPath: string;
   } | null>(null);
+
+  const [topLevelFolders, setTopLevelFolders] = useState<string[]>([]);
+  const [isLoadingFolders, setIsLoadingFolders] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [currentPath, setCurrentPath] = useState<string>("");
+  const [isAddingTopLevelFolder, setIsAddingTopLevelFolder] = useState(false);
+  const [newTopLevelFolderPath, setNewTopLevelFolderPath] = useState("");
 
   const {
     newFolderName,
     setNewFolderName,
     isCreatingFolder,
-    setIsCreatingFolder,
     handleCreateFolder,
     confirmCreateFolder,
     cancelCreateFolder,
-    error,
+    error: folderCreationError,
   } = useFolderCreation((folderName) =>
     onCreateDirectory(`${currentPath}/${folderName}`)
   );
 
+  const loadTopLevelFolders = useCallback(async () => {
+    setIsLoadingFolders(true);
+    setLoadError(null);
+    try {
+      const folders = await window.electron.getTopLevelFolders();
+      setTopLevelFolders(folders || []); // Ensure it's always an array
+    } catch (error) {
+      console.error("Error loading top-level folders:", error);
+      setLoadError("Failed to load folders. Please try again.");
+      toast("Error loading folders", {
+        description: "There was an error loading the top-level folders. Please try again.",
+      });
+      setTopLevelFolders([]); // Set to empty array in case of error
+    } finally {
+      setIsLoadingFolders(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTopLevelFolders();
+  }, [loadTopLevelFolders]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (contextMenu && !event.defaultPrevented) {
-        closeContextMenu();
+        setContextMenu(null);
       }
     };
 
@@ -91,33 +123,42 @@ const LeftSidebar: React.FC<{
   }, [contextMenu]);
 
   const handleContextMenu = useCallback(
-    (
-      e: React.MouseEvent,
-      itemId: string,
-      itemType: "note" | "folder" | "empty",
-      dirPath: string
-    ) => {
+    (e: React.MouseEvent, itemId: string, itemType: "note" | "folder" | "topLevelFolder", dirPath: string) => {
       e.preventDefault();
       setContextMenu({ x: e.clientX, y: e.clientY, itemId, itemType, dirPath });
     },
     []
   );
 
-  const handleCreateFile = useCallback(() => {
+  const handleDelete = useCallback(() => {
     if (contextMenu) {
-      onCreateNote(contextMenu.dirPath);
+      if (contextMenu.itemType === "note") {
+        onDeleteNote(contextMenu.itemId, contextMenu.dirPath);
+      } else if (contextMenu.itemType === "folder") {
+        onDeleteDirectory(contextMenu.dirPath);
+      } else if (contextMenu.itemType === "topLevelFolder") {
+        window.electron.removeTopLevelFolder(contextMenu.dirPath);
+        loadTopLevelFolders();
+      }
+      setContextMenu(null);
     }
-  }, [contextMenu, onCreateNote]);
+  }, [contextMenu, onDeleteNote, onDeleteDirectory, loadTopLevelFolders]);
 
-  const closeContextMenu = useCallback(() => {
-    setContextMenu(null);
-  }, []);
-
-  const handleSettingsClick = () => {
-    toast("Settings feature is not implemented yet", {
-      description: "This feature will be available in a future update.",
-    });
-  };
+  const handleAddTopLevelFolder = useCallback(async () => {
+    if (newTopLevelFolderPath.trim()) {
+      try {
+        await window.electron.addTopLevelFolder(newTopLevelFolderPath.trim());
+        setNewTopLevelFolderPath("");
+        setIsAddingTopLevelFolder(false);
+        loadTopLevelFolders();
+      } catch (error) {
+        console.error("Error adding top-level folder:", error);
+        toast("Error adding folder", {
+          description: "There was an error adding the top-level folder. Please try again.",
+        });
+      }
+    }
+  }, [newTopLevelFolderPath, loadTopLevelFolders]);
 
   const toggleDirectory = useCallback((dirPath: string) => {
     setExpandedDirs((prev) => {
@@ -131,77 +172,56 @@ const LeftSidebar: React.FC<{
     });
   }, []);
 
-  const handleDelete = useCallback(() => {
-    if (contextMenu) {
-      if (contextMenu.itemType === "note") {
-        onDeleteNote(contextMenu.itemId, contextMenu.dirPath);
-      } else {
-        onDeleteDirectory(contextMenu.dirPath);
-      }
-      closeContextMenu();
-    }
-  }, [contextMenu, onDeleteNote, onDeleteDirectory, closeContextMenu]);
+  const renderDirectoryStructure = useCallback((structure: DirectoryStructure, currentPath = "") => {
+    const fullPath = `${currentPath}/${structure.name}`.replace(/^\//, "");
+    const isExpanded = expandedDirs.has(fullPath);
 
-  const renderDirectoryStructure = useMemo(() => {
-    const render = (structure: DirectoryStructure, currentPath = "") => {
-      const fullPath = `${currentPath}/${structure.name}`.replace(/^\//, "");
-      const isExpanded = expandedDirs.has(fullPath);
-
-      if (structure.type === "note") {
-        return (
-          <div
-            key={structure.note!.id}
-            className={cn(
-              "flex items-center py-1 px-2 rounded-md cursor-pointer text-sm",
-              selectedNote === structure.note!.id
-                ? "bg-accent text-accent-foreground"
-                : "hover:bg-accent/50"
-            )}
-            onClick={() => onSelectNote(structure.note!.id)}
-            onContextMenu={(e) =>
-              handleContextMenu(e, structure.note!.id, "note", currentPath)
-            }
-          >
-            <File className="h-4 w-4 mr-2" />
-            <span className="truncate">{structure.name}</span>
-          </div>
-        );
-      }
-
+    if (structure.type === "note") {
       return (
-        <div key={fullPath}>
-          <div
-            className="flex items-center cursor-pointer hover:bg-accent/50 py-1 px-2"
-            onClick={() => toggleDirectory(fullPath)}
-            onContextMenu={(e) =>
-              handleContextMenu(e, structure.name, "folder", fullPath)
-            }
-          >
-            {isExpanded ? (
-              <ChevronDown className="h-4 w-4 mr-1" />
-            ) : (
-              <ChevronRight className="h-4 w-4 mr-1" />
-            )}
-            <Folder className="h-4 w-4 mr-1" />
-            <span>{structure.name}</span>
-          </div>
-          {isExpanded && structure.children && (
-            <div className="ml-4">
-              {structure.children.map((child) => render(child, fullPath))}
-            </div>
+        <div
+          key={structure.note!.id}
+          className={cn(
+            "flex items-center py-1 px-2 rounded-md cursor-pointer text-sm",
+            selectedNote === structure.note!.id
+              ? "bg-accent text-accent-foreground"
+              : "hover:bg-accent/50"
           )}
+          onClick={() => onSelectNote(structure.note!.id)}
+          onContextMenu={(e) =>
+            handleContextMenu(e, structure.note!.id, "note", currentPath)
+          }
+        >
+          <File className="h-4 w-4 mr-2" />
+          <span className="truncate">{structure.name}</span>
         </div>
       );
-    };
+    }
 
-    return render;
-  }, [
-    expandedDirs,
-    selectedNote,
-    onSelectNote,
-    handleContextMenu,
-    toggleDirectory
-  ]);
+    return (
+      <div key={fullPath}>
+        <div
+          className="flex items-center cursor-pointer hover:bg-accent/50 py-1 px-2"
+          onClick={() => toggleDirectory(fullPath)}
+          onContextMenu={(e) =>
+            handleContextMenu(e, structure.name, "folder", fullPath)
+          }
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4 mr-1" />
+          ) : (
+            <ChevronRight className="h-4 w-4 mr-1" />
+          )}
+          <Folder className="h-4 w-4 mr-1" />
+          <span>{structure.name}</span>
+        </div>
+        {isExpanded && structure.children && (
+          <div className="ml-4">
+            {structure.children.map((child) => renderDirectoryStructure(child, fullPath))}
+          </div>
+        )}
+      </div>
+    );
+  }, [expandedDirs, selectedNote, onSelectNote, handleContextMenu, toggleDirectory]);
 
   return (
     <div
@@ -214,15 +234,11 @@ const LeftSidebar: React.FC<{
     >
       {contextMenu && (
         <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
+          {...contextMenu}
           onDelete={handleDelete}
-          onCreateFile={handleCreateFile}
+          onCreateFile={() => contextMenu && onCreateNote(contextMenu.dirPath)}
           onCreateFolder={handleCreateFolder}
-          itemId={contextMenu.itemId}
-          itemType={contextMenu.itemType}
-          dirPath={contextMenu.dirPath}
-          onClose={closeContextMenu}
+          onClose={() => setContextMenu(null)}
           onCopyFilePath={onCopyFilePath}
           onOpenNoteInNewTab={onOpenNoteInNewTab}
         />
@@ -242,7 +258,7 @@ const LeftSidebar: React.FC<{
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 mr-1"
             onClick={() => {
               setCurrentPath("");
               handleCreateFolder();
@@ -250,6 +266,15 @@ const LeftSidebar: React.FC<{
             title="New Folder"
           >
             <FolderPlus className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setIsAddingTopLevelFolder(true)}
+            title="Add Top-Level Folder"
+          >
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -267,16 +292,62 @@ const LeftSidebar: React.FC<{
           </Button>
         </div>
       )}
-      {error && <div className="text-red-500 text-sm p-2">{error}</div>}
-      <div className="overflow-y-auto h-[calc(100%-2.5rem)] p-2">
-        {renderDirectoryStructure(directoryStructure)}
-      </div>
+      {isAddingTopLevelFolder && (
+        <div className="flex items-center mt-2 p-2">
+          <Input
+            value={newTopLevelFolderPath}
+            onChange={(e) => setNewTopLevelFolderPath(e.target.value)}
+            placeholder="Folder path"
+            className="mr-2"
+          />
+          <Button onClick={handleAddTopLevelFolder}>Add</Button>
+          <Button variant="ghost" onClick={() => setIsAddingTopLevelFolder(false)}>
+            Cancel
+          </Button>
+        </div>
+      )}
+      {folderCreationError && <div className="text-red-500 text-sm p-2">{folderCreationError}</div>}
+      <ScrollArea className="h-[calc(100%-2.5rem)]">
+        <div className="p-2">
+          {isLoadingFolders ? (
+            <div className="flex items-center justify-center h-20">
+              <Loader className="h-6 w-6 animate-spin" />
+            </div>
+          ) : loadError ? (
+            <div className="text-red-500 text-sm p-2">{loadError}</div>
+          ) : topLevelFolders.length === 0 ? (
+            <div className="text-sm text-muted-foreground p-2">No top-level folders added yet.</div>
+          ) : (
+            topLevelFolders.map((folderPath) => (
+              <div
+                key={folderPath}
+                className="flex items-center cursor-pointer hover:bg-accent/50 py-1 px-2"
+                onClick={() => toggleDirectory(folderPath)}
+                onContextMenu={(e) =>
+                  handleContextMenu(e, folderPath, "topLevelFolder", folderPath)
+                }
+              >
+                {expandedDirs.has(folderPath) ? (
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 mr-1" />
+                )}
+                <Folder className="h-4 w-4 mr-1" />
+                <span className="text-sm">{folderPath}</span>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="p-2">
+          {renderDirectoryStructure(directoryStructure)}
+        </div>
+      </ScrollArea>
       <div className="absolute bottom-2 right-2">
         <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={handleSettingsClick}
+          onClick={() => toast("Settings feature is not implemented yet")}
           title="Settings"
         >
           <Settings className="h-4 w-4" />

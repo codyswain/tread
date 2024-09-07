@@ -50,6 +50,9 @@ declare global {
       getNotePath: (noteId: string) => Promise<string>;
       createDirectory: (dirName: string) => Promise<void>;
       deleteDirectory: (dirName: string) => Promise<void>;
+      getTopLevelFolders: () => Promise<string[]>;
+      addTopLevelFolder: (folderPath: string) => Promise<void>;
+      removeTopLevelFolder: (folderPath: string) => Promise<void>;
     };
   }
 }

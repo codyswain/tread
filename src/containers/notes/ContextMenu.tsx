@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { Pencil, Trash2, Copy, FolderPlus, FilePlus, Folder } from "lucide-react";
+import { Pencil, Trash2, Copy, FolderPlus, FilePlus, Folder, Edit } from "lucide-react";
 
 const ContextMenu: React.FC<{
   x: number;
@@ -8,8 +8,9 @@ const ContextMenu: React.FC<{
   onDelete: () => void;
   onCreateFile: () => void;
   onCreateFolder: () => void;
+  onRenameFolder?: () => void;
   itemId: string;
-  itemType: 'note' | 'folder' | 'empty';
+  itemType: 'note' | 'folder' | 'topLevelFolder' | 'empty';
   dirPath: string;
   onClose: () => void;
   onCopyFilePath?: (noteId: string) => void;
@@ -20,6 +21,7 @@ const ContextMenu: React.FC<{
   onDelete,
   onCreateFile,
   onCreateFolder,
+  onRenameFolder,
   itemId,
   itemType,
   dirPath,
@@ -73,7 +75,7 @@ const ContextMenu: React.FC<{
       }}
       onClick={(e) => e.stopPropagation()}
     >
-      {(itemType === 'folder' || itemType === 'empty') && (
+      {(itemType === 'folder' || itemType === 'topLevelFolder' || itemType === 'empty') && (
         <>
           <Button
             variant="ghost"
@@ -146,6 +148,18 @@ const ContextMenu: React.FC<{
             </Button>
           )}
         </>
+      )}
+      {(itemType === 'folder' || itemType === 'topLevelFolder') && onRenameFolder && (
+        <Button
+          variant="ghost"
+          className="w-full justify-start px-2 py-1.5 text-sm"
+          onClick={() => {
+            onRenameFolder();
+            onClose();
+          }}
+        >
+          <Edit className="mr-2 h-4 w-4" /> Rename Folder
+        </Button>
       )}
     </div>
   );

@@ -1,17 +1,21 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
-import path from 'path';
-import { setupFileSystem } from './main/fileSystem';
-import { runEmbeddingScript, runPythonScript } from './main/pythonBridge';
-
+import { app, BrowserWindow, ipcMain } from "electron";
+import path from "path";
+import { setupFileSystem } from "./main/fileSystem";
+import { runEmbeddingScript, runPythonScript } from "./main/pythonBridge";
+import {
+  addTopLevelFolder,
+  getTopLevelFolders,
+  removeTopLevelFolder,
+} from "./main/configManager";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
+if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
 let mainWindow: BrowserWindow | null = null;
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isDevelopment = process.env.NODE_ENV === "development";
 
 const CSP = [
   "default-src 'self'",
@@ -21,9 +25,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self' data:",
-  isDevelopment
-    ? "connect-src 'self' ws:"
-    : "connect-src 'self'",
+  isDevelopment ? "connect-src 'self' ws:" : "connect-src 'self'",
 ];
 
 const createWindow = () => {
@@ -32,7 +34,7 @@ const createWindow = () => {
     height: 600,
     frame: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
@@ -40,34 +42,38 @@ const createWindow = () => {
   });
 
   // Set Content Security Policy
-  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': [CSP.join('; ')],
-      },
-    });
-  });
+  mainWindow.webContents.session.webRequest.onHeadersReceived(
+    (details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          "Content-Security-Policy": [CSP.join("; ")],
+        },
+      });
+    }
+  );
 
   // Load the main page (which will contain the navigation)
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    mainWindow.loadFile(
+      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+    );
   }
 
   // Open the DevTools only in development mode
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     mainWindow.webContents.openDevTools();
   }
 };
 
 // Set up IPC listeners for window controls
-ipcMain.on('minimize-window', () => {
+ipcMain.on("minimize-window", () => {
   mainWindow?.minimize();
 });
 
-ipcMain.on('maximize-window', () => {
+ipcMain.on("maximize-window", () => {
   if (mainWindow?.isMaximized()) {
     mainWindow.unmaximize();
   } else {
@@ -75,7 +81,7 @@ ipcMain.on('maximize-window', () => {
   }
 });
 
-ipcMain.on('close-window', () => {
+ipcMain.on("close-window", () => {
   mainWindow?.close();
 });
 
@@ -90,13 +96,13 @@ app.whenReady().then(async () => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-app.on('activate', () => {
+app.on("activate", () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
@@ -104,29 +110,41 @@ app.on('activate', () => {
   }
 });
 
-
 // Add error handling
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught exception:', error);
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught exception:", error);
   // Optionally, you can quit the app or show an error dialog
 });
 
-ipcMain.handle('run-python-script', async (_, scriptName: string, args: string[]) => {
+ipcMain.handle(
+  "run-python-script",
+  async (_, scriptName: string, args: string[]) => {
+    try {
+      const result = await runPythonScript(scriptName, args);
+      return result;
+    } catch (error) {
+      console.error("Error running Python script:", error);
+      throw error;
+    }
+  }
+);
+
+ipcMain.handle("find-similar-notes", async (_, query: string) => {
   try {
-    const result = await runPythonScript(scriptName, args);
-    return result;
+    const result = await runEmbeddingScript("find_similar", query);
+    return result.similar_notes;
   } catch (error) {
-    console.error('Error running Python script:', error);
+    console.error("Error finding similar notes:", error);
     throw error;
   }
 });
 
-ipcMain.handle('find-similar-notes', async (_, query: string) => {
-  try {
-    const result = await runEmbeddingScript('find_similar', query);
-    return result.similar_notes;
-  } catch (error) {
-    console.error('Error finding similar notes:', error);
-    throw error;
-  }
-});
+ipcMain.handle("get-top-level-folders", getTopLevelFolders);
+
+ipcMain.handle("add-top-level-folder", (_, folderPath) =>
+  addTopLevelFolder(folderPath)
+);
+
+ipcMain.handle("remove-top-level-folder", (_, folderPath) =>
+  removeTopLevelFolder(folderPath)
+);

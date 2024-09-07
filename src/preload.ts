@@ -18,4 +18,7 @@ contextBridge.exposeInMainWorld("electron", {
   setOpenAIKey: (key: string) => ipcRenderer.invoke("set-openai-key", key),
   createDirectory: (dirName: string) => ipcRenderer.invoke("create-directory", dirName),
   deleteDirectory: (dirName: string) => ipcRenderer.invoke("delete-directory", dirName),
+  getTopLevelFolders: () => ipcRenderer.invoke("get-top-level-folders"),
+  addTopLevelFolder: (folderPath: string) => ipcRenderer.invoke("add-top-level-folder", folderPath),
+  removeTopLevelFolder: (folderPath: string) => ipcRenderer.invoke("remove-top-level-folder", folderPath),
 });
