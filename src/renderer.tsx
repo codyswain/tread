@@ -51,8 +51,9 @@ declare global {
       createDirectory: (dirName: string) => Promise<void>;
       deleteDirectory: (dirName: string) => Promise<void>;
       getTopLevelFolders: () => Promise<string[]>;
-      addTopLevelFolder: (folderPath: string) => Promise<void>;
-      removeTopLevelFolder: (folderPath: string) => Promise<void>;
+      addTopLevelFolder: (folderPath: string) => Promise<string[]>;
+      removeTopLevelFolder: (folderPath: string) => Promise<string[]>;
+      openFolderDialog: () => Promise<string>;
     };
   }
 }

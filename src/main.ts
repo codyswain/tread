@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import path from "path";
 import { setupFileSystem } from "./main/fileSystem";
 import { runEmbeddingScript, runPythonScript } from "./main/pythonBridge";
@@ -140,11 +140,25 @@ ipcMain.handle("find-similar-notes", async (_, query: string) => {
 });
 
 ipcMain.handle("get-top-level-folders", getTopLevelFolders);
+ipcMain.handle("add-top-level-folder", async (_, folderPath) => {
+  await addTopLevelFolder(folderPath);
+  return getTopLevelFolders(); // Return updated list
+});
+ipcMain.handle("remove-top-level-folder", async (_, folderPath) => {
+  await removeTopLevelFolder(folderPath);
+  return getTopLevelFolders(); // Return updated list
+});
 
-ipcMain.handle("add-top-level-folder", (_, folderPath) =>
-  addTopLevelFolder(folderPath)
-);
+// Folder selection dialog handler remains the same
+ipcMain.handle("open-folder-dialog", async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ["openDirectory", "createDirectory"],
+    buttonLabel: "Select Folder",
+    title: "Select a folder to add as a top-level folder",
+  });
 
-ipcMain.handle("remove-top-level-folder", (_, folderPath) =>
-  removeTopLevelFolder(folderPath)
-);
+  if (!result.canceled && result.filePaths.length > 0) {
+    return result.filePaths[0];
+  }
+  return null;
+});

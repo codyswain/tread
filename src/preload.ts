@@ -21,4 +21,5 @@ contextBridge.exposeInMainWorld("electron", {
   getTopLevelFolders: () => ipcRenderer.invoke("get-top-level-folders"),
   addTopLevelFolder: (folderPath: string) => ipcRenderer.invoke("add-top-level-folder", folderPath),
   removeTopLevelFolder: (folderPath: string) => ipcRenderer.invoke("remove-top-level-folder", folderPath),
+  openFolderDialog: () => ipcRenderer.invoke("open-folder-dialog"),
 });

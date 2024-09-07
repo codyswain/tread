@@ -11,7 +11,7 @@ import {
   Loader,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/utils";
+import { cn, getFolderName } from "@/lib/utils";
 import { useResizableSidebar } from "@/hooks/useResizableSidebar";
 import ContextMenu from "./ContextMenu";
 import { toast } from "@/components/ui/Toast";
@@ -145,20 +145,22 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   }, [contextMenu, onDeleteNote, onDeleteDirectory, loadTopLevelFolders]);
 
   const handleAddTopLevelFolder = useCallback(async () => {
-    if (newTopLevelFolderPath.trim()) {
-      try {
-        await window.electron.addTopLevelFolder(newTopLevelFolderPath.trim());
-        setNewTopLevelFolderPath("");
-        setIsAddingTopLevelFolder(false);
-        loadTopLevelFolders();
-      } catch (error) {
-        console.error("Error adding top-level folder:", error);
-        toast("Error adding folder", {
-          description: "There was an error adding the top-level folder. Please try again.",
+    try {
+      const selectedFolder = await window.electron.openFolderDialog();
+      if (selectedFolder) {
+        const updatedFolders = await window.electron.addTopLevelFolder(selectedFolder);
+        setTopLevelFolders(updatedFolders);
+        toast("Folder added", {
+          description: `The folder "${getFolderName(selectedFolder)}" has been added as a top-level folder.`,
         });
       }
+    } catch (error) {
+      console.error("Error adding top-level folder:", error);
+      toast("Error adding folder", {
+        description: "There was an error adding the top-level folder. Please try again.",
+      });
     }
-  }, [newTopLevelFolderPath, loadTopLevelFolders]);
+  }, []);
 
   const toggleDirectory = useCallback((dirPath: string) => {
     setExpandedDirs((prev) => {
@@ -271,7 +273,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => setIsAddingTopLevelFolder(true)}
+            onClick={handleAddTopLevelFolder}
             title="Add Top-Level Folder"
           >
             <Plus className="h-4 w-4" />
@@ -333,7 +335,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
                   <ChevronRight className="h-4 w-4 mr-1" />
                 )}
                 <Folder className="h-4 w-4 mr-1" />
-                <span className="text-sm">{folderPath}</span>
+                <span className="text-sm" title={folderPath}>{getFolderName(folderPath)}</span>
               </div>
             ))
           )}
