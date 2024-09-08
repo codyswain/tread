@@ -18,22 +18,20 @@ Notes
 
 ## Prerequisites
 
-- Node.js (v14 or later recommended)
-- npm (v6 or later)
+- [`nvm` installed](https://formulae.brew.sh/formula/nvm)
 
 ## Installation
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/codyswain/tread.git
-cd tread
+git clone https://github.com/codyswain/tread.git && cd tread
 ```
 
 2. Install Node.js dependencies:
 
 ```bash
-npm install
+nvm use && npm install
 ```
 
 3. Set up Python virtual environment
@@ -43,7 +41,8 @@ python -m venv python_venv
 ```
 
 4. Activate the Virtual Environment
-   On Windows:
+
+On Windows:
 
 ```bash
 python_venv\Scripts\activate
@@ -53,6 +52,14 @@ On macOS and Linux:
 
 ```bash
 source python_venv/bin/activate
+```
+
+4. Install binaries required for python libraries:
+
+On macOS:
+
+```bash
+brew install libomp openblas
 ```
 
 5. Install Python Dependencies
