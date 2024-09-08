@@ -33,7 +33,7 @@ cd tread
 2. Install Node.js dependencies:
 
 ```bash
-npm install
+nvm use && npm install
 ```
 
 3. Set up Python virtual environment
@@ -53,6 +53,14 @@ On macOS and Linux:
 
 ```bash
 source python_venv/bin/activate
+```
+
+4. Install binaries required for python libraries:
+
+On macOS:
+
+```bash
+brew install libomp openblas
 ```
 
 5. Install Python Dependencies
