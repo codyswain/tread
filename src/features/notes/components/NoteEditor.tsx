@@ -45,6 +45,10 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   const [isSavingEmbedding, setIsSavingEmbedding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    setTitle(note.title);
+  }, [note.title]);
+
   const debouncedTitle = useDebounce(title, 500);
 
   const editor = useEditor({
@@ -65,6 +69,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
   }, []);
+
 
   const handleContentChange = useCallback(() => {
     if (editor) {
@@ -88,6 +93,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       });
     }
   }, [onSave]);
+
+  useEffect(() => {
+    if (debouncedTitle !== note.title) {
+      saveNote({ ...note, title: debouncedTitle });
+    }
+  }, [debouncedTitle, note, saveNote]);
 
   const handleSaveEmbedding = useCallback(async () => {
     if (editor) {

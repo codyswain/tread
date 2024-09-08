@@ -3,40 +3,44 @@ import ContextMenu from '@/shared/components/ContextMenu/ContextMenu';
 import ContextMenuItem from '@/shared/components/ContextMenu/ContextMenuItem';
 import { FilePlus, FolderPlus, Trash2, Copy, Folder, Pencil } from 'lucide-react';
 
-interface FileExplorerContextMenuProps {
-  x: number;
-  y: number;
-  itemType: 'note' | 'folder' | 'topLevelFolder' | 'empty';
+interface NoteExplorerContextMenuProps {
+  contextMenu: {
+    x: number;
+    y: number;
+    itemId: string;
+    itemType: 'note' | 'folder' | 'topLevelFolder';
+    dirPath: string;
+  } | null;
   onClose: () => void;
   onDelete: () => void;
   onCreateFile: () => void;
   onCreateFolder: () => void;
-  onCopyFilePath?: (noteId: string) => void;
-  onOpenNoteInNewTab?: (noteId: string) => void;
-  itemId: string;
+  onCopyFilePath: (noteId: string) => void;
+  onOpenNoteInNewTab: (noteId: string) => void;
 }
 
-const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
-  x,
-  y,
-  itemType,
+const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
+  contextMenu,
   onClose,
   onDelete,
   onCreateFile,
   onCreateFolder,
   onCopyFilePath,
   onOpenNoteInNewTab,
-  itemId,
 }) => {
+  if (!contextMenu) return null;
+
+  const { x, y, itemType, itemId } = contextMenu;
+
   return (
     <ContextMenu x={x} y={y} onClose={onClose}>
-      {(itemType === 'folder' || itemType === 'topLevelFolder' || itemType === 'empty') && (
+      {(itemType === 'folder' || itemType === 'topLevelFolder') && (
         <>
           <ContextMenuItem icon={FilePlus} label="New File" onClick={() => { onCreateFile(); onClose(); }} />
           <ContextMenuItem icon={FolderPlus} label="New Folder" onClick={() => { onCreateFolder(); onClose(); }} />
         </>
       )}
-      {itemType !== 'empty' && (
+      {itemType !== 'topLevelFolder' && (
         <ContextMenuItem 
           icon={Trash2} 
           label="Delete" 
@@ -51,24 +55,20 @@ const FileExplorerContextMenu: React.FC<FileExplorerContextMenuProps> = ({
             label="Copy ID" 
             onClick={() => { navigator.clipboard.writeText(itemId); onClose(); }} 
           />
-          {onCopyFilePath && (
-            <ContextMenuItem 
-              icon={Folder} 
-              label="Copy File Path" 
-              onClick={() => { onCopyFilePath(itemId); onClose(); }} 
-            />
-          )}
-          {onOpenNoteInNewTab && (
-            <ContextMenuItem 
-              icon={Pencil} 
-              label="Open in New Tab" 
-              onClick={() => { onOpenNoteInNewTab(itemId); onClose(); }} 
-            />
-          )}
+          <ContextMenuItem 
+            icon={Folder} 
+            label="Copy File Path" 
+            onClick={() => { onCopyFilePath(itemId); onClose(); }} 
+          />
+          <ContextMenuItem 
+            icon={Pencil} 
+            label="Open in New Tab" 
+            onClick={() => { onOpenNoteInNewTab(itemId); onClose(); }} 
+          />
         </>
       )}
     </ContextMenu>
   );
 };
 
-export default FileExplorerContextMenu;
+export default NoteExplorerContextMenu;

@@ -5,7 +5,7 @@ import GlobalStyles from "@/styles/GlobalStyles";
 import "@/index.css";
 import { ThemeProvider } from "@/features/theme";
 import { Settings, SettingsProvider } from "@/features/settings";
-import { NotesV2 } from "@/features/notes";
+import { Notes } from "@/features/notes";
 import { Toaster } from "@/shared/components/Toast";
 import { TooltipProvider } from "@/shared/components/Tooltip";
 import { Navbar, navbarItems } from "@/features/navbar";
@@ -34,7 +34,7 @@ const App: React.FC = () => {
               <main className="flex-grow pt-10">
                 <Routes>
                   <Route path="/" element={<Feed />} />
-                  <Route path="/notes" element={<NotesV2 />} />
+                  <Route path="/notes" element={<Notes />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </main>

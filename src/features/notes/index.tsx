@@ -1,10 +1,10 @@
-import NotesV2 from './components/NotesV2';
+import Notes from './components/Notes';
 import NoteEditor from './components/NoteEditor';
 import RelatedNotes from './components/RelatedNotes';
 import { useNotes } from './hooks/useNotes';
 
 export {
-  NotesV2,
+  Notes,
   NoteEditor,
   RelatedNotes,
   useNotes
