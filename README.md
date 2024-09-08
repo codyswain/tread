@@ -18,8 +18,7 @@ Notes
 
 ## Prerequisites
 
-- Node.js (v14 or later recommended)
-- npm (v6 or later)
+- [`nvm` installed](https://formulae.brew.sh/formula/nvm)
 
 ## Installation
 
