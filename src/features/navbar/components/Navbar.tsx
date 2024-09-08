@@ -1,30 +1,17 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
-import {
-  Home,
-  Notebook,
-  Image,
-  X,
-  Minus,
-  Square,
-  PanelLeft,
-  PanelRight,
-  Settings,
-} from "lucide-react";
-import { ThemeToggle } from "./ThemeToggle";
+// import { ThemeToggle } from "./ThemeToggle";
+import { NavbarItem, NavbarItemProps } from "./NavbarItem";
+import { Minus, PanelLeft, PanelRight, Settings, Square, X } from "lucide-react";
 
-const navItems = [
-  { to: "/", icon: Home, text: "Home" },
-  { to: "/notes", icon: Notebook, text: "Notes" },
-  { to: "/new-notes", icon: Notebook, text: "New Notes" },
-  { to: "/media", icon: Image, text: "Files" },
-];
-
-const Navbar: React.FC<{
+interface NavbarProps {
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
-}> = ({ toggleLeftSidebar, toggleRightSidebar }) => {
+  items: NavbarItemProps[];
+}
+
+const Navbar: React.FC<NavbarProps> = ({ toggleLeftSidebar, toggleRightSidebar, items }) => {
   const location = useLocation();
 
   const handleWindowAction = (action: "minimize" | "maximize" | "close") => {
@@ -43,11 +30,10 @@ const Navbar: React.FC<{
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() =>
-            handleWindowAction(action as "minimize" | "maximize" | "close")
-          }
+          onClick={() => handleWindowAction(action as "minimize" | "maximize" | "close")}
         >
-          <Icon className="h-4 w-4" />
+          <span className="sr-only">{action}</span>
+          <Icon className="h-4 w-4 mr-2" />
         </Button>
       ))}
     </div>
@@ -55,41 +41,19 @@ const Navbar: React.FC<{
 
   const renderNavItems = () => (
     <ul className="flex items-center space-x-2 no-drag mx-auto">
-      {navItems.map(({ to, icon: Icon, text }) => (
-        <li key={to}>
-          <Link
-            to={to}
-            className={`flex items-center px-3 py-1 rounded-md text-sm ${
-              location.pathname === to
-                ? "bg-accent text-accent-foreground"
-                : "hover:bg-accent/50"
-            }`}
-          >
-            <Icon className="h-4 w-4 mr-2" />
-            {text}
-          </Link>
-        </li>
+      {items.map((item) => (
+        <NavbarItem key={item.to} {...item} isActive={location.pathname === item.to} />
       ))}
     </ul>
   );
 
   const renderSidebarControls = () => (
     <div className="flex items-center space-x-2 no-drag">
-      <ThemeToggle />
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={toggleLeftSidebar}
-      >
+      {/* <ThemeToggle /> */}
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleLeftSidebar}>
         <PanelLeft className="h-4 w-4" />
       </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={toggleRightSidebar}
-      >
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleRightSidebar}>
         <PanelRight className="h-4 w-4" />
       </Button>
       <Link to="/settings">
