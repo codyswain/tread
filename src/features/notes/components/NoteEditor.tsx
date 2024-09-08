@@ -4,8 +4,8 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
-import { toast } from "@/components/ui/Toast";
-import { cn } from "@/lib/utils";
+import { toast } from "@/shared/components/Toast";
+import { cn } from "@/shared/utils/utils";
 import {
   Bold,
   Italic,
@@ -23,15 +23,15 @@ import {
   Save,
   Loader2,
 } from "lucide-react";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
-import { Toggle } from "@/components/ui/Toggle";
+import { Input } from "@/shared/components/Input";
+import { Button } from "@/shared/components/Button";
+import { Toggle } from "@/shared/components/Toggle";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/Tooltip";
-import { Note } from "@/types";
+} from "@/shared/components/Tooltip";
+import { Note } from "@/shared/types";
 import { useDebounce } from "@/shared/hooks/useDebounce";
 
 interface NoteEditorProps {

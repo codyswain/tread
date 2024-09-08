@@ -2,7 +2,7 @@ import { ipcMain, app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import { runEmbeddingScript } from "./pythonBridge";
-import { DirectoryStructure, Note } from "@/types";
+import { DirectoryStructure, Note } from "@/shared/types";
 
 export const NOTES_DIR = path.join(app.getPath("userData"), "notes");
 

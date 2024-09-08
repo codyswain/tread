@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/shared/components/Button";
 // import { ThemeToggle } from "./ThemeToggle";
 import { NavbarItem, NavbarItemProps } from "./NavbarItem";
 import { Minus, PanelLeft, PanelRight, Settings, Square, X } from "lucide-react";

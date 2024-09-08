@@ -1,11 +1,11 @@
 import React from 'react';
-import { Button } from "@/components/ui/Button";
-import { ScrollArea } from "@/components/ui/ScrollArea";
-import { cn } from "@/lib/utils";
+import { Button } from "@/shared/components/Button";
+import { ScrollArea } from "@/shared/components/ScrollArea";
+import { cn } from "@/shared/utils/utils";
 import { Loader2, Settings } from "lucide-react";
-import { useResizableSidebar } from "@/hooks/useResizableSidebar";
-import { toast } from "@/components/ui/Toast";
-import { SimilarNote } from "@/types";
+import { toast } from "@/shared/components/Toast";
+import { SimilarNote } from "@/shared/types";
+import { useResizableSidebar } from '@/shared/hooks/useResizableSidebar';
 
 interface RelatedNotesProps {
   currentNoteId: string;

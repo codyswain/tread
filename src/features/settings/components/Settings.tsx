@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { Input } from "@/shared/components/Input";
+import { Button } from "@/shared/components/Button";
 import { Eye, EyeOff } from "lucide-react";
 import { useSettings } from "../context/SettingsContext";
 

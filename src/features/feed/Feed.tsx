@@ -1,6 +1,6 @@
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/shared/components/Card";
 
-const Home = () => (
+const Feed = () => (
   <div className="container mx-auto p-4 mt-2">
     <h2 className="text-2xl font-bold mb-4">Welcome</h2>
     <Card className="p-6 mb-6">
@@ -62,4 +62,4 @@ const Home = () => (
   </div>
 );
 
-export default Home;
+export default Feed;

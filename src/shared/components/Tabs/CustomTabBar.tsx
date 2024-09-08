@@ -1,14 +1,14 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
+import { Button } from '@/shared/components/Button';
+import { cn } from '@/shared/utils/utils';
 
 interface Tab {
   id: string;
   title: string;
 }
 
-interface TabBarProps {
+interface CustomTabBarProps {
   tabs: Tab[];
   activeTab: string;
   onTabClick: (id: string) => void;
@@ -16,7 +16,7 @@ interface TabBarProps {
   onTabDragStart: (id: string, e: React.DragEvent) => void;
 }
 
-const TabBar: React.FC<TabBarProps> = ({
+const CustomTabBar: React.FC<CustomTabBarProps> = ({
   tabs,
   activeTab,
   onTabClick,
@@ -56,4 +56,4 @@ const TabBar: React.FC<TabBarProps> = ({
   );
 };
 
-export default TabBar;
+export default CustomTabBar;

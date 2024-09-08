@@ -10,16 +10,15 @@ import {
   Plus,
   Loader,
 } from "lucide-react";
+import { DirectoryStructure } from "@/shared/types";
+import FileExplorerContextMenu from "@/features/fileExplorer/components/FileExplorerContextMenu";
+import { useFolderCreation } from "@/features/fileExplorer/hooks/useFolderCreation";
+import { cn, getFolderName } from "@/shared/utils/utils";
 import { Button } from "@/shared/components/Button";
-import { cn, getFolderName } from "@/lib/utils";
-import { useResizableSidebar } from "@/hooks/useResizableSidebar";
-
-import FileExplorerContextMenu from "./FileExplorerContextMenu";
-import { toast } from "@/components/ui/Toast";
-import { Input } from "@/components/ui/Input";
-import { DirectoryStructure } from "@/types";
-import { useFolderCreation } from "@/hooks/useFolderCreation";
-import { ScrollArea } from "@/components/ui/ScrollArea";
+import { toast } from "@/shared/components/Toast";
+import { Input } from "@/shared/components/input";
+import { ScrollArea } from "@/shared/components/ScrollArea";
+import { useResizableSidebar } from "@/shared/hooks/useResizableSidebar";
 
 interface FileExplorerProps {
   isOpen: boolean;

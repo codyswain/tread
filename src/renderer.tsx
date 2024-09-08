@@ -31,7 +31,7 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { DirectoryStructure, Note } from "./types";
+import { DirectoryStructure, Note } from "./shared/types";
 
 declare global {
   interface Window {
