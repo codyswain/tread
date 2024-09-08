@@ -25,8 +25,7 @@ Notes
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/codyswain/tread.git
-cd tread
+git clone https://github.com/codyswain/tread.git && cd tread
 ```
 
 2. Install Node.js dependencies:
@@ -42,7 +41,8 @@ python -m venv python_venv
 ```
 
 4. Activate the Virtual Environment
-   On Windows:
+
+On Windows:
 
 ```bash
 python_venv\Scripts\activate
