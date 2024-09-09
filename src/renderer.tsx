@@ -55,10 +55,13 @@ declare global {
       removeTopLevelFolder: (folderPath: string) => Promise<string[]>;
       openFolderDialog: () => Promise<string>;
 
-      getDirectoryStructure: (dirPath: string) => Promise<DirectoryStructure>
+      getDirectoryStructure: (dirPath: string) => Promise<DirectoryStructure>;
       loadNote: (dirPath: string) => Promise<Note>;
-      deleteFileNode: (fileNodeType: string, fileNodePath: string) => Promise<void>;
-      
+      deleteFileNode: (
+        fileNodeType: string,
+        fileNodePath: string
+      ) => Promise<void>;
+      updateNote: (updatedNote: Note, prevFilePath: string) => Promise<string>;
     };
   }
 }

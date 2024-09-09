@@ -66,14 +66,17 @@ export const setupFileSystem = async () => {
     }
   });
 
-  ipcMain.handle("save-note", async (_, note: Note, dirPath = "") => {
+  ipcMain.handle("save-note", async (_, note: Note, filePath: string) => {
     try {
+      const dirPath = path.dirname(filePath);
       const sanitizedTitle = sanitizeFilename(note.title);
-      const notePath = path.join(
-        dirPath,
-        `${note.id}${NOTE_DELIMITER}${sanitizedTitle}.json`
-      );
-      await fs.mkdir(path.dirname(notePath), { recursive: true });
+      const fileName = `${note.id}${NOTE_DELIMITER}${sanitizedTitle}.json`;
+      const notePath = path.join(dirPath, fileName);
+  
+      // Ensure the directory exists
+      await fs.mkdir(dirPath, { recursive: true });
+  
+      // Write the note to the file
       await fs.writeFile(notePath, JSON.stringify(note));
       console.log(`Note saved successfully with notePath=${notePath}`);
       return notePath;
@@ -82,6 +85,30 @@ export const setupFileSystem = async () => {
       throw error;
     }
   });
+
+  ipcMain.handle("update-note", async (_, updatedNote: Note, prevFilePath: string) => {
+    try {
+      const dirPath = path.dirname(prevFilePath);
+      const sanitizedTitle = sanitizeFilename(updatedNote.title);
+      const newFileName = `${updatedNote.id}${NOTE_DELIMITER}${sanitizedTitle}.json`;
+      const newNotePath = path.join(dirPath, newFileName);
+  
+      // Rename the file if the path has changed
+      if (prevFilePath !== newNotePath) {
+        await fs.rename(prevFilePath, newNotePath);
+      }
+  
+      // Update the note content
+      await fs.writeFile(newNotePath, JSON.stringify(updatedNote));
+  
+      console.log(`Note updated successfully with new path=${newNotePath}`);
+      return newNotePath;
+    } catch (error) {
+      console.error("Error updating note:", error);
+      throw error;
+    }
+  });
+  
 
   ipcMain.handle("save-embedding", async (_, note: Note, dirPath = "") => {
     try {
@@ -226,6 +253,22 @@ const loadDirectoryStructure = async (
   }
 
   return structure;
+};
+
+const deleteFileNode = async (fileNodeType: string, fileNodePath: string) => {
+  if (fileNodeType === "directory") {
+    try {
+      await fs.rm(fileNodePath, { recursive: true, force: true });
+    } catch (err) {
+      console.error(`Error deleting directory fileNode with path: ${fileNodePath}`);
+    }
+  } else if (fileNodeType === "note") {
+    try {
+      await fs.unlink(fileNodePath);
+    } catch (err) {
+      console.error(`Error deleting note fileNode with fileNodePath: ${fileNodePath}`);
+    }
+  }
 };
 
 export function sanitizeFilename(filename: string) {

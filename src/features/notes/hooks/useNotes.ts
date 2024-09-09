@@ -151,17 +151,17 @@ export const useNotes = () => {
 
   const saveNote = useCallback(async (updatedNote: Note) => {
     try {
-      await window.electron.saveNote(updatedNote, "");
-      setNotes((prevNotes) =>
-        prevNotes.map((note) =>
-          note.id === updatedNote.id ? updatedNote : note
-        )
-      );
-      await window.electron.saveEmbedding(updatedNote.id, updatedNote.content);
+      if (!activeFileNode || activeFileNode.type !== 'note') {
+        throw new Error('No active note file node');
+      }
+      await window.electron.updateNote(updatedNote, activeFileNode.fullPath);
+      // await window.electron.saveEmbedding(updatedNote.id, updatedNote.content);
+      // Reload notes to reflect any changes in the file system
+      await loadNotes();
     } catch (error) {
       console.error("Error saving note:", error);
     }
-  }, []);
+  }, [activeFileNode, loadNotes]);
 
 
   const deleteFileNode = useCallback(
