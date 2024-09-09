@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { cn } from "@/shared/utils/utils";
+import { cn } from "@/shared/utils";
 
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,

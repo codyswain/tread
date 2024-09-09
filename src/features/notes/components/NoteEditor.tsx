@@ -5,7 +5,7 @@ import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
 import { toast } from "@/shared/components/Toast";
-import { cn } from "@/shared/utils/utils";
+import { cn } from "@/shared/utils";
 import {
   Bold,
   Italic,

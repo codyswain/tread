@@ -1,3 +1,4 @@
+import { DirectoryStructure } from "@/shared/types";
 import { useState, useCallback, useEffect } from "react";
 
 interface ContextMenuState {
@@ -6,6 +7,7 @@ interface ContextMenuState {
   itemId: string;
   itemType: "note" | "folder" | "topLevelFolder";
   dirPath: string;
+  fileNode?: DirectoryStructure;
 }
 
 export const useNoteExplorerContextMenu = () => {
@@ -16,7 +18,8 @@ export const useNoteExplorerContextMenu = () => {
       e: React.MouseEvent,
       itemId: string,
       itemType: "note" | "folder" | "topLevelFolder",
-      dirPath: string
+      dirPath: string,
+      fileNode?: DirectoryStructure
     ) => {
       e.preventDefault();
       e.stopPropagation();
@@ -26,6 +29,7 @@ export const useNoteExplorerContextMenu = () => {
         itemId,
         itemType,
         dirPath,
+        fileNode,
       });
     },
     []

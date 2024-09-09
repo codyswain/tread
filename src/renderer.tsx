@@ -37,7 +37,7 @@ declare global {
   interface Window {
     electron: {
       loadNotes: () => Promise<DirectoryStructure>;
-      saveNote: (note: Note, dirPath: string) => Promise<void>;
+      saveNote: (note: Note, dirPath: string) => Promise<string>;
       deleteNote: (noteId: string, dirPath: string) => Promise<void>;
       minimize: () => void;
       maximize: () => void;
@@ -54,6 +54,11 @@ declare global {
       addTopLevelFolder: (folderPath: string) => Promise<string[]>;
       removeTopLevelFolder: (folderPath: string) => Promise<string[]>;
       openFolderDialog: () => Promise<string>;
+
+      getDirectoryStructure: (dirPath: string) => Promise<DirectoryStructure>
+      loadNote: (dirPath: string) => Promise<Note>;
+      deleteFileNode: (fileNodeType: string, fileNodePath: string) => Promise<void>;
+      
     };
   }
 }

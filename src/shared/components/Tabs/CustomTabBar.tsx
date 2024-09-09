@@ -1,7 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/shared/components/Button';
-import { cn } from '@/shared/utils/utils';
+import { cn } from '@/shared/utils';
 
 interface Tab {
   id: string;

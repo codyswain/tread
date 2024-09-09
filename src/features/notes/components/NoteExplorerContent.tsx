@@ -3,17 +3,16 @@ import { ScrollArea } from "@/shared/components/ScrollArea";
 import { Loader, ChevronDown, ChevronRight, Folder, File } from "lucide-react";
 import { Input } from "@/shared/components/input";
 import { Button } from "@/shared/components/Button";
-import { cn, getFolderName } from "@/shared/utils/utils";
+import { cn, getFolderName } from "@/shared/utils";
 import { DirectoryStructure } from "@/shared/types";
 
 interface NoteExplorerContentProps {
   isLoadingFolders: boolean;
   loadError: string | null;
-  topLevelFolders: string[];
-  directoryStructure: DirectoryStructure;
+  directoryStructures: { [path: string]: DirectoryStructure };
   expandedDirs: Set<string>;
-  selectedNote: string | null;
-  onSelectNote: (id: string) => void;
+  selectedFileNode: DirectoryStructure;
+  onSelectNote: (file: DirectoryStructure) => void;
   toggleDirectory: (dirPath: string) => void;
   handleContextMenu: (
     e: React.MouseEvent,
@@ -34,10 +33,9 @@ interface NoteExplorerContentProps {
 export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
   isLoadingFolders,
   loadError,
-  topLevelFolders,
-  directoryStructure,
+  directoryStructures,
   expandedDirs,
-  selectedNote,
+  selectedFileNode,
   onSelectNote,
   toggleDirectory,
   handleContextMenu,
@@ -45,56 +43,18 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
 }) => {
   const renderDirectoryStructure = (
     structure: DirectoryStructure,
-    currentPath = ""
+    currentPath: string
   ) => {
-    const fullPath = `${currentPath}/${structure.name}`.replace(/^\//, "");
-    const isExpanded = expandedDirs.has(fullPath);
-
+    const fullPath = `/${currentPath}/${structure.name}`.replace(/^\//, "");
+  
     if (structure.type === "note") {
-      return (
-        <div
-          key={structure.note!.id}
-          className={cn(
-            "flex items-center py-1 px-2 rounded-md cursor-pointer text-sm",
-            selectedNote === structure.note!.id
-              ? "bg-accent text-accent-foreground"
-              : "hover:bg-accent/50"
-          )}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onSelectNote(structure.note!.id);
-          }}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleContextMenu(e, structure.note!.id, "note", currentPath);
-          }}
-        >
-          <File className="h-4 w-4 mr-2" />
-          <span className="truncate">{structure.name}</span>
-        </div>
-      );
+      return renderNote(structure, currentPath);
     }
-
+  
     return (
       <div key={fullPath}>
-        <div
-          className="flex items-center cursor-pointer hover:bg-accent/50 py-1 px-2"
-          onClick={() => toggleDirectory(fullPath)}
-          onContextMenu={(e) =>
-            handleContextMenu(e, structure.name, "folder", fullPath)
-          }
-        >
-          {isExpanded ? (
-            <ChevronDown className="h-4 w-4 mr-1" />
-          ) : (
-            <ChevronRight className="h-4 w-4 mr-1" />
-          )}
-          <Folder className="h-4 w-4 mr-1" />
-          <span>{structure.name}</span>
-        </div>
-        {isExpanded && structure.children && (
+        {renderFolder(structure, fullPath)}
+        {structure.children && (
           <div className="ml-4">
             {structure.children.map((child) =>
               renderDirectoryStructure(child, fullPath)
@@ -104,6 +64,54 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
       </div>
     );
   };
+  
+  const renderFolder = (structure: DirectoryStructure, fullPath: string) => {
+    const isExpanded = expandedDirs.has(fullPath);
+    const parentPath = fullPath.split('/').slice(0, -1).join('/');
+  
+    return (
+      <div
+        className="flex items-center cursor-pointer hover:bg-accent/50 py-1 px-2"
+        onClick={() => toggleDirectory(fullPath)}
+        onContextMenu={(e) =>
+          handleContextMenu(e, structure.name, "folder", parentPath)
+        }
+      >
+        {isExpanded ? (
+          <ChevronDown className="h-4 w-4 mr-1" />
+        ) : (
+          <ChevronRight className="h-4 w-4 mr-1" />
+        )}
+        <Folder className="h-4 w-4 mr-1" />
+        <span>{structure.name}</span>
+      </div>
+    );
+  };
+  
+  const renderNote = (structure: DirectoryStructure, currentPath: string) => (
+    <div
+      key={structure.fullPath}
+      className={cn(
+        "flex items-center py-1 px-2 rounded-md cursor-pointer text-sm",
+        selectedFileNode === structure
+          ? "bg-accent text-accent-foreground"
+          : "hover:bg-accent/50"
+      )}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onSelectNote(structure);
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleContextMenu(e, structure.noteMetadata.id, "note", currentPath);
+      }}
+    >
+      <File className="h-4 w-4 mr-2" />
+      <span className="truncate">{structure.name}</span>
+    </div>
+  );
 
   return (
     <ScrollArea className="h-[calc(100%-2.5rem)]">
@@ -131,34 +139,21 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
           </div>
         ) : loadError ? (
           <div className="text-red-500 text-sm p-2">{loadError}</div>
-        ) : topLevelFolders.length === 0 ? (
+        ) : Object.keys(directoryStructures).length === 0 ? (
           <div className="text-sm text-muted-foreground p-2">
-            No top-level folders added yet.
+            No folders added yet.
           </div>
         ) : (
-          topLevelFolders.map((folderPath) => (
-            <div
-              key={folderPath}
-              className="flex items-center cursor-pointer hover:bg-accent/50 py-1 px-2"
-              onClick={() => toggleDirectory(folderPath)}
-              onContextMenu={(e) =>
-                handleContextMenu(e, folderPath, "topLevelFolder", folderPath)
-              }
-            >
-              {expandedDirs.has(folderPath) ? (
-                <ChevronDown className="h-4 w-4 mr-1" />
-              ) : (
-                <ChevronRight className="h-4 w-4 mr-1" />
-              )}
-              <Folder className="h-4 w-4 mr-1" />
-              <span className="text-sm" title={folderPath}>
-                {getFolderName(folderPath)}
-              </span>
-            </div>
-          ))
+          Object.entries(directoryStructures).map(
+            ([path, structure]) => (
+              <div className="ml-4">
+                {renderDirectoryStructure(structure, path)}
+              </div>
+            )
+
+          )
         )}
       </div>
-      <div className="p-2">{renderDirectoryStructure(directoryStructure)}</div>
     </ScrollArea>
   );
 };

@@ -1,11 +1,16 @@
-export interface Note {
+export interface NoteMetadata {
   id: string;
   title: string;
-  content: string;
-  // Consider adding optional fields if needed, e.g.:
-  // lastModified?: Date;
-  // tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  tags?: string[];
 }
+
+export interface NoteContent {
+  content?: string
+}
+
+export interface Note extends NoteMetadata, NoteContent {}
 
 export interface Directory {
   notes: Note[];
@@ -13,11 +18,16 @@ export interface Directory {
   name: string;
 }
 
+export interface DirectoryStructures {
+  [key: string]: DirectoryStructure
+}
+
 export interface DirectoryStructure {
   name: string;
   type: 'directory' | 'note';
   children?: DirectoryStructure[];
-  note?: Note;
+  noteMetadata?: NoteMetadata;
+  fullPath: string;
 }
 
 // SimilarNote can be replaced with Note since they have the same structure

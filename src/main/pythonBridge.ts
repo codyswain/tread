@@ -73,7 +73,7 @@ export async function runEmbeddingScript(
   ...args: string[]
 ): Promise<any> {
   const apiKey = await getOpenAIKey();
-  return runPythonScript("embeddings", [NOTES_DIR, action, ...args], {
+  return runPythonScript("embeddings", [action, ...args], {
     OPENAI_API_KEY: apiKey,
   });
 }

@@ -3,6 +3,7 @@ import { useNotes } from "../hooks/useNotes";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
+import { DirectoryStructure, NoteMetadata } from "@/shared/types";
 
 const Notes: React.FC = () => {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -11,14 +12,18 @@ const Notes: React.FC = () => {
   const [rightSidebarWidth, setRightSidebarWidth] = useState(256);
   const {
     notes,
-    directoryStructure,
-    activeNote,
+    directoryStructures,
     similarNotes,
     createNote,
     saveNote,
-    deleteNote,
-    selectNote,
+
     findSimilarNotes,
+    activeNotePath,
+    setActiveNotePath,
+    activeNote,
+    activeFileNode,
+    setActiveFileNode,
+    deleteFileNode,
   } = useNotes();
 
   const handleLeftSidebarResize = (width: number) => {
@@ -29,37 +34,30 @@ const Notes: React.FC = () => {
     setRightSidebarWidth(width);
   };
 
-  const handleSelectNote = useCallback(
-    (noteId: string) => {
-      selectNote(noteId);
-      findSimilarNotes(noteId);
+  const handleSelection = useCallback(
+    (fileNode: DirectoryStructure) => {
+      setActiveFileNode(fileNode);
     },
-    [selectNote, findSimilarNotes]
+    [setActiveFileNode]
   );
 
   const handleCreateNote = useCallback(
     (dirPath: string) => {
+      console.log("handler to create note with dirPath: ", dirPath);
       createNote(dirPath);
     },
     [createNote]
-  );
-
-  const handleDeleteNote = useCallback(
-    (noteId: string, dirPath: string) => {
-      deleteNote(noteId, dirPath);
-    },
-    [deleteNote]
   );
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <NoteExplorer
         isOpen={isLeftSidebarOpen}
-        directoryStructure={directoryStructure}
-        selectedNote={activeNote}
-        onSelectNote={handleSelectNote}
+        directoryStructures={directoryStructures}
+        selectedFileNode={activeFileNode}
+        onSelectNote={handleSelection}
         onCreateNote={handleCreateNote}
-        onDeleteNote={handleDeleteNote}
+        onDelete={deleteFileNode}
         onResize={handleLeftSidebarResize}
         onClose={() => setIsLeftSidebarOpen(false)}
         onCopyFilePath={(noteId) => console.log("Copy file path:", noteId)} // TODO: Implement this function
@@ -81,20 +79,9 @@ const Notes: React.FC = () => {
           transition: "margin 0.3s ease-in-out",
         }}
       >
-        {activeNote && (
-          <NoteEditor
-            note={
-              notes.find((note) => note.id === activeNote) || {
-                id: "",
-                title: "",
-                content: "",
-              }
-            }
-            onSave={saveNote}
-          />
-        )}
+        {activeNote && <NoteEditor note={activeNote} onSave={saveNote} />}
       </main>
-      <RelatedNotes
+      {/* <RelatedNotes
         isOpen={isRightSidebarOpen}
         onResize={handleRightSidebarResize}
         onClose={() => setIsRightSidebarOpen(false)}
@@ -102,10 +89,10 @@ const Notes: React.FC = () => {
         currentNoteContent={
           notes.find((note) => note.id === activeNote)?.content || ""
         }
-        onOpenNote={handleSelectNote}
+        onOpenNote={handleSelection}
         isSimilarNotesLoading={false} // Implement loading state
         similarNotes={similarNotes}
-      />
+      /> */}
     </div>
   );
 };

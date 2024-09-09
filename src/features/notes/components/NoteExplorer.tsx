@@ -3,8 +3,8 @@ import { Settings } from "lucide-react";
 import { useResizableSidebar } from "@/shared/hooks/useResizableSidebar";
 import { Button } from "@/shared/components/Button";
 import { toast } from "@/shared/components/Toast";
-import { cn } from "@/shared/utils/utils";
-import { DirectoryStructure } from "@/shared/types";
+import { cn } from "@/shared/utils";
+import { DirectoryStructure, DirectoryStructures, Note } from "@/shared/types";
 import { useNoteExplorerState } from "../hooks/useNoteExplorerState";
 import { useTopLevelFolders } from "../hooks/useNoteExplorerTopLevelFolder";
 import { useNoteExplorerContextMenu } from "../hooks/useNoteExplorerContextMenu";
@@ -14,11 +14,11 @@ import { NoteExplorerContent } from "./NoteExplorerContent";
 
 interface NoteExplorerProps {
   isOpen: boolean;
-  directoryStructure: DirectoryStructure;
-  selectedNote: string | null;
-  onSelectNote: (id: string) => void;
+  directoryStructures: DirectoryStructures;
+  selectedFileNode: DirectoryStructure;
+  onSelectNote: (file: DirectoryStructure) => void;
   onCreateNote: (dirPath: string) => void;
-  onDeleteNote: (id: string, dirPath: string) => void;
+  onDelete: (fileNode: DirectoryStructure) => void;
   onResize: (width: number) => void;
   onClose: () => void;
   onCopyFilePath: (noteId: string) => void;
@@ -28,12 +28,12 @@ interface NoteExplorerProps {
 }
 
 const NoteExplorer: React.FC<NoteExplorerProps> = ({
-  directoryStructure,
+  directoryStructures,
   isOpen,
-  selectedNote,
+  selectedFileNode,
   onSelectNote,
   onCreateNote,
-  onDeleteNote,
+  onDelete,
   onResize,
   onClose,
   onCopyFilePath,
@@ -61,28 +61,18 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
   } = useNoteExplorerState(onCreateDirectory);
 
   const {
-    topLevelFolders,
     isLoadingFolders,
     loadError,
     handleAddTopLevelFolder,
-    loadTopLevelFolders,
   } = useTopLevelFolders();
 
   const { contextMenu, handleContextMenu, closeContextMenu } = useNoteExplorerContextMenu();
 
   const handleDelete = () => {
-    if (contextMenu) {
-      if (contextMenu.itemType === "note") {
-        onDeleteNote(contextMenu.itemId, contextMenu.dirPath);
-      } else if (contextMenu.itemType === "folder") {
-        onDeleteDirectory(contextMenu.dirPath);
-      } else if (contextMenu.itemType === "topLevelFolder") {
-        window.electron.removeTopLevelFolder(contextMenu.dirPath);
-        loadTopLevelFolders();
-      }
-      closeContextMenu();
+    if (contextMenu.fileNode){
+      onDelete(contextMenu.fileNode)
     }
-  };
+  }
 
   return (
     <div
@@ -113,10 +103,9 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
       <NoteExplorerContent
         isLoadingFolders={isLoadingFolders}
         loadError={loadError}
-        topLevelFolders={topLevelFolders}
-        directoryStructure={directoryStructure}
+        directoryStructures={directoryStructures}
         expandedDirs={expandedDirs}
-        selectedNote={selectedNote}
+        selectedFileNode={selectedFileNode}
         onSelectNote={onSelectNote}
         toggleDirectory={toggleDirectory}
         handleContextMenu={handleContextMenu}

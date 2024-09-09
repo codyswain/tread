@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from "@/shared/components/Button";
 import { ScrollArea } from "@/shared/components/ScrollArea";
-import { cn } from "@/shared/utils/utils";
+import { cn } from "@/shared/utils";
 import { Loader2, Settings } from "lucide-react";
 import { toast } from "@/shared/components/Toast";
 import { SimilarNote } from "@/shared/types";

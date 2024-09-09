@@ -21,13 +21,10 @@ def get_embedding(text: str) -> List[float]:
     return response.data[0].embedding
 
 
-def compute_and_store_embedding(note_id: str, content: str) -> None:
-    embedding = get_embedding(content)
-
-    embedding_path = os.path.join(NOTES_DIR, f"{note_id}.embedding.json")
+def compute_and_store_embedding(embedding_path: str, note_content: str) -> None:
+    embedding = get_embedding(note_content)
     with open(embedding_path, "w") as f:
         json.dump({"embedding": embedding}, f)
-
 
 def find_similar_notes(query_embedding: List[float], top_k: int = 5) -> List[str]:
     embeddings: List[List[float]] = []
@@ -59,12 +56,12 @@ def find_similar_notes(query_embedding: List[float], top_k: int = 5) -> List[str
 if __name__ == "__main__":
     action = sys.argv[2]
     if action == "compute":
-        note_id = sys.argv[3]
-        content = sys.argv[4]
-        compute_and_store_embedding(note_id, content)
+        embedding_path = sys.argv[3]
+        note_content = sys.argv[4]
+        compute_and_store_embedding(embedding_path, note_content)
         print(json.dumps({"success": True}))
-    elif action == "find_similar":
-        query = sys.argv[3]
-        query_embedding = get_embedding(query)
-        similar_notes = find_similar_notes(query_embedding)
-        print(json.dumps({"similar_notes": similar_notes}))
+    # elif action == "find_similar":
+    #     query = sys.argv[3]
+    #     query_embedding = get_embedding(query)
+    #     similar_notes = find_similar_notes(query_embedding)
+    #     print(json.dumps({"similar_notes": similar_notes}))

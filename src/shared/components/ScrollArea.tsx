@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
-import { cn } from "@/shared/utils/utils";
+import { cn } from "@/shared/utils";
 
 // ScrollArea: A customizable scrollable area component
 const ScrollArea = React.forwardRef<
