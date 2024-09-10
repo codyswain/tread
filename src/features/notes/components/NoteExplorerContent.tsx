@@ -146,7 +146,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
         ) : (
           Object.entries(directoryStructures).map(
             ([path, structure]) => (
-              <div className="ml-4">
+              <div className="ml-4" key={path}>
                 {renderDirectoryStructure(structure, path)}
               </div>
             )

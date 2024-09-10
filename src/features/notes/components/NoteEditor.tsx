@@ -94,11 +94,11 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
     }
   }, [onSave]);
 
-  useEffect(() => {
-    if (debouncedTitle !== note.title) {
-      saveNote({ ...note, title: debouncedTitle });
-    }
-  }, [debouncedTitle, note, saveNote]);
+  // useEffect(() => {
+  //   if (debouncedTitle !== note.title) {
+  //     saveNote({ ...note, title: debouncedTitle });
+  //   }
+  // }, [debouncedTitle, note, saveNote]);
 
   const handleSaveEmbedding = useCallback(async () => {
     if (editor) {
@@ -128,12 +128,6 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       };
     }
   }, [editor, handleContentChange]);
-
-  useEffect(() => {
-    if (debouncedTitle !== note.title) {
-      saveNote({ ...note, title: debouncedTitle });
-    }
-  }, [debouncedTitle, note, saveNote]);
 
   const applyFormat = useCallback((format: string) => {
     if (editor) {
