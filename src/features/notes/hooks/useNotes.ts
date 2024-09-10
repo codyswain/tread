@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Note, DirectoryStructure, SimilarNote, DirectoryStructures } from "@/shared/types";
+import { Note, DirectoryStructure, SimilarNote, DirectoryStructures, Directory } from "@/shared/types";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -136,17 +136,17 @@ export const useNotes = () => {
     [notes]
   );
 
-  const toggleDirectory = useCallback((dirPath: string) => {
+  const toggleDirectory = useCallback((fileNode: DirectoryStructure) => {
     setExpandedDirs((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(dirPath)) {
-        newSet.delete(dirPath);
+      if (newSet.has(fileNode.fullPath)) {
+        newSet.delete(fileNode.fullPath);
       } else {
-        newSet.add(dirPath);
+        newSet.add(fileNode.fullPath);
       }
       return newSet;
     });
-  }, []);
+  }, [setExpandedDirs]);
 
   const handleCreateFolder = useCallback(() => {
     setIsCreatingFolder(true);

@@ -79,10 +79,8 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         isLoadingFolders={isLoadingFolders}
         loadError={loadError}
         directoryStructures={directoryStructures}
-        expandedDirs={expandedDirs}
         selectedFileNode={activeFileNode}
         onSelectNote={setActiveFileNode}
-        toggleDirectory={toggleDirectory}
         handleContextMenu={handleContextMenu}
         newFolderState={newFolderState}
       />

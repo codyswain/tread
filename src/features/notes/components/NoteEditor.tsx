@@ -4,7 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
-import debounce from 'lodash/debounce';
+import debounce from "lodash/debounce";
 import { toast } from "@/shared/components/Toast";
 import { cn } from "@/shared/utils";
 import {
@@ -68,57 +68,45 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
     setLocalNote(note);
   }, [editor, note]);
 
-  const debouncedSave = useMemo(
-    () => debounce(async (updatedNote: Note) => {
-      setIsSaving(true);
-      try {
-        await onSave(updatedNote);
-        setError(null);
-      } catch (err) {
-        setError("Failed to save note. Please try again.");
-        toast("Error saving note", {
-          description: "An error occurred while saving the note. Please try again.",
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    }, 50),
-    [onSave]
-  );
-
   const debouncedSaveContent = useMemo(
-    () => debounce(async (updatedNote: Note) => {
-      setIsSaving(true);
-      try {
-        await onSave(updatedNote);
-        setError(null);
-      } catch (err) {
-        setError("Failed to save note. Please try again.");
-        toast("Error saving note", {
-          description: "An error occurred while saving the note. Please try again.",
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    }, 500), // Increased debounce time for content changes
+    () =>
+      debounce(async (updatedNote: Note) => {
+        setIsSaving(true);
+        try {
+          await onSave(updatedNote);
+          setError(null);
+        } catch (err) {
+          setError("Failed to save note. Please try again.");
+          toast("Error saving note", {
+            description:
+              "An error occurred while saving the note. Please try again.",
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      }, 500),  
     [onSave]
   );
 
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value;
-    setLocalNote(prev => ({ ...prev, title: newTitle }));
-    onSave({ ...localNote, title: newTitle }).catch(err => {
-      setError("Failed to save note title. Please try again.");
-      toast("Error saving note title", {
-        description: "An error occurred while saving the note title. Please try again.",
+  const handleTitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newTitle = e.target.value;
+      setLocalNote((prev) => ({ ...prev, title: newTitle }));
+      onSave({ ...localNote, title: newTitle }).catch((err) => {
+        setError("Failed to save note title. Please try again.");
+        toast("Error saving note title", {
+          description:
+            "An error occurred while saving the note title. Please try again.",
+        });
       });
-    });
-  }, [localNote, onSave]);
+    },
+    [localNote, onSave]
+  );
 
   const handleContentChange = useCallback(() => {
     if (editor) {
       const content = editor.getHTML();
-      setLocalNote(prev => {
+      setLocalNote((prev) => {
         if (prev.content !== content) {
           const updatedNote = { ...prev, content };
           debouncedSaveContent(updatedNote);
@@ -136,12 +124,14 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
         const content = editor.getHTML();
         await window.electron.saveEmbedding(localNote.id, content);
         toast("Embedding saved successfully", {
-          description: "The note's embedding has been updated for similarity search.",
+          description:
+            "The note's embedding has been updated for similarity search.",
         });
       } catch (error) {
         console.error("Error saving embedding:", error);
         toast("Error saving embedding", {
-          description: "An error occurred while saving the embedding. Please try again.",
+          description:
+            "An error occurred while saving the embedding. Please try again.",
         });
       } finally {
         setIsSavingEmbedding(false);
@@ -158,55 +148,61 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
     }
   }, [editor, handleContentChange]);
 
-  const applyFormat = useCallback((format: string) => {
-    if (editor) {
-      switch (format) {
-        case "bold":
-        case "italic":
-        case "underline":
-          editor.chain().focus().toggleMark(format).run();
-          break;
-        case "bulletList":
-          editor.chain().focus().toggleBulletList().run();
-          break;
-        case "orderedList":
-          editor.chain().focus().toggleOrderedList().run();
-          break;
-        case "codeBlock":
-          editor.chain().focus().toggleCodeBlock().run();
-          break;
-        case "blockquote":
-          editor.chain().focus().toggleBlockquote().run();
-          break;
-        case "highlight":
-          editor.chain().focus().toggleHighlight().run();
-          break;
-        case "alignLeft":
-        case "alignCenter":
-        case "alignRight":
-          editor
-            .chain()
-            .focus()
-            .setTextAlign(format.replace("align", "").toLowerCase())
-            .run();
-          break;
+  const applyFormat = useCallback(
+    (format: string) => {
+      if (editor) {
+        switch (format) {
+          case "bold":
+          case "italic":
+          case "underline":
+            editor.chain().focus().toggleMark(format).run();
+            break;
+          case "bulletList":
+            editor.chain().focus().toggleBulletList().run();
+            break;
+          case "orderedList":
+            editor.chain().focus().toggleOrderedList().run();
+            break;
+          case "codeBlock":
+            editor.chain().focus().toggleCodeBlock().run();
+            break;
+          case "blockquote":
+            editor.chain().focus().toggleBlockquote().run();
+            break;
+          case "highlight":
+            editor.chain().focus().toggleHighlight().run();
+            break;
+          case "alignLeft":
+          case "alignCenter":
+          case "alignRight":
+            editor
+              .chain()
+              .focus()
+              .setTextAlign(format.replace("align", "").toLowerCase())
+              .run();
+            break;
+        }
       }
-    }
-  }, [editor]);
+    },
+    [editor]
+  );
 
-  const toolbarButtons = useMemo(() => [
-    { icon: Bold, format: "bold" },
-    { icon: Italic, format: "italic" },
-    { icon: UnderlineIcon, format: "underline" },
-    { icon: List, format: "bulletList" },
-    { icon: ListOrdered, format: "orderedList" },
-    { icon: AlignLeft, format: "alignLeft" },
-    { icon: AlignCenter, format: "alignCenter" },
-    { icon: AlignRight, format: "alignRight" },
-    { icon: Code, format: "codeBlock" },
-    { icon: Quote, format: "blockquote" },
-    { icon: Highlighter, format: "highlight" },
-  ], []);
+  const toolbarButtons = useMemo(
+    () => [
+      { icon: Bold, format: "bold" },
+      { icon: Italic, format: "italic" },
+      { icon: UnderlineIcon, format: "underline" },
+      { icon: List, format: "bulletList" },
+      { icon: ListOrdered, format: "orderedList" },
+      { icon: AlignLeft, format: "alignLeft" },
+      { icon: AlignCenter, format: "alignCenter" },
+      { icon: AlignRight, format: "alignRight" },
+      { icon: Code, format: "codeBlock" },
+      { icon: Quote, format: "blockquote" },
+      { icon: Highlighter, format: "highlight" },
+    ],
+    []
+  );
 
   if (!editor) {
     return <div>Loading editor...</div>;
