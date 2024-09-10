@@ -17,14 +17,6 @@ interface NoteExplorerContentProps {
     e: React.MouseEvent,
     fileNode: DirectoryStructure
   ) => void;
-  newFolderState: {
-    isCreatingFolder: boolean;
-    newFolderName: string;
-    setNewFolderName: (name: string) => void;
-    confirmCreateFolder: () => void;
-    cancelCreateFolder: () => void;
-    error: string | null;
-  };
 }
 
 export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
@@ -34,9 +26,11 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
   selectedFileNode,
   onSelectNote,
   handleContextMenu,
-  newFolderState,
 }) => {
   const { toggleDirectory, expandedDirs } = useNotesContext();
+  const {
+    newFolderState
+  } = useNotesContext();
 
   const renderDirectoryStructure = (structure: DirectoryStructure) => {
     const fullPath = "/" + structure.fullPath.replace(/^\//, "");

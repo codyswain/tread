@@ -147,6 +147,7 @@ export const useNotes = () => {
   }, [setExpandedDirs]);
 
   const handleCreateFolder = useCallback((fileNode: DirectoryStructure) => {
+    setActiveFileNode(fileNode);
     setIsCreatingFolder(true);
     setNewFolderName("");
     setError(null);
@@ -165,7 +166,7 @@ export const useNotes = () => {
     }
 
     try {
-      await window.electron.createDirectory(`${currentPath}/${newFolderName.trim()}`);
+      await window.electron.createDirectory(`${activeFileNode.fullPath}/${newFolderName.trim()}`);
       setIsCreatingFolder(false);
       setNewFolderName("");
       setError(null);
