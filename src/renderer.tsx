@@ -48,7 +48,7 @@ declare global {
       getOpenAIKey: () => Promise<string>;
       setOpenAIKey: (key: string) => Promise<void>;
       getNotePath: (noteId: string) => Promise<string>;
-      createDirectory: (dirName: string) => Promise<void>;
+      createDirectory: (dirPath: string) => Promise<void>;
       deleteDirectory: (dirName: string) => Promise<void>;
       getTopLevelFolders: () => Promise<string[]>;
       addTopLevelFolder: (folderPath: string) => Promise<string[]>;

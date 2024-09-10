@@ -5,81 +5,63 @@ import { Input } from "@/shared/components/input";
 import { Button } from "@/shared/components/Button";
 import { cn, getFolderName } from "@/shared/utils";
 import { DirectoryStructure } from "@/shared/types";
+import { useNotesContext } from "../context/notesContext";
 
 interface NoteExplorerContentProps {
   isLoadingFolders: boolean;
   loadError: string | null;
   directoryStructures: { [path: string]: DirectoryStructure };
-  expandedDirs: Set<string>;
   selectedFileNode: DirectoryStructure;
   onSelectNote: (file: DirectoryStructure) => void;
-  toggleDirectory: (dirPath: string) => void;
   handleContextMenu: (
     e: React.MouseEvent,
-    itemId: string,
-    itemType: "note" | "folder" | "topLevelFolder",
-    dirPath: string
+    fileNode: DirectoryStructure
   ) => void;
-  newFolderState: {
-    isCreatingFolder: boolean;
-    newFolderName: string;
-    setNewFolderName: (name: string) => void;
-    confirmCreateFolder: () => void;
-    cancelCreateFolder: () => void;
-    error: string | null;
-  };
 }
 
 export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
   isLoadingFolders,
   loadError,
   directoryStructures,
-  expandedDirs,
   selectedFileNode,
   onSelectNote,
-  toggleDirectory,
   handleContextMenu,
-  newFolderState,
 }) => {
-  const renderDirectoryStructure = (
-    structure: DirectoryStructure,
-    currentPath: string
-  ) => {
-    const fullPath = `/${currentPath}/${structure.name}`.replace(/^\//, "");
-  
+  const { toggleDirectory, expandedDirs } = useNotesContext();
+  const {
+    newFolderState
+  } = useNotesContext();
+
+  const renderDirectoryStructure = (structure: DirectoryStructure) => {
+    const fullPath = "/" + structure.fullPath.replace(/^\//, "");
+
     if (structure.type === "note") {
-      return renderNote(structure, currentPath);
+      return renderNote(structure);
     }
-  
+
     return (
       <div key={fullPath}>
-        {renderFolder(structure, fullPath)}
-        {structure.children && (
+        {renderFolder(structure)}
+        {expandedDirs.has(fullPath) && structure.children && (
           <div className="ml-4">
-            {structure.children.map((child) =>
-              renderDirectoryStructure(child, fullPath)
-            )}
+            {structure.children.map((child) => renderDirectoryStructure(child))}
           </div>
         )}
       </div>
     );
   };
-  
-  const renderFolder = (structure: DirectoryStructure, fullPath: string) => {
-    const isExpanded = expandedDirs.has(fullPath);
-    const parentPath = fullPath.split('/').slice(0, -1).join('/');
-  
+
+  const renderFolder = (fileNode: DirectoryStructure) => {
+    const isExpanded = expandedDirs.has(fileNode.fullPath);
     return (
       <div
         className="flex items-center cursor-pointer hover:bg-accent/50 py-1 px-2"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          toggleDirectory(fullPath);
+          toggleDirectory(fileNode);
         }}
-        onContextMenu={(e) =>
-          handleContextMenu(e, structure.name, "folder", parentPath)
-        }
+        onContextMenu={(e) => handleContextMenu(e, fileNode)}
       >
         {isExpanded ? (
           <ChevronDown className="h-4 w-4 mr-1" />
@@ -87,12 +69,12 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
           <ChevronRight className="h-4 w-4 mr-1" />
         )}
         <Folder className="h-4 w-4 mr-1" />
-        <span>{structure.name}</span>
+        <span>{fileNode.name}</span>
       </div>
     );
   };
-  
-  const renderNote = (structure: DirectoryStructure, currentPath: string) => (
+
+  const renderNote = (structure: DirectoryStructure) => (
     <div
       key={structure.fullPath}
       className={cn(
@@ -109,7 +91,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        handleContextMenu(e, structure.noteMetadata.id, "note", currentPath);
+        handleContextMenu(e, structure);
       }}
     >
       <File className="h-4 w-4 mr-2" />
@@ -148,14 +130,9 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
             No folders added yet.
           </div>
         ) : (
-          Object.entries(directoryStructures).map(
-            ([path, structure]) => (
-              <div className="ml-4" key={path}>
-                {renderDirectoryStructure(structure, path)}
-              </div>
-            )
-
-          )
+          Object.entries(directoryStructures).map(([path, fileNode]) => (
+            <div key={path}>{renderDirectoryStructure(fileNode)}</div>
+          ))
         )}
       </div>
     </ScrollArea>

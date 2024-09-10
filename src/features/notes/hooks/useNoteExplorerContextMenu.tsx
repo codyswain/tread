@@ -4,10 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 interface ContextMenuState {
   x: number;
   y: number;
-  itemId: string;
-  itemType: "note" | "folder" | "topLevelFolder";
-  dirPath: string;
-  fileNode?: DirectoryStructure;
+  fileNode: DirectoryStructure;
 }
 
 export const useNoteExplorerContextMenu = () => {
@@ -16,20 +13,14 @@ export const useNoteExplorerContextMenu = () => {
   const handleContextMenu = useCallback(
     (
       e: React.MouseEvent,
-      itemId: string,
-      itemType: "note" | "folder" | "topLevelFolder",
-      dirPath: string,
-      fileNode?: DirectoryStructure
+      fileNode: DirectoryStructure
     ) => {
       e.preventDefault();
       e.stopPropagation();
       setContextMenu({
         x: e.clientX,
         y: e.clientY,
-        itemId,
-        itemType,
-        dirPath,
-        fileNode,
+        fileNode
       });
     },
     []

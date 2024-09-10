@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Note, DirectoryStructure, SimilarNote, DirectoryStructures } from "@/shared/types";
+import { Note, DirectoryStructure, SimilarNote, DirectoryStructures, Directory } from "@/shared/types";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -48,7 +48,6 @@ export const useNotes = () => {
     setIsLoading(true);
     try {
       const topLevelDirPath = await window.electron.getTopLevelFolders();
-      console.log(`Top level directories: ${topLevelDirPath}`);
 
       // for each top level folder path, fetch the directory structure.
       // this is done in the app side code so that we can later add dynamic loading
@@ -73,7 +72,6 @@ export const useNotes = () => {
 
   const createNote = useCallback(
     async (dirPath: string) => {
-      console.log(`Attempting to create note with dirPath=${dirPath}`)
       const timestamp = new Date().toISOString();
       const newNote: Note = {
         id: uuidv4(),
@@ -136,19 +134,20 @@ export const useNotes = () => {
     [notes]
   );
 
-  const toggleDirectory = useCallback((dirPath: string) => {
+  const toggleDirectory = useCallback((fileNode: DirectoryStructure) => {
     setExpandedDirs((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(dirPath)) {
-        newSet.delete(dirPath);
+      if (newSet.has(fileNode.fullPath)) {
+        newSet.delete(fileNode.fullPath);
       } else {
-        newSet.add(dirPath);
+        newSet.add(fileNode.fullPath);
       }
       return newSet;
     });
-  }, []);
+  }, [setExpandedDirs]);
 
-  const handleCreateFolder = useCallback(() => {
+  const handleCreateFolder = useCallback((fileNode: DirectoryStructure) => {
+    setActiveFileNode(fileNode);
     setIsCreatingFolder(true);
     setNewFolderName("");
     setError(null);
@@ -167,7 +166,7 @@ export const useNotes = () => {
     }
 
     try {
-      await window.electron.createDirectory(`${currentPath}/${newFolderName.trim()}`);
+      await window.electron.createDirectory(`${activeFileNode.fullPath}/${newFolderName.trim()}`);
       setIsCreatingFolder(false);
       setNewFolderName("");
       setError(null);

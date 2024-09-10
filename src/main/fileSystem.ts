@@ -48,9 +48,9 @@ export const setupFileSystem = async () => {
   });
 
   // Add new IPC handlers
-  ipcMain.handle("create-directory", async (_, dirName: string) => {
+  ipcMain.handle("create-directory", async (_, dirPath: string) => {
     try {
-      await createDirectory(dirName);
+      await createDirectory(dirPath);
     } catch (error) {
       console.error("Error creating directory:", error);
       throw error;
@@ -173,8 +173,7 @@ export const getOpenAIKey = async (): Promise<string> => {
 };
 
 const createDirectory = async (dirPath: string) => {
-  const fullPath = path.join(NOTES_DIR, dirPath);
-  await fs.mkdir(fullPath, { recursive: true });
+  await fs.mkdir(dirPath, { recursive: true });
 };
 
 const deleteDirectory = async (dirPath: string) => {
