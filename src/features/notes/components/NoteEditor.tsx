@@ -53,7 +53,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
     ],
-    content: localNote.content,
+    content: note.content,
     editorProps: {
       attributes: {
         class: "prose dark:prose-invert max-w-none focus:outline-none",
@@ -62,8 +62,11 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   });
 
   useEffect(() => {
+    if (editor && note.content !== editor.getHTML()) {
+      editor.commands.setContent(note.content);
+    }
     setLocalNote(note);
-  }, [note]);
+  }, [editor, note]);
 
   const debouncedSave = useMemo(
     () => debounce(async (updatedNote: Note) => {
@@ -94,10 +97,14 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
 
   const handleContentChange = useCallback(() => {
     if (editor) {
+      const content = editor.getHTML();
       setLocalNote(prev => {
-        const updatedNote = { ...prev, content: editor.getHTML() };
-        debouncedSave(updatedNote);
-        return updatedNote;
+        if (prev.content !== content) {
+          const updatedNote = { ...prev, content };
+          debouncedSave(updatedNote);
+          return updatedNote;
+        }
+        return prev;
       });
     }
   }, [editor, debouncedSave]);
@@ -291,4 +298,4 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   );
 };
 
-export default React.memo(NoteEditor);
+export default NoteEditor;

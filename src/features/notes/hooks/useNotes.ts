@@ -16,7 +16,6 @@ export const useNotes = () => {
   const [activeFileNode, setActiveFileNode] = useState<DirectoryStructure | null>(null);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
 
-  // const [activeNote, setActiveNote] = useState<string | null>(null);
   const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

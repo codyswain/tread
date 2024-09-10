@@ -36,6 +36,7 @@ const Notes: React.FC = () => {
 
   const handleSelection = useCallback(
     (fileNode: DirectoryStructure) => {
+      console.log(`set active file node=${fileNode.fullPath}`)
       setActiveFileNode(fileNode);
     },
     [setActiveFileNode]
