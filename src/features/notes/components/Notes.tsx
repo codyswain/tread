@@ -1,8 +1,7 @@
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
-import { DirectoryStructure, NoteMetadata } from "@/shared/types";
 import { useNotesContext } from "../context/notesContext";
 
 const Notes: React.FC = () => {
