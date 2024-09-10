@@ -15,9 +15,7 @@ interface NoteExplorerContentProps {
   onSelectNote: (file: DirectoryStructure) => void;
   handleContextMenu: (
     e: React.MouseEvent,
-    itemId: string,
-    itemType: "note" | "folder" | "topLevelFolder",
-    dirPath: string
+    fileNode: DirectoryStructure
   ) => void;
   newFolderState: {
     isCreatingFolder: boolean;
@@ -41,7 +39,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
   const { toggleDirectory, expandedDirs } = useNotesContext();
 
   const renderDirectoryStructure = (structure: DirectoryStructure) => {
-    const fullPath = '/' + structure.fullPath.replace(/^\//, "");
+    const fullPath = "/" + structure.fullPath.replace(/^\//, "");
 
     if (structure.type === "note") {
       return renderNote(structure);
@@ -69,9 +67,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
           e.stopPropagation();
           toggleDirectory(fileNode);
         }}
-        onContextMenu={(e) =>
-          handleContextMenu(e, fileNode)
-        }
+        onContextMenu={(e) => handleContextMenu(e, fileNode)}
       >
         {isExpanded ? (
           <ChevronDown className="h-4 w-4 mr-1" />
@@ -101,12 +97,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        handleContextMenu(
-          e,
-          structure.noteMetadata.id,
-          "note",
-          structure.fullPath
-        );
+        handleContextMenu(e, structure);
       }}
     >
       <File className="h-4 w-4 mr-2" />

@@ -31,7 +31,7 @@ const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
   onCopyFilePath,
   onOpenNoteInNewTab,
 }) => {
-  const { handleCreateFolder, createNote } = useNotesContext();
+  const { handleCreateFolder, createNote, deleteFileNode } = useNotesContext();
   if (!contextMenu) return null;
   const { x, y, fileNode } = contextMenu;
 
@@ -61,7 +61,7 @@ const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
         icon={Trash2}
         label="Delete"
         onClick={() => {
-          onDelete();
+          deleteFileNode(fileNode);
           onClose();
         }}
         className="text-destructive"
