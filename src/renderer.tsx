@@ -31,13 +31,13 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { DirectoryStructure, Note } from "./types";
+import { DirectoryStructure, Note } from "./shared/types";
 
 declare global {
   interface Window {
     electron: {
       loadNotes: () => Promise<DirectoryStructure>;
-      saveNote: (note: Note, dirPath: string) => Promise<void>;
+      saveNote: (note: Note, dirPath: string) => Promise<string>;
       deleteNote: (noteId: string, dirPath: string) => Promise<void>;
       minimize: () => void;
       maximize: () => void;
@@ -51,8 +51,16 @@ declare global {
       createDirectory: (dirName: string) => Promise<void>;
       deleteDirectory: (dirName: string) => Promise<void>;
       getTopLevelFolders: () => Promise<string[]>;
-      addTopLevelFolder: (folderPath: string) => Promise<void>;
-      removeTopLevelFolder: (folderPath: string) => Promise<void>;
+      addTopLevelFolder: (folderPath: string) => Promise<string[]>;
+      removeTopLevelFolder: (folderPath: string) => Promise<string[]>;
+      openFolderDialog: () => Promise<string>;
+
+      getDirectoryStructure: (dirPath: string) => Promise<DirectoryStructure>;
+      loadNote: (dirPath: string) => Promise<Note>;
+      deleteFileNode: (
+        fileNodeType: string,
+        fileNodePath: string
+      ) => Promise<void>;
     };
   }
 }

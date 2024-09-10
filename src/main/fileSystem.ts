@@ -2,8 +2,11 @@ import { ipcMain, app } from "electron";
 import fs from "fs/promises";
 import path from "path";
 import { runEmbeddingScript } from "./pythonBridge";
-import { DirectoryStructure, Note } from "@/types";
+import { DirectoryStructure, Note } from "@/shared/types";
+import { v4 as uuidv4 } from "uuid";
 
+// Special delimiter used for parsing notes from non-notes
+const NOTE_DELIMITER = "___";
 export const NOTES_DIR = path.join(app.getPath("userData"), "notes");
 
 // Create a config file path
@@ -20,12 +23,26 @@ export const setupFileSystem = async () => {
     await fs.writeFile(CONFIG_FILE, JSON.stringify({}));
   }
 
-  // Modify the existing loadNotes function
-  ipcMain.handle("load-notes", async () => {
+  ipcMain.handle("load-notes", async (_, dirPath: string) => {
     try {
-      return await loadDirectoryStructure();
+      return await loadDirectoryStructure(dirPath);
     } catch (error) {
       console.error("Error loading notes:", error);
+      throw error;
+    }
+  });
+
+  // Load a single note based on path
+  ipcMain.handle("load-note", async (_, notePath: string) => {
+    try {
+      const noteContent = await fs.readFile(notePath, "utf-8");
+      const note: Note = JSON.parse(noteContent);
+      console.log(
+        `Note loaded successfully: id=${note.id}, title=${note.title}`
+      );
+      return note;
+    } catch (error) {
+      console.error("Error loading note:", error);
       throw error;
     }
   });
@@ -49,21 +66,26 @@ export const setupFileSystem = async () => {
     }
   });
 
-  ipcMain.handle("save-note", async (_, note, dirPath = "") => {
+  ipcMain.handle("save-note", async (_, note: Note, filePath: string) => {
     try {
-      const notePath = path.join(NOTES_DIR, dirPath, `${note.id}.json`);
-      await fs.mkdir(path.dirname(notePath), { recursive: true });
-      await fs.writeFile(notePath, JSON.stringify(note));
-      return notePath;
+      const folderName = path.dirname(filePath);
+      const fileName = `${note.id}.json`;
+      const newFilePath = path.join(filePath, fileName);
+      await fs.mkdir(folderName, { recursive: true });
+      await fs.writeFile(newFilePath, JSON.stringify(note));
+      console.log(`Note saved successfully with newFilePath=${newFilePath}`);
+      return newFilePath;
     } catch (error) {
       console.error("Error saving note:", error);
       throw error;
     }
   });
 
-  ipcMain.handle("save-embedding", async (_, noteId, content) => {
+  ipcMain.handle("save-embedding", async (_, note: Note, dirPath = "") => {
     try {
-      await runEmbeddingScript("compute", noteId, content);
+      const embeddingPath = path.join(dirPath, `${note.id}.embedding.json`);
+      const embeddingContent = note.title + note.content; // TODO: improve this
+      await runEmbeddingScript("compute", embeddingPath, embeddingContent);
     } catch (error) {
       console.error("Error saving embedding:", error);
       throw error;
@@ -72,8 +94,18 @@ export const setupFileSystem = async () => {
 
   ipcMain.handle("delete-note", async (_, noteId, dirPath = "") => {
     try {
-      const notePath = path.join(NOTES_DIR, dirPath, `${noteId}.json`);
-      await fs.unlink(notePath);
+      const files = await fs.readdir(dirPath);
+      const noteFile = files.find(
+        (file) =>
+          file.startsWith(`${noteId}${NOTE_DELIMITER}`) &&
+          file.endsWith(".json")
+      );
+      if (noteFile) {
+        const notePath = path.join(dirPath, noteFile);
+        await fs.unlink(notePath);
+      } else {
+        throw new Error(`Note with id ${noteId} not found in ${dirPath}`);
+      }
     } catch (error) {
       console.error("Error deleting note:", error);
       throw error;
@@ -103,6 +135,31 @@ export const setupFileSystem = async () => {
       throw error;
     }
   });
+
+  ipcMain.handle("get-directory-structure", async (_, dirPath: string) => {
+    try {
+      const dirStructure = await loadDirectoryStructure(dirPath);
+      return dirStructure;
+    } catch (error) {
+      console.error(`error loading directory structure for dirPath=${dirPath}`);
+    }
+  });
+
+  ipcMain.handle("delete-file-node", async (_, fileNodeType: string, fileNodePath: string) => {
+    if (fileNodeType === "directory") {
+      try {
+        await fs.rm(fileNodePath, { recursive: true, force: true });
+      } catch (err) {
+        console.error(`Error deleting directory fileNode with path: ${fileNodePath}`);
+      }
+    } else if (fileNodeType === "note") {
+      try {
+        await fs.unlink(fileNodePath);
+      } catch (err) {
+        console.error(`Error deleting note fileNode with fileNodePath: ${fileNodePath}`);
+      }
+    }
+  });
 };
 
 export const getOpenAIKey = async (): Promise<string> => {
@@ -125,33 +182,67 @@ const deleteDirectory = async (dirPath: string) => {
   await fs.rm(fullPath, { recursive: true, force: true });
 };
 
-const loadDirectoryStructure = async (): Promise<DirectoryStructure> => {
-  const readDir = async (dir: string): Promise<DirectoryStructure> => {
-    const name = path.basename(dir);
-    const structure: DirectoryStructure = {
-      name,
-      type: "directory",
-      children: [],
-    };
-    const entries = await fs.readdir(dir, { withFileTypes: true });
-
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        structure.children!.push(await readDir(path.join(dir, entry.name)));
-      } else if (
-        entry.isFile() &&
-        entry.name.endsWith(".json") &&
-        !entry.name.endsWith(".embedding.json")
-      ) {
-        const filePath = path.join(dir, entry.name);
-        const content = await fs.readFile(filePath, "utf-8");
-        const note: Note = JSON.parse(content);
-        structure.children!.push({ name: note.title, type: "note", note });
-      }
-    }
-
-    return structure;
+// Recursively create node representation of a directory
+const loadDirectoryStructure = async (
+  dirPath: string
+): Promise<DirectoryStructure> => {
+  const dirName = path.basename(dirPath);
+  const structure: DirectoryStructure = {
+    name: dirName,
+    type: "directory",
+    children: [],
+    fullPath: dirPath,
   };
 
-  return await readDir(NOTES_DIR);
+  const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+  for (const entry of entries) {
+    const childPath = path.join(dirPath, entry.name);
+
+    if (entry.isDirectory()) {
+      structure.children?.push(await loadDirectoryStructure(childPath));
+    } else if (
+      entry.isFile() &&
+      entry.name.endsWith(".json") &&
+      !entry.name.endsWith(".embedding.json")
+    ) {
+      try {
+        const noteContent = await fs.readFile(childPath, "utf-8");
+        const note: Note = JSON.parse(noteContent);
+        structure.children?.push({
+          name: note.title,
+          type: "note",
+          noteMetadata: {
+            id: note.id,
+            title: note.title,
+          },
+          fullPath: childPath,
+        });
+      } catch (error) {
+        console.error(`Error reading note file ${childPath}:`, error);
+      }
+    }
+  }
+
+  return structure;
 };
+
+const deleteFileNode = async (fileNodeType: string, fileNodePath: string) => {
+  if (fileNodeType === "directory") {
+    try {
+      await fs.rm(fileNodePath, { recursive: true, force: true });
+    } catch (err) {
+      console.error(`Error deleting directory fileNode with path: ${fileNodePath}`);
+    }
+  } else if (fileNodeType === "note") {
+    try {
+      await fs.unlink(fileNodePath);
+    } catch (err) {
+      console.error(`Error deleting note fileNode with fileNodePath: ${fileNodePath}`);
+    }
+  }
+};
+
+export function sanitizeFilename(filename: string) {
+  return filename.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+}

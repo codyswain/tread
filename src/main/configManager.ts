@@ -1,23 +1,27 @@
-import { app } from "electron";
-import fs from "fs/promises";
-import path from "path";
+import { app } from 'electron';
+import fs from 'fs/promises';
+import path from 'path';
 
 interface Config {
   topLevelFolders: string[];
 }
 
-const CONFIG_FILE = path.join(app.getPath("userData"), "config.json");
+const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
+console.log(`CONFIG_FILE=${CONFIG_FILE}`)
 
 async function readConfig(): Promise<Config> {
   try {
-    const data = await fs.readFile(CONFIG_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      // File doesn't exist, return default config
-      return { topLevelFolders: [] };
+    const data = await fs.readFile(CONFIG_FILE, 'utf-8');
+    const config = JSON.parse(data);
+    // Ensure topLevelFolders is always an array
+    if (!Array.isArray(config.topLevelFolders)) {
+      config.topLevelFolders = [];
     }
-    throw error;
+    return config;
+  } catch (error) {
+    console.error('Error reading config:', error);
+    // Return default config if file doesn't exist or is invalid
+    return { topLevelFolders: [] };
   }
 }
 
@@ -40,8 +44,6 @@ export async function addTopLevelFolder(folderPath: string): Promise<void> {
 
 export async function removeTopLevelFolder(folderPath: string): Promise<void> {
   const config = await readConfig();
-  config.topLevelFolders = config.topLevelFolders.filter(
-    (path) => path !== folderPath
-  );
+  config.topLevelFolders = config.topLevelFolders.filter(path => path !== folderPath);
   await writeConfig(config);
 }

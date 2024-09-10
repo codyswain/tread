@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Home from "./containers/Home";
-import Notes from "./containers/notes/Notes";
-import MediaGallery from "./containers/MediaGallery";
-import Settings from "./containers/Settings";
-import { TooltipProvider } from "@/components/ui/Tooltip";
-import { Toaster } from "@/components/ui/Toast";
+import GlobalStyles from "@/styles/GlobalStyles";
 
-import GlobalStyles from "./styles/GlobalStyles";
-import "./index.css";
-import { ThemeProvider } from "./components/ThemeProvider";
+import "@/index.css";
+import { ThemeProvider } from "@/features/theme";
+import { Settings, SettingsProvider } from "@/features/settings";
+import { Notes } from "@/features/notes";
+import { Toaster } from "@/shared/components/Toast";
+import { TooltipProvider } from "@/shared/components/Tooltip";
+import { Navbar, navbarItems } from "@/features/navbar";
+import { Feed } from "@/features/feed";
+import { NotesProvider } from "./features/notes/context/notesContext";
 
 const App: React.FC = () => {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -21,38 +21,30 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider>
-      <TooltipProvider>
-        <GlobalStyles />
-        <Toaster />
-        <Router>
-          <div className="flex flex-col h-screen">
-            <Navbar
-              isLeftSidebarOpen={isLeftSidebarOpen}
-              isRightSidebarOpen={isRightSidebarOpen}
-              toggleLeftSidebar={toggleLeftSidebar}
-              toggleRightSidebar={toggleRightSidebar}
-            />
-            <main className="flex-grow pt-10">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route
-                  path="/notes"
-                  element={
-                    <Notes
-                      isLeftSidebarOpen={isLeftSidebarOpen}
-                      isRightSidebarOpen={isRightSidebarOpen}
-                      toggleLeftSidebar={toggleLeftSidebar}
-                      toggleRightSidebar={toggleRightSidebar}
-                    />
-                  }
+      <SettingsProvider>
+        <TooltipProvider>
+          <NotesProvider>
+            <GlobalStyles />
+            <Toaster />
+            <Router>
+              <div className="flex flex-col h-screen">
+                <Navbar
+                  toggleLeftSidebar={toggleLeftSidebar}
+                  toggleRightSidebar={toggleRightSidebar}
+                  items={navbarItems}
                 />
-                <Route path="/media" element={<MediaGallery />} />
-                <Route path="/settings" element={<Settings />} />
-              </Routes>
-            </main>
-          </div>
-        </Router>
-      </TooltipProvider>
+                <main className="flex-grow pt-10">
+                  <Routes>
+                    <Route path="/" element={<Feed />} />
+                    <Route path="/notes" element={<Notes />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Routes>
+                </main>
+              </div>
+            </Router>
+          </NotesProvider>
+        </TooltipProvider>
+      </SettingsProvider>
     </ThemeProvider>
   );
 };
