@@ -82,18 +82,38 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       } finally {
         setIsSaving(false);
       }
-    }, 500),
+    }, 50),
+    [onSave]
+  );
+
+  const debouncedSaveContent = useMemo(
+    () => debounce(async (updatedNote: Note) => {
+      setIsSaving(true);
+      try {
+        await onSave(updatedNote);
+        setError(null);
+      } catch (err) {
+        setError("Failed to save note. Please try again.");
+        toast("Error saving note", {
+          description: "An error occurred while saving the note. Please try again.",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    }, 500), // Increased debounce time for content changes
     [onSave]
   );
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newTitle = e.target.value;
-    setLocalNote(prev => {
-      const updatedNote = { ...prev, title: newTitle };
-      debouncedSave(updatedNote);
-      return updatedNote;
+    setLocalNote(prev => ({ ...prev, title: newTitle }));
+    onSave({ ...localNote, title: newTitle }).catch(err => {
+      setError("Failed to save note title. Please try again.");
+      toast("Error saving note title", {
+        description: "An error occurred while saving the note title. Please try again.",
+      });
     });
-  }, [debouncedSave]);
+  }, [localNote, onSave]);
 
   const handleContentChange = useCallback(() => {
     if (editor) {
@@ -101,13 +121,13 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       setLocalNote(prev => {
         if (prev.content !== content) {
           const updatedNote = { ...prev, content };
-          debouncedSave(updatedNote);
+          debouncedSaveContent(updatedNote);
           return updatedNote;
         }
         return prev;
       });
     }
-  }, [editor, debouncedSave]);
+  }, [editor, debouncedSaveContent]);
 
   const handleSaveEmbedding = useCallback(async () => {
     if (editor) {

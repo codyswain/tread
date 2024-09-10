@@ -6,25 +6,18 @@ import { Loader2, Settings } from "lucide-react";
 import { toast } from "@/shared/components/Toast";
 import { SimilarNote } from "@/shared/types";
 import { useResizableSidebar } from '@/shared/hooks/useResizableSidebar';
+import { useNotesContext } from '../context/notesContext';
 
 interface RelatedNotesProps {
-  currentNoteId: string;
   isOpen: boolean;
   onResize: (width: number) => void;
   onClose: () => void;
-  currentNoteContent: string;
-  onOpenNote: (noteId: string) => void;
-  isSimilarNotesLoading: boolean;
-  similarNotes: SimilarNote[];
 }
 
 const RelatedNotes: React.FC<RelatedNotesProps> = ({
   isOpen,
   onResize,
-  onClose,
-  onOpenNote,
-  similarNotes,
-  isSimilarNotesLoading,
+  onClose
 }) => {
   const { width, sidebarRef, startResizing } = useResizableSidebar({
     minWidth: 100,
@@ -36,9 +29,24 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
     side: "right",
   });
 
-  const handleOpenNote = (noteId: string) => {
-    onOpenNote(noteId);
-  };
+  const {
+    directoryStructures,
+    createNote,
+    activeFileNode,
+    setActiveFileNode,
+    deleteFileNode,
+    handleCreateFolder,
+    expandedDirs,
+    toggleDirectory,
+    newFolderState,
+
+    
+    similarNotes,
+  } = useNotesContext();
+
+  // const handleOpenNote = (noteId: string) => {
+  //   onOpenNote(noteId);
+  // };
 
   const handleSettingsClick = () => {
     toast("Settings feature is not implemented yet", {
@@ -58,7 +66,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
       <div className="flex justify-between items-center p-2 h-10 border-b border-border">
         <span className="font-semibold text-sm">Related Notes</span>
       </div>
-      <ScrollArea className="h-[calc(100%-5rem)]">
+      {/* <ScrollArea className="h-[calc(100%-5rem)]">
         <div className="p-4">
           {isSimilarNotesLoading ? (
             <div className="flex items-center justify-center h-20">
@@ -72,7 +80,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
                     <li
                       key={note.id}
                       className="cursor-pointer hover:bg-accent/10 p-2 rounded"
-                      onClick={() => handleOpenNote(note.id)}
+                      onClick={() => handleOpenNote(note.)}
                     >
                       <h3 className="font-semibold mb-1">{note.title}</h3>
                       <div
@@ -88,7 +96,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
             </>
           )}
         </div>
-      </ScrollArea>
+      </ScrollArea> */}
       <div className="absolute bottom-2 right-2">
         <Button
           variant="ghost"

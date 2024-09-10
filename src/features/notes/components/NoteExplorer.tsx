@@ -1,45 +1,26 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Settings } from "lucide-react";
 import { useResizableSidebar } from "@/shared/hooks/useResizableSidebar";
 import { Button } from "@/shared/components/Button";
 import { toast } from "@/shared/components/Toast";
 import { cn } from "@/shared/utils";
-import { DirectoryStructure, DirectoryStructures, Note } from "@/shared/types";
-import { useNoteExplorerState } from "../hooks/useNoteExplorerState";
 import { useTopLevelFolders } from "../hooks/useNoteExplorerTopLevelFolder";
 import { useNoteExplorerContextMenu } from "../hooks/useNoteExplorerContextMenu";
 import { NoteExplorerHeader } from "./NoteExplorerHeader";
 import NoteExplorerContextMenu from "./NoteExplorerContextMenu";
 import { NoteExplorerContent } from "./NoteExplorerContent";
+import { useNotesContext } from "../context/notesContext";
 
 interface NoteExplorerProps {
   isOpen: boolean;
-  directoryStructures: DirectoryStructures;
-  selectedFileNode: DirectoryStructure;
-  onSelectNote: (file: DirectoryStructure) => void;
-  onCreateNote: (dirPath: string) => void;
-  onDelete: (fileNode: DirectoryStructure) => void;
   onResize: (width: number) => void;
   onClose: () => void;
-  onCopyFilePath: (noteId: string) => void;
-  onOpenNoteInNewTab: (noteId: string) => void;
-  onCreateDirectory: (dirPath: string) => void;
-  onDeleteDirectory: (dirPath: string) => void;
 }
 
 const NoteExplorer: React.FC<NoteExplorerProps> = ({
-  directoryStructures,
   isOpen,
-  selectedFileNode,
-  onSelectNote,
-  onCreateNote,
-  onDelete,
   onResize,
-  onClose,
-  onCopyFilePath,
-  onOpenNoteInNewTab,
-  onCreateDirectory,
-  onDeleteDirectory,
+  onClose
 }) => {
   const { width, sidebarRef, startResizing } = useResizableSidebar({
     minWidth: 100,
@@ -51,26 +32,23 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
     side: "left",
   });
 
+  const { isLoadingFolders, loadError, handleAddTopLevelFolder } = useTopLevelFolders();
+  const { contextMenu, handleContextMenu, closeContextMenu } = useNoteExplorerContextMenu();
   const {
+    directoryStructures,
+    createNote,
+    activeFileNode,
+    setActiveFileNode,
+    deleteFileNode,
+    handleCreateFolder,
     expandedDirs,
     toggleDirectory,
-    currentPath,
-    setCurrentPath,
-    handleCreateFolder,
-    newFolderState,
-  } = useNoteExplorerState(onCreateDirectory);
-
-  const {
-    isLoadingFolders,
-    loadError,
-    handleAddTopLevelFolder,
-  } = useTopLevelFolders();
-
-  const { contextMenu, handleContextMenu, closeContextMenu } = useNoteExplorerContextMenu();
+    newFolderState
+  } = useNotesContext();
 
   const handleDelete = () => {
-    if (contextMenu.fileNode){
-      onDelete(contextMenu.fileNode)
+    if (contextMenu.fileNode) {
+      deleteFileNode(contextMenu.fileNode)
     }
   }
 
@@ -87,17 +65,14 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         contextMenu={contextMenu}
         onClose={closeContextMenu}
         onDelete={handleDelete}
-        onCreateFile={() => contextMenu && onCreateNote(contextMenu.dirPath)}
+        onCreateFile={() => contextMenu && createNote(contextMenu.dirPath)}
         onCreateFolder={handleCreateFolder}
-        onCopyFilePath={onCopyFilePath}
-        onOpenNoteInNewTab={onOpenNoteInNewTab}
+        onCopyFilePath={() => {console.log('IMPLEMENT COPY FILE PATH')}}
+        onOpenNoteInNewTab={() => {console.log('IMPLEMENT OPEN NOTE IN NEW TAB')}}
       />
       <NoteExplorerHeader
-        onCreateNote={() => onCreateNote("")}
-        onCreateFolder={() => {
-          setCurrentPath("");
-          handleCreateFolder();
-        }}
+        onCreateNote={() => console.log('IMPLEMENT CREATE NEW NOTE')}
+        onCreateFolder={() => {console.log('IMPLEMENT CREATE NEW FOLDER')}}
         onAddTopLevelFolder={handleAddTopLevelFolder}
       />
       <NoteExplorerContent
@@ -105,8 +80,8 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         loadError={loadError}
         directoryStructures={directoryStructures}
         expandedDirs={expandedDirs}
-        selectedFileNode={selectedFileNode}
-        onSelectNote={onSelectNote}
+        selectedFileNode={activeFileNode}
+        onSelectNote={setActiveFileNode}
         toggleDirectory={toggleDirectory}
         handleContextMenu={handleContextMenu}
         newFolderState={newFolderState}

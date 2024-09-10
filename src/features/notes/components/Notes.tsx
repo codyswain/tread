@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from "react";
-import { useNotes } from "../hooks/useNotes";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
 import { DirectoryStructure, NoteMetadata } from "@/shared/types";
+import { useNotesContext } from "../context/notesContext";
 
 const Notes: React.FC = () => {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -11,12 +11,10 @@ const Notes: React.FC = () => {
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(256);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(256);
   const {
-    notes,
     directoryStructures,
-    similarNotes,
     createNote,
     saveNote,
-
+    similarNotes,
     findSimilarNotes,
     activeNotePath,
     setActiveNotePath,
@@ -24,53 +22,14 @@ const Notes: React.FC = () => {
     activeFileNode,
     setActiveFileNode,
     deleteFileNode,
-  } = useNotes();
-
-  const handleLeftSidebarResize = (width: number) => {
-    setLeftSidebarWidth(width);
-  };
-
-  const handleRightSidebarResize = (width: number) => {
-    setRightSidebarWidth(width);
-  };
-
-  const handleSelection = useCallback(
-    (fileNode: DirectoryStructure) => {
-      console.log(`set active file node=${fileNode.fullPath}`)
-      setActiveFileNode(fileNode);
-    },
-    [setActiveFileNode]
-  );
-
-  const handleCreateNote = useCallback(
-    (dirPath: string) => {
-      console.log("handler to create note with dirPath: ", dirPath);
-      createNote(dirPath);
-    },
-    [createNote]
-  );
+  } = useNotesContext();
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <NoteExplorer
         isOpen={isLeftSidebarOpen}
-        directoryStructures={directoryStructures}
-        selectedFileNode={activeFileNode}
-        onSelectNote={handleSelection}
-        onCreateNote={handleCreateNote}
-        onDelete={deleteFileNode}
-        onResize={handleLeftSidebarResize}
+        onResize={setLeftSidebarWidth}
         onClose={() => setIsLeftSidebarOpen(false)}
-        onCopyFilePath={(noteId) => console.log("Copy file path:", noteId)} // TODO: Implement this function
-        onOpenNoteInNewTab={(noteId) =>
-          console.log("Open note in new tab:", noteId)
-        } // TODO: Implement this function
-        onCreateDirectory={(dirPath) =>
-          console.log("Create directory:", dirPath)
-        } // TODO: Implement this function
-        onDeleteDirectory={(dirPath) =>
-          console.log("Delete directory:", dirPath)
-        } // TODO: Implement this function
       />
       <main
         className="flex-grow flex flex-col overflow-hidden"
@@ -82,18 +41,11 @@ const Notes: React.FC = () => {
       >
         {activeNote && <NoteEditor note={activeNote} onSave={saveNote} />}
       </main>
-      {/* <RelatedNotes
+      <RelatedNotes
         isOpen={isRightSidebarOpen}
-        onResize={handleRightSidebarResize}
+        onResize={(width: number) => {setRightSidebarWidth(width)}}
         onClose={() => setIsRightSidebarOpen(false)}
-        currentNoteId={activeNote || ""}
-        currentNoteContent={
-          notes.find((note) => note.id === activeNote)?.content || ""
-        }
-        onOpenNote={handleSelection}
-        isSimilarNotesLoading={false} // Implement loading state
-        similarNotes={similarNotes}
-      /> */}
+      />
     </div>
   );
 };

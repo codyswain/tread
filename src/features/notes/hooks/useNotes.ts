@@ -1,23 +1,29 @@
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Note, DirectoryStructure, SimilarNote } from "@/shared/types";
+import { Note, DirectoryStructure, SimilarNote, DirectoryStructures } from "@/shared/types";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
-
-  const [directoryStructures, setDirectoryStructures] = useState<
-    { [key: string]: DirectoryStructure } | undefined
-  >({
-    undefined: { name: "", type: "directory", children: [], fullPath: "" },
+  const [directoryStructures, setDirectoryStructures] = useState<DirectoryStructures | undefined>({
+    'undefined': {
+      name: 'undefined',
+      type: 'directory',
+      fullPath: 'undefined'
+    }
   });
-
   const [activeNotePath, setActiveNotePath] = useState<string | null>(null);
-
   const [activeFileNode, setActiveFileNode] = useState<DirectoryStructure | null>(null);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
-
   const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // File System Explorer State
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const [currentPath, setCurrentPath] = useState<string>("");
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
 
   // Load the active note based on setting the active note path
   useEffect(() => {
@@ -46,44 +52,14 @@ export const useNotes = () => {
 
       // for each top level folder path, fetch the directory structure.
       // this is done in the app side code so that we can later add dynamic loading
-      const allDirStructures: { [key: string]: DirectoryStructure } = {};
+      const allDirStructures: DirectoryStructures = {};
       for (const dirPath of topLevelDirPath) {
         const dirStructure = await window.electron.getDirectoryStructure(
           dirPath
         );
         allDirStructures[dirPath] = dirStructure;
       }
-      // store the entire set of file nodes
       setDirectoryStructures(allDirStructures);
-      // const printAllDirStructures = (allDirStructures: {
-      //   [key: string]: DirectoryStructure;
-      // }): void => {
-      //   console.log("All Directory Structures:");
-      //   console.log("========================");
-      //   for (const [path, structure] of Object.entries(allDirStructures)) {
-      //     console.log(`\nRoot: ${path}`);
-      //     printDirectoryStructure(structure);
-      //   }
-      // };
-
-      // const printDirectoryStructure = (
-      //   structure: DirectoryStructure,
-      //   indent = ""
-      // ): void => {
-      //   console.log(`${indent}${structure.name} (${structure.type})`);
-
-      //   if (structure.type === "directory" && structure.children) {
-      //     structure.children.forEach((child) => {
-      //       if (child.type === "directory") {
-      //         printDirectoryStructure(child, indent + "  ");
-      //       } else {
-      //         console.log(`${indent}  ${child.name} (${child.type})`);
-      //       }
-      //     });
-      //   }
-      // };
-
-      // printAllDirStructures(allDirStructures);
     } catch (error) {
       console.error("Error loading notes:", error);
     } finally {
@@ -91,41 +67,9 @@ export const useNotes = () => {
     }
   }, []);
 
-  // const loadNotes = useCallback(async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     const structure = await window.electron.loadNotes();
-  //     setDirectoryStructure(structure);
-  //     const allNotes = extractNotesFromStructure(structure);
-
-  //     setNotes(allNotes);
-  //     if (allNotes.length > 0 && !activeNote) {
-  //       setActiveNote(allNotes[0].id);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error loading notes:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }, [activeNote]);
-
   useEffect(() => {
     loadNotes();
   }, [loadNotes]);
-
-  // const extractNotesFromStructure = (structure: DirectoryStructure): Note[] => {
-  //   const extractedNotes: Note[] = [];
-  //   const traverse = (node: DirectoryStructure) => {
-  //     if (node.type === "note" && node.note) {
-  //       extractedNotes.push(node.note);
-  //     }
-  //     if (node.children) {
-  //       node.children.forEach(traverse);
-  //     }
-  //   };
-  //   traverse(structure);
-  //   return extractedNotes;
-  // };
 
   const createNote = useCallback(
     async (dirPath: string) => {
@@ -177,10 +121,6 @@ export const useNotes = () => {
     [loadNotes]
   );
 
-  // const selectNote = useCallback((noteId: string) => {
-  //   setActiveNote(noteId);
-  // }, []);
-
   const findSimilarNotes = useCallback(
     async (query: string) => {
       try {
@@ -196,6 +136,53 @@ export const useNotes = () => {
     [notes]
   );
 
+  const toggleDirectory = useCallback((dirPath: string) => {
+    setExpandedDirs((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(dirPath)) {
+        newSet.delete(dirPath);
+      } else {
+        newSet.add(dirPath);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleCreateFolder = useCallback(() => {
+    setIsCreatingFolder(true);
+    setNewFolderName("");
+    setError(null);
+  }, []);
+
+  const confirmCreateFolder = useCallback(async () => {
+    if (!newFolderName.trim()) {
+      setError("Folder name cannot be empty");
+      return;
+    }
+
+    const invalidChars = /[<>:"/\\|?*\p{C}]/u;
+    if (invalidChars.test(newFolderName)) {
+      setError("Folder name contains invalid characters");
+      return;
+    }
+
+    try {
+      await window.electron.createDirectory(`${currentPath}/${newFolderName.trim()}`);
+      setIsCreatingFolder(false);
+      setNewFolderName("");
+      setError(null);
+      await loadNotes(); // Reload notes to reflect the new folder
+    } catch (err) {
+      setError(`Failed to create folder: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }, [currentPath, newFolderName, loadNotes]);
+
+  const cancelCreateFolder = useCallback(() => {
+    setIsCreatingFolder(false);
+    setNewFolderName("");
+    setError(null);
+  }, []);
+
   return {
     notes,
     directoryStructures,
@@ -203,17 +190,27 @@ export const useNotes = () => {
     isLoading,
     createNote,
     saveNote,
-    // deleteNote,
-    // selectNote,
     findSimilarNotes,
     loadNotes,
-
-    // new
     activeNotePath,
     setActiveNotePath,
     activeNote,
     activeFileNode, 
     setActiveFileNode,
-    deleteFileNode
+    deleteFileNode,
+
+    expandedDirs,
+    toggleDirectory,
+    currentPath,
+    setCurrentPath,
+    handleCreateFolder,
+    newFolderState: {
+      isCreatingFolder,
+      newFolderName,
+      setNewFolderName,
+      confirmCreateFolder,
+      cancelCreateFolder,
+      error,
+    },
   };
 };

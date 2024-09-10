@@ -72,7 +72,11 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
     return (
       <div
         className="flex items-center cursor-pointer hover:bg-accent/50 py-1 px-2"
-        onClick={() => toggleDirectory(fullPath)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleDirectory(fullPath);
+        }}
         onContextMenu={(e) =>
           handleContextMenu(e, structure.name, "folder", parentPath)
         }

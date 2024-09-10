@@ -10,6 +10,7 @@ import { Toaster } from "@/shared/components/Toast";
 import { TooltipProvider } from "@/shared/components/Tooltip";
 import { Navbar, navbarItems } from "@/features/navbar";
 import { Feed } from "@/features/feed";
+import { NotesProvider } from "./features/notes/context/notesContext";
 
 const App: React.FC = () => {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -22,24 +23,26 @@ const App: React.FC = () => {
     <ThemeProvider>
       <SettingsProvider>
         <TooltipProvider>
-          <GlobalStyles />
-          <Toaster />
-          <Router>
-            <div className="flex flex-col h-screen">
-              <Navbar
-                toggleLeftSidebar={toggleLeftSidebar}
-                toggleRightSidebar={toggleRightSidebar}
-                items={navbarItems}
-              />
-              <main className="flex-grow pt-10">
-                <Routes>
-                  <Route path="/" element={<Feed />} />
-                  <Route path="/notes" element={<Notes />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Routes>
-              </main>
-            </div>
-          </Router>
+          <NotesProvider>
+            <GlobalStyles />
+            <Toaster />
+            <Router>
+              <div className="flex flex-col h-screen">
+                <Navbar
+                  toggleLeftSidebar={toggleLeftSidebar}
+                  toggleRightSidebar={toggleRightSidebar}
+                  items={navbarItems}
+                />
+                <main className="flex-grow pt-10">
+                  <Routes>
+                    <Route path="/" element={<Feed />} />
+                    <Route path="/notes" element={<Notes />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Routes>
+                </main>
+              </div>
+            </Router>
+          </NotesProvider>
         </TooltipProvider>
       </SettingsProvider>
     </ThemeProvider>
