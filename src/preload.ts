@@ -34,6 +34,4 @@ contextBridge.exposeInMainWorld("electron", {
   loadNote: (dirPath: string) => ipcRenderer.invoke("load-note", dirPath),
   deleteFileNode: (fileNodeType: string, fileNodePath: string) =>
     ipcRenderer.invoke("delete-file-node", fileNodeType, fileNodePath),
-  updateNote: (updatedNote: Note, prevFilePath: string) =>
-    ipcRenderer.invoke("update-note", updatedNote, prevFilePath),
 });

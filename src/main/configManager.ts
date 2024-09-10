@@ -7,6 +7,7 @@ interface Config {
 }
 
 const CONFIG_FILE = path.join(app.getPath('userData'), 'config.json');
+console.log(`CONFIG_FILE=${CONFIG_FILE}`)
 
 async function readConfig(): Promise<Config> {
   try {

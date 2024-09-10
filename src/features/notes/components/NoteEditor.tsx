@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
+import debounce from 'lodash/debounce';
 import { toast } from "@/shared/components/Toast";
 import { cn } from "@/shared/utils";
 import {
@@ -32,7 +33,6 @@ import {
   TooltipTrigger,
 } from "@/shared/components/Tooltip";
 import { Note } from "@/shared/types";
-import { useDebounce } from "@/shared/hooks/useDebounce";
 
 interface NoteEditorProps {
   note: Note;
@@ -40,16 +40,11 @@ interface NoteEditorProps {
 }
 
 const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
-  const [title, setTitle] = useState(note.title);
+  const [localNote, setLocalNote] = useState(note);
   const [isEditing, setIsEditing] = useState(true);
   const [isSavingEmbedding, setIsSavingEmbedding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setTitle(note.title);
-  }, [note.title]);
-
-  const debouncedTitle = useDebounce(title, 500);
 
   const editor = useEditor({
     extensions: [
@@ -58,7 +53,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
     ],
-    content: note.content,
+    content: localNote.content,
     editorProps: {
       attributes: {
         class: "prose dark:prose-invert max-w-none focus:outline-none",
@@ -66,46 +61,53 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
     },
   });
 
-  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-  }, []);
+  useEffect(() => {
+    setLocalNote(note);
+  }, [note]);
 
+  const debouncedSave = useMemo(
+    () => debounce(async (updatedNote: Note) => {
+      setIsSaving(true);
+      try {
+        await onSave(updatedNote);
+        setError(null);
+      } catch (err) {
+        setError("Failed to save note. Please try again.");
+        toast("Error saving note", {
+          description: "An error occurred while saving the note. Please try again.",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    }, 500),
+    [onSave]
+  );
+
+  const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setLocalNote(prev => {
+      const updatedNote = { ...prev, title: newTitle };
+      debouncedSave(updatedNote);
+      return updatedNote;
+    });
+  }, [debouncedSave]);
 
   const handleContentChange = useCallback(() => {
     if (editor) {
-      const updatedNote = {
-        ...note,
-        title,
-        content: editor.getHTML(),
-      };
-      saveNote(updatedNote);
-    }
-  }, [editor, note, title]);
-
-  const saveNote = useCallback(async (updatedNote: Note) => {
-    try {
-      await onSave(updatedNote);
-      setError(null);
-    } catch (err) {
-      setError("Failed to save note. Please try again.");
-      toast("Error saving note", {
-        description: "An error occurred while saving the note. Please try again.",
+      setLocalNote(prev => {
+        const updatedNote = { ...prev, content: editor.getHTML() };
+        debouncedSave(updatedNote);
+        return updatedNote;
       });
     }
-  }, [onSave]);
-
-  // useEffect(() => {
-  //   if (debouncedTitle !== note.title) {
-  //     saveNote({ ...note, title: debouncedTitle });
-  //   }
-  // }, [debouncedTitle, note, saveNote]);
+  }, [editor, debouncedSave]);
 
   const handleSaveEmbedding = useCallback(async () => {
     if (editor) {
       setIsSavingEmbedding(true);
       try {
         const content = editor.getHTML();
-        await window.electron.saveEmbedding(note.id, content);
+        await window.electron.saveEmbedding(localNote.id, content);
         toast("Embedding saved successfully", {
           description: "The note's embedding has been updated for similarity search.",
         });
@@ -118,7 +120,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
         setIsSavingEmbedding(false);
       }
     }
-  }, [editor, note.id]);
+  }, [editor, localNote.id]);
 
   useEffect(() => {
     if (editor) {
@@ -186,14 +188,17 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   return (
     <div className="flex flex-col h-full bg-background text-foreground overflow-hidden p-4">
       <div className="flex items-center justify-between mb-4">
-        <Input
-          type="text"
-          value={title}
-          onChange={handleTitleChange}
-          placeholder="Note Title"
-          className="text-2xl font-semibold border-none focus:ring-0 bg-background text-foreground flex-grow mr-2"
-          aria-label="Note title"
-        />
+        <div className="flex items-center flex-grow mr-2">
+          <Input
+            type="text"
+            value={localNote.title}
+            onChange={handleTitleChange}
+            placeholder="Note Title"
+            className="text-2xl font-semibold border-none focus:ring-0 bg-background text-foreground flex-grow"
+            aria-label="Note title"
+          />
+          {isSaving && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+        </div>
         <div className="flex items-center space-x-2">
           <Tooltip>
             <TooltipTrigger asChild>

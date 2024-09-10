@@ -130,10 +130,11 @@ export const useNotes = () => {
 
   const createNote = useCallback(
     async (dirPath: string) => {
+      console.log(`Attempting to create note with dirPath=${dirPath}`)
       const timestamp = new Date().toISOString();
       const newNote: Note = {
         id: uuidv4(),
-        title: `Untitled Note ${timestamp.slice(0, 19).replace("T", " ")}`,
+        title: `Untitled Note`,
         content: "",
         createdAt: timestamp,
         updatedAt: timestamp,
@@ -154,7 +155,8 @@ export const useNotes = () => {
       if (!activeFileNode || activeFileNode.type !== 'note') {
         throw new Error('No active note file node');
       }
-      await window.electron.updateNote(updatedNote, activeFileNode.fullPath);
+      const dirPath = activeFileNode.fullPath.substring(0, activeFileNode.fullPath.lastIndexOf('/'));
+      await window.electron.saveNote(updatedNote, dirPath);
       // await window.electron.saveEmbedding(updatedNote.id, updatedNote.content);
       // Reload notes to reflect any changes in the file system
       await loadNotes();
@@ -162,7 +164,6 @@ export const useNotes = () => {
       console.error("Error saving note:", error);
     }
   }, [activeFileNode, loadNotes]);
-
 
   const deleteFileNode = useCallback(
     async (fileNode: DirectoryStructure) => {

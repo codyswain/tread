@@ -61,7 +61,6 @@ declare global {
         fileNodeType: string,
         fileNodePath: string
       ) => Promise<void>;
-      updateNote: (updatedNote: Note, prevFilePath: string) => Promise<string>;
     };
   }
 }

@@ -68,47 +68,18 @@ export const setupFileSystem = async () => {
 
   ipcMain.handle("save-note", async (_, note: Note, filePath: string) => {
     try {
-      const dirPath = path.dirname(filePath);
-      const sanitizedTitle = sanitizeFilename(note.title);
-      const fileName = `${note.id}${NOTE_DELIMITER}${sanitizedTitle}.json`;
-      const notePath = path.join(dirPath, fileName);
-  
-      // Ensure the directory exists
-      await fs.mkdir(dirPath, { recursive: true });
-  
-      // Write the note to the file
-      await fs.writeFile(notePath, JSON.stringify(note));
-      console.log(`Note saved successfully with notePath=${notePath}`);
-      return notePath;
+      const folderName = path.dirname(filePath);
+      const fileName = `${note.id}.json`;
+      const newFilePath = path.join(filePath, fileName);
+      await fs.mkdir(folderName, { recursive: true });
+      await fs.writeFile(newFilePath, JSON.stringify(note));
+      console.log(`Note saved successfully with newFilePath=${newFilePath}`);
+      return newFilePath;
     } catch (error) {
       console.error("Error saving note:", error);
       throw error;
     }
   });
-
-  ipcMain.handle("update-note", async (_, updatedNote: Note, prevFilePath: string) => {
-    try {
-      const dirPath = path.dirname(prevFilePath);
-      const sanitizedTitle = sanitizeFilename(updatedNote.title);
-      const newFileName = `${updatedNote.id}${NOTE_DELIMITER}${sanitizedTitle}.json`;
-      const newNotePath = path.join(dirPath, newFileName);
-  
-      // Rename the file if the path has changed
-      if (prevFilePath !== newNotePath) {
-        await fs.rename(prevFilePath, newNotePath);
-      }
-  
-      // Update the note content
-      await fs.writeFile(newNotePath, JSON.stringify(updatedNote));
-  
-      console.log(`Note updated successfully with new path=${newNotePath}`);
-      return newNotePath;
-    } catch (error) {
-      console.error("Error updating note:", error);
-      throw error;
-    }
-  });
-  
 
   ipcMain.handle("save-embedding", async (_, note: Note, dirPath = "") => {
     try {
@@ -235,20 +206,21 @@ const loadDirectoryStructure = async (
       entry.name.endsWith(".json") &&
       !entry.name.endsWith(".embedding.json")
     ) {
-      const [id, ...titleParts] = entry.name.slice(0, -5).split(NOTE_DELIMITER);
-
-      const title = titleParts.join(NOTE_DELIMITER);
-      console.log(`Loaded note with id=${id}, title=${title}`);
-
-      structure.children?.push({
-        name: title,
-        type: "note",
-        noteMetadata: {
-          id,
-          title,
-        },
-        fullPath: childPath,
-      });
+      try {
+        const noteContent = await fs.readFile(childPath, "utf-8");
+        const note: Note = JSON.parse(noteContent);
+        structure.children?.push({
+          name: note.title,
+          type: "note",
+          noteMetadata: {
+            id: note.id,
+            title: note.title,
+          },
+          fullPath: childPath,
+        });
+      } catch (error) {
+        console.error(`Error reading note file ${childPath}:`, error);
+      }
     }
   }
 
