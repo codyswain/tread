@@ -48,7 +48,6 @@ export const useNotes = () => {
     setIsLoading(true);
     try {
       const topLevelDirPath = await window.electron.getTopLevelFolders();
-      console.log(`Top level directories: ${topLevelDirPath}`);
 
       // for each top level folder path, fetch the directory structure.
       // this is done in the app side code so that we can later add dynamic loading
@@ -73,7 +72,6 @@ export const useNotes = () => {
 
   const createNote = useCallback(
     async (dirPath: string) => {
-      console.log(`Attempting to create note with dirPath=${dirPath}`)
       const timestamp = new Date().toISOString();
       const newNote: Note = {
         id: uuidv4(),
@@ -148,7 +146,7 @@ export const useNotes = () => {
     });
   }, [setExpandedDirs]);
 
-  const handleCreateFolder = useCallback(() => {
+  const handleCreateFolder = useCallback((fileNode: DirectoryStructure) => {
     setIsCreatingFolder(true);
     setNewFolderName("");
     setError(null);

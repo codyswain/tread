@@ -47,9 +47,6 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
       return renderNote(structure);
     }
 
-    console.log(`expandedDirs=${JSON.stringify(Array.from(expandedDirs), null, 2)}; fullPath=${fullPath}`);
-    console.log(`expandedDirs.has(fullPath)=${expandedDirs.has(fullPath)}`);
-
     return (
       <div key={fullPath}>
         {renderFolder(structure)}
@@ -73,7 +70,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
           toggleDirectory(fileNode);
         }}
         onContextMenu={(e) =>
-          handleContextMenu(e, fileNode.name, "folder", fileNode.fullPath)
+          handleContextMenu(e, fileNode)
         }
       >
         {isExpanded ? (
