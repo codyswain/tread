@@ -33,13 +33,20 @@ import {
   TooltipTrigger,
 } from "@/shared/components/Tooltip";
 import { Note } from "@/shared/types";
+import { useNotesContext } from "../context/notesContext";
 
 interface NoteEditorProps {
   note: Note;
-  onSave: (note: Note) => Promise<void>;
 }
 
-const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
+const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
+  const {
+    activeNote,
+    activeFileNode,
+    saveNote,
+    createEmbedding
+  } = useNotesContext();
+
   const [localNote, setLocalNote] = useState(note);
   const [isEditing, setIsEditing] = useState(true);
   const [isSavingEmbedding, setIsSavingEmbedding] = useState(false);
@@ -73,7 +80,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
       debounce(async (updatedNote: Note) => {
         setIsSaving(true);
         try {
-          await onSave(updatedNote);
+          await saveNote(updatedNote);
           setError(null);
         } catch (err) {
           setError("Failed to save note. Please try again.");
@@ -85,14 +92,14 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
           setIsSaving(false);
         }
       }, 500),  
-    [onSave]
+    [saveNote]
   );
 
   const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newTitle = e.target.value;
       setLocalNote((prev) => ({ ...prev, title: newTitle }));
-      onSave({ ...localNote, title: newTitle }).catch((err) => {
+      saveNote({ ...localNote, title: newTitle }).catch((err) => {
         setError("Failed to save note title. Please try again.");
         toast("Error saving note title", {
           description:
@@ -100,7 +107,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
         });
       });
     },
-    [localNote, onSave]
+    [localNote, saveNote]
   );
 
   const handleContentChange = useCallback(() => {
@@ -120,22 +127,20 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave }) => {
   const handleSaveEmbedding = useCallback(async () => {
     if (editor) {
       setIsSavingEmbedding(true);
-      try {
-        const content = editor.getHTML();
-        await window.electron.saveEmbedding(localNote.id, content);
+      console.log('attempting to save embedding')
+      const success = await createEmbedding();
+      if (success){
         toast("Embedding saved successfully", {
           description:
             "The note's embedding has been updated for similarity search.",
         });
-      } catch (error) {
-        console.error("Error saving embedding:", error);
+      } else {
         toast("Error saving embedding", {
           description:
             "An error occurred while saving the embedding. Please try again.",
         });
-      } finally {
-        setIsSavingEmbedding(false);
       }
+      setIsSavingEmbedding(false);
     }
   }, [editor, localNote.id]);
 

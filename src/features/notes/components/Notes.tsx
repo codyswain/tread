@@ -35,7 +35,7 @@ const Notes: React.FC<{
         }}
       >
         {activeNote ? (
-          <NoteEditor note={activeNote} onSave={saveNote} />
+          <NoteEditor note={activeNote} />
         ) : (
           <div className="flex w-full h-full justify-center items-center">
             Please select a note

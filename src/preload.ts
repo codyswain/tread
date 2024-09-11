@@ -14,8 +14,8 @@ contextBridge.exposeInMainWorld("electron", {
   getNotePath: (noteId: string) => ipcRenderer.invoke("get-note-path", noteId),
   findSimilarNotes: (query: string) =>
     ipcRenderer.invoke("find-similar-notes", query),
-  saveEmbedding: (noteId: string, content: string) =>
-    ipcRenderer.invoke("save-embedding", noteId, content),
+  saveEmbedding: (note: Note, dirPath: string) =>
+    ipcRenderer.invoke("save-embedding", note, dirPath),
   getOpenAIKey: () => ipcRenderer.invoke("get-openai-key"),
   setOpenAIKey: (key: string) => ipcRenderer.invoke("set-openai-key", key),
   createDirectory: (dirPath: string) =>

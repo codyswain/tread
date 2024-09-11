@@ -27,7 +27,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
   onSelectNote,
   handleContextMenu,
 }) => {
-  const { toggleDirectory, expandedDirs } = useNotesContext();
+  const { toggleDirectory, expandedDirs, setActiveFileNode } = useNotesContext();
   const { newFolderState } = useNotesContext();
 
   // For the folder that renders when creating a new folder
@@ -115,7 +115,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        onSelectNote(structure);
+        setActiveFileNode(structure);
       }}
       onContextMenu={(e) => {
         e.preventDefault();

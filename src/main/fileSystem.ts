@@ -78,10 +78,17 @@ export const setupFileSystem = async () => {
     }
   });
 
-  ipcMain.handle("save-embedding", async (_, note: Note, dirPath = "") => {
+  ipcMain.handle("save-embedding", async (_, note: Note, dirPath: string) => {
     try {
+      
       const embeddingPath = path.join(dirPath, `${note.id}.embedding.json`);
       const embeddingContent = note.title + note.content; // TODO: improve this
+
+      console.log({
+        action: "compute", 
+        embeddingPath, 
+        embeddingContent
+      })
       await runEmbeddingScript("compute", embeddingPath, embeddingContent);
     } catch (error) {
       console.error("Error saving embedding:", error);

@@ -44,7 +44,7 @@ declare global {
       close: () => void;
       runPythonScript: <T>(scriptName: string, args: string[]) => Promise<T>;
       findSimilarNotes: (query: string) => Promise<string[]>;
-      saveEmbedding: (noteId: string, content: string) => Promise<void>;
+      saveEmbedding: (note: Note, dirPath: string) => Promise<void>;
       getOpenAIKey: () => Promise<string>;
       setOpenAIKey: (key: string) => Promise<void>;
       getNotePath: (noteId: string) => Promise<string>;
