@@ -75,6 +75,26 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
         >
           Find Similar
         </Button>
+        {
+          similarNotes.length > 0 && 
+          <ul>
+            {similarNotes.map((note) => (
+              <li
+                key={note.id}
+                className="cursor-pointer hover:bg-accent/10 p-2 rounded"
+                onClick={() => {}}
+              >
+                
+                <h3 className="font-semibold mb-1">{note.title}</h3>
+                <p className="text-green-500 text-sm">Score: {note.score}</p>
+                <div
+                  className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
+                  dangerouslySetInnerHTML={{ __html: note.content }}
+                />
+              </li>
+            ))}
+          </ul>
+        }
       {/* <ScrollArea className="h-[calc(100%-5rem)]">
         <div className="p-4">
           {isSimilarNotesLoading ? (

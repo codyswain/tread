@@ -64,8 +64,8 @@ class SimilaritySearcher {
     return embeddingPaths;
   }
 
-  async performSimilaritySearch(queryEmbedding: OpenAI.Embeddings.CreateEmbeddingResponse, embeddingPaths: string[]): Promise<Array<{ note: SimilarNote, score: number }>> {
-    const results: Array<{ note: SimilarNote, score: number }> = [];
+  async performSimilaritySearch(queryEmbedding: OpenAI.Embeddings.CreateEmbeddingResponse, embeddingPaths: string[]): Promise<Array<SimilarNote>> {
+    const results: Array<SimilarNote> = [];
 
     for (const embeddingPath of embeddingPaths) {
       const embeddingContent = await fs.readFile(embeddingPath, 'utf-8');
@@ -77,7 +77,7 @@ class SimilaritySearcher {
       const noteContent = await fs.readFile(notePath, 'utf-8');
       const note = JSON.parse(noteContent) as SimilarNote;
 
-      results.push({ note, score });
+      results.push({ ...note, score });
     }
 
     return results.sort((a, b) => b.score - a.score).slice(0, 5); // Return top 5 results
@@ -111,7 +111,7 @@ export const setupEmbeddingService = async (): Promise<void> => {
     }
   });
 
-  ipcMain.handle("perform-similarity-search", async (_, query: string, directoryStructures: DirectoryStructures): Promise<Array<{ note: SimilarNote, score: number }>> => {
+  ipcMain.handle("perform-similarity-search", async (_, query: string, directoryStructures: DirectoryStructures): Promise<Array<SimilarNote>> => {
     try {
       console.log('finding embedding paths', query, directoryStructures)
       const embeddingPaths = await similaritySearcher.findEmbeddingPaths(directoryStructures);

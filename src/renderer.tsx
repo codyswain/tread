@@ -43,7 +43,7 @@ declare global {
       maximize: () => void;
       close: () => void;
       runPythonScript: <T>(scriptName: string, args: string[]) => Promise<T>;
-      findSimilarNotes: (query: string, directoryStructures: DirectoryStructures) => Promise<Array<{ note: SimilarNote, score: number }>>;
+      
       saveEmbedding: (note: Note, dirPath: string) => Promise<void>;
       getOpenAIKey: () => Promise<string>;
       setOpenAIKey: (key: string) => Promise<void>;
@@ -62,6 +62,7 @@ declare global {
       ) => Promise<void>;
 
       generateNoteEmbeddings: (note: Note, fileNode: DirectoryStructure) => Promise<Embedding>;
+      findSimilarNotes: (query: string, directoryStructures: DirectoryStructures) => Promise<Array<SimilarNote>>;
     };
   }
 }

@@ -161,11 +161,9 @@ export const useNotes = () => {
   const findSimilarNotes = useCallback(async () => {
     if (!activeNote) return
       try {
-        const similarNotesAndScore = await window.electron.findSimilarNotes(activeNote.content, directoryStructures);
-        for (const note of similarNotesAndScore){
-          console.log(`Note=${note.note.id}`)
-          console.log(`Score=${note.score}`)
-        }
+        const similarNotes = await window.electron.findSimilarNotes(activeNote.content, directoryStructures);
+        
+        setSimilarNotes(similarNotes.filter((note: SimilarNote) => note.id !== activeNote.id))
       } catch (error) {
         console.error("Error finding similar notes:", error);
       }
