@@ -1,3 +1,5 @@
+import OpenAI from "openai";
+
 export interface NoteMetadata {
   id: string;
   title: string;
@@ -30,11 +32,18 @@ export interface DirectoryStructure {
   fullPath: string;
 }
 
+
+export interface SimilarNote extends Note {
+  score: number;
+}
+
 // SimilarNote can be replaced with Note since they have the same structure
-export type SimilarNote = Note;
+// export type SimilarNote = Note;
 
 // Add a new type for tab information
 export interface TabInfo {
   id: string;
   title: string;
 }
+
+export type Embedding = OpenAI.Embeddings.CreateEmbeddingResponse;

@@ -3,15 +3,35 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/shared/components/Button";
 // import { ThemeToggle } from "./ThemeToggle";
 import { NavbarItem, NavbarItemProps } from "./NavbarItem";
-import { Minus, PanelLeft, PanelRight, Settings, Square, X } from "lucide-react";
+import {
+  Minus,
+  PanelLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRight,
+  PanelRightClose,
+  PanelRightOpen,
+  Settings,
+  Square,
+  X,
+} from "lucide-react";
+import { ThemeToggle } from "@/features/theme";
 
 interface NavbarProps {
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
+  isLeftSidebarOpen: boolean;
+  isRightSidebarOpen: boolean;
   items: NavbarItemProps[];
 }
 
-const Navbar: React.FC<NavbarProps> = ({ toggleLeftSidebar, toggleRightSidebar, items }) => {
+const Navbar: React.FC<NavbarProps> = ({
+  toggleLeftSidebar,
+  toggleRightSidebar,
+  isLeftSidebarOpen,
+  isRightSidebarOpen,
+  items,
+}) => {
   const location = useLocation();
 
   const handleWindowAction = (action: "minimize" | "maximize" | "close") => {
@@ -30,7 +50,9 @@ const Navbar: React.FC<NavbarProps> = ({ toggleLeftSidebar, toggleRightSidebar, 
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={() => handleWindowAction(action as "minimize" | "maximize" | "close")}
+          onClick={() =>
+            handleWindowAction(action as "minimize" | "maximize" | "close")
+          }
         >
           <span className="sr-only">{action}</span>
           <Icon className="h-4 w-4 mr-2" />
@@ -42,19 +64,41 @@ const Navbar: React.FC<NavbarProps> = ({ toggleLeftSidebar, toggleRightSidebar, 
   const renderNavItems = () => (
     <ul className="flex items-center space-x-2 no-drag mx-auto">
       {items.map((item) => (
-        <NavbarItem key={item.to} {...item} isActive={location.pathname === item.to} />
+        <NavbarItem
+          key={item.to}
+          {...item}
+          isActive={location.pathname === item.to}
+        />
       ))}
     </ul>
   );
 
   const renderSidebarControls = () => (
     <div className="flex items-center space-x-2 no-drag">
-      {/* <ThemeToggle /> */}
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleLeftSidebar}>
-        <PanelLeft className="h-4 w-4" />
+      <ThemeToggle />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={toggleLeftSidebar}
+      >
+        {isLeftSidebarOpen ? (
+          <PanelLeftClose className="h-4 w-4" />
+        ) : (
+          <PanelLeftOpen className="h-4 w-4" />
+        )}
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleRightSidebar}>
-        <PanelRight className="h-4 w-4" />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={toggleRightSidebar}
+      >
+        {isRightSidebarOpen ? (
+          <PanelRightClose className="h-4 w-4" />
+        ) : (
+          <PanelRightOpen className="h-4 w-4" />
+        )}
       </Button>
       <Link to="/settings">
         <Button variant="ghost" size="icon" className="h-8 w-8">

@@ -1,18 +1,28 @@
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Note, DirectoryStructure, SimilarNote, DirectoryStructures, Directory } from "@/shared/types";
+import {
+  Note,
+  DirectoryStructure,
+  SimilarNote,
+  DirectoryStructures,
+  Directory,
+} from "@/shared/types";
+import { getTopLevelFolders, removeTopLevelFolder } from "@/main/configManager";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
-  const [directoryStructures, setDirectoryStructures] = useState<DirectoryStructures | undefined>({
-    'undefined': {
-      name: 'undefined',
-      type: 'directory',
-      fullPath: 'undefined'
-    }
+  const [directoryStructures, setDirectoryStructures] = useState<
+    DirectoryStructures | undefined
+  >({
+    undefined: {
+      name: "undefined",
+      type: "directory",
+      fullPath: "undefined",
+    },
   });
   const [activeNotePath, setActiveNotePath] = useState<string | null>(null);
-  const [activeFileNode, setActiveFileNode] = useState<DirectoryStructure | null>(null);
+  const [activeFileNode, setActiveFileNode] =
+    useState<DirectoryStructure | null>(null);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,47 +34,64 @@ export const useNotes = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // Mounted Folder States
+  const [mountedDirPaths, setMountedDirPaths] = useState<string[]>([]);
+  const [isLoadingMountedDirPaths, setIsLoadingMountedDirPaths] =
+    useState(false);
+  const [mountedDirPathsLoadError, setMountedDirPathsLoadError] = useState<
+    string | null
+  >(null);
+
+  console.log('activeNote: ', activeNote)
+  console.log('activeFileNode: ', activeFileNode)
 
   // Load the active note based on setting the active note path
   useEffect(() => {
+    console.log('setting active note')
     const loadActiveNote = async () => {
-      if (activeFileNode && activeFileNode.type === 'note') {
+      if (activeFileNode && activeFileNode.type === "note") {
         try {
-          const loadedNote = await window.electron.loadNote(activeFileNode.fullPath);
+          const loadedNote = await window.electron.loadNote(
+            activeFileNode.fullPath
+          );
+          console.log('set active note to: ', loadedNote.id)
           setActiveNote(loadedNote);
         } catch (err) {
-          console.error('Failed to load note file node with error: ', err);
+          console.error("Failed to load note file node with error: ", err);
           setActiveNote(null);
         }
       } else {
         setActiveNote(null);
       }
     };
-
     loadActiveNote();
   }, [activeFileNode]);
 
   const loadNotes = useCallback(async () => {
     setIsLoading(true);
+    let topLevelDirPaths: string[];
+    const allDirStructures: DirectoryStructures = {};
     try {
-      const topLevelDirPath = await window.electron.getTopLevelFolders();
-
-      // for each top level folder path, fetch the directory structure.
-      // this is done in the app side code so that we can later add dynamic loading
-      const allDirStructures: DirectoryStructures = {};
-      for (const dirPath of topLevelDirPath) {
+      topLevelDirPaths = await window.electron.getTopLevelFolders();
+    } catch (err) {
+      console.error(`Failed to load topLevelDirPath with error=`, error);
+    }
+    for (const dirPath of topLevelDirPaths) {
+      try {
         const dirStructure = await window.electron.getDirectoryStructure(
           dirPath
         );
         allDirStructures[dirPath] = dirStructure;
+      } catch (err) {
+        console.error(
+          `Failed to load dirStructure for dirPath=${dirPath} with error=`,
+          error
+        );
       }
-      setDirectoryStructures(allDirStructures);
-    } catch (error) {
-      console.error("Error loading notes:", error);
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+    setDirectoryStructures(allDirStructures);
+    setIsLoading(false);
+  }, [setDirectoryStructures, setIsLoading]);
 
   useEffect(() => {
     loadNotes();
@@ -91,25 +118,37 @@ export const useNotes = () => {
     [loadNotes]
   );
 
-  const saveNote = useCallback(async (updatedNote: Note) => {
-    try {
-      if (!activeFileNode || activeFileNode.type !== 'note') {
-        throw new Error('No active note file node');
+  const saveNote = useCallback(
+    async (updatedNote: Note) => {
+      try {
+        if (!activeFileNode || activeFileNode.type !== "note") {
+          throw new Error("No active note file node");
+        }
+        const dirPath = activeFileNode.fullPath.substring(
+          0,
+          activeFileNode.fullPath.lastIndexOf("/")
+        );
+        await window.electron.saveNote(updatedNote, dirPath);
+        // await window.electron.saveEmbedding(updatedNote.id, updatedNote.content);
+        // Reload notes to reflect any changes in the file system
+        await loadNotes();
+      } catch (error) {
+        console.error("Error saving note:", error);
       }
-      const dirPath = activeFileNode.fullPath.substring(0, activeFileNode.fullPath.lastIndexOf('/'));
-      await window.electron.saveNote(updatedNote, dirPath);
-      // await window.electron.saveEmbedding(updatedNote.id, updatedNote.content);
-      // Reload notes to reflect any changes in the file system
-      await loadNotes();
-    } catch (error) {
-      console.error("Error saving note:", error);
-    }
-  }, [activeFileNode, loadNotes]);
+    },
+    [activeFileNode, loadNotes]
+  );
 
   const deleteFileNode = useCallback(
     async (fileNode: DirectoryStructure) => {
       try {
         await window.electron.deleteFileNode(fileNode.type, fileNode.fullPath);
+
+        // Remove it from App Level Config File if it's a mounted top level folder
+        const topLevelFolderPaths = await window.electron.getTopLevelFolders();
+        if (topLevelFolderPaths.includes(fileNode.fullPath)) {
+          await window.electron.removeTopLevelFolder(fileNode.fullPath);
+        }
         // TODO: set active note after deletion
         await loadNotes();
       } catch (error) {
@@ -119,32 +158,33 @@ export const useNotes = () => {
     [loadNotes]
   );
 
-  const findSimilarNotes = useCallback(
-    async (query: string) => {
+  const findSimilarNotes = useCallback(async () => {
+    if (!activeNote) return
       try {
-        const similarNoteIds = await window.electron.findSimilarNotes(query);
-        const similar = notes.filter((note) =>
-          similarNoteIds.includes(note.id)
-        );
-        setSimilarNotes(similar);
+        const similarNotes = await window.electron.findSimilarNotes(activeNote.content, directoryStructures);
+        
+        setSimilarNotes(similarNotes.filter((note: SimilarNote) => note.id !== activeNote.id))
       } catch (error) {
         console.error("Error finding similar notes:", error);
       }
     },
-    [notes]
+    [notes, activeNote, activeFileNode, directoryStructures]
   );
 
-  const toggleDirectory = useCallback((fileNode: DirectoryStructure) => {
-    setExpandedDirs((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(fileNode.fullPath)) {
-        newSet.delete(fileNode.fullPath);
-      } else {
-        newSet.add(fileNode.fullPath);
-      }
-      return newSet;
-    });
-  }, [setExpandedDirs]);
+  const toggleDirectory = useCallback(
+    (fileNode: DirectoryStructure) => {
+      setExpandedDirs((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(fileNode.fullPath)) {
+          newSet.delete(fileNode.fullPath);
+        } else {
+          newSet.add(fileNode.fullPath);
+        }
+        return newSet;
+      });
+    },
+    [setExpandedDirs]
+  );
 
   const handleCreateFolder = useCallback((fileNode: DirectoryStructure) => {
     setActiveFileNode(fileNode);
@@ -166,13 +206,19 @@ export const useNotes = () => {
     }
 
     try {
-      await window.electron.createDirectory(`${activeFileNode.fullPath}/${newFolderName.trim()}`);
+      await window.electron.createDirectory(
+        `${activeFileNode.fullPath}/${newFolderName.trim()}`
+      );
       setIsCreatingFolder(false);
       setNewFolderName("");
       setError(null);
       await loadNotes(); // Reload notes to reflect the new folder
     } catch (err) {
-      setError(`Failed to create folder: ${err instanceof Error ? err.message : String(err)}`);
+      setError(
+        `Failed to create folder: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
     }
   }, [currentPath, newFolderName, loadNotes]);
 
@@ -181,6 +227,48 @@ export const useNotes = () => {
     setNewFolderName("");
     setError(null);
   }, []);
+
+  const loadMountedDirPaths = useCallback(async () => {
+    setIsLoadingMountedDirPaths(true);
+    setMountedDirPathsLoadError(null);
+    try {
+      const dirPaths = await window.electron.getTopLevelFolders();
+      setMountedDirPaths(dirPaths);
+    } catch (error) {
+      setMountedDirPathsLoadError("Failed to load top-level folders");
+      console.error(error);
+    } finally {
+      setIsLoadingMountedDirPaths(false);
+    }
+  }, [setIsLoadingMountedDirPaths, setMountedDirPathsLoadError]);
+
+  useEffect(() => {
+    loadMountedDirPaths();
+  }, [loadMountedDirPaths]);
+
+  const openDialogToMountDirpath = useCallback(async () => {``
+    const result = await window.electron.openFolderDialog();
+    if (result) {
+      await window.electron.addTopLevelFolder(result);
+      loadMountedDirPaths();
+      loadNotes();
+    }
+  }, [loadMountedDirPaths]);
+
+  const createEmbedding = useCallback(async (): Promise<boolean> => {
+    if (activeFileNode.type === "note") {
+      try {
+        await window.electron.generateNoteEmbeddings(activeNote, activeFileNode);
+        return true
+      } catch (error){
+        console.error(`Failed generating note embedding with error=${error}`);
+        return false;
+      }
+    } else {
+      console.error(`save embedding erraneously triggered for fileNode.type=${activeFileNode.type}`)
+      return false;
+    }
+  }, [activeFileNode, activeNote]);
 
   return {
     notes,
@@ -194,7 +282,7 @@ export const useNotes = () => {
     activeNotePath,
     setActiveNotePath,
     activeNote,
-    activeFileNode, 
+    activeFileNode,
     setActiveFileNode,
     deleteFileNode,
 
@@ -211,5 +299,9 @@ export const useNotes = () => {
       cancelCreateFolder,
       error,
     },
+
+    openDialogToMountDirpath,
+
+    createEmbedding,
   };
 };

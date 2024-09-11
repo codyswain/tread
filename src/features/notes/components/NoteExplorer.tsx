@@ -44,7 +44,7 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
     expandedDirs,
     toggleDirectory,
     newFolderState
-  } = useNotesContext();
+  } = useNotesContext();                              
 
   const handleDelete = () => {
     if (contextMenu.fileNode) {
@@ -65,15 +65,12 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         contextMenu={contextMenu}
         onClose={closeContextMenu}
         onDelete={handleDelete}
-        onCreateFile={() => contextMenu && createNote(contextMenu.dirPath)}
-        onCreateFolder={handleCreateFolder}
         onCopyFilePath={() => {console.log('IMPLEMENT COPY FILE PATH')}}
         onOpenNoteInNewTab={() => {console.log('IMPLEMENT OPEN NOTE IN NEW TAB')}}
       />
       <NoteExplorerHeader
         onCreateNote={() => console.log('IMPLEMENT CREATE NEW NOTE')}
         onCreateFolder={() => {console.log('IMPLEMENT CREATE NEW FOLDER')}}
-        onAddTopLevelFolder={handleAddTopLevelFolder}
       />
       <NoteExplorerContent
         isLoadingFolders={isLoadingFolders}
@@ -82,7 +79,6 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         selectedFileNode={activeFileNode}
         onSelectNote={setActiveFileNode}
         handleContextMenu={handleContextMenu}
-        newFolderState={newFolderState}
       />
       <div className="absolute bottom-2 right-2">
         <Button

@@ -31,7 +31,7 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { DirectoryStructure, Note } from "./shared/types";
+import { DirectoryStructure, DirectoryStructures, Embedding, Note, SimilarNote } from "./shared/types";
 
 declare global {
   interface Window {
@@ -43,8 +43,8 @@ declare global {
       maximize: () => void;
       close: () => void;
       runPythonScript: <T>(scriptName: string, args: string[]) => Promise<T>;
-      findSimilarNotes: (query: string) => Promise<string[]>;
-      saveEmbedding: (noteId: string, content: string) => Promise<void>;
+      
+      saveEmbedding: (note: Note, dirPath: string) => Promise<void>;
       getOpenAIKey: () => Promise<string>;
       setOpenAIKey: (key: string) => Promise<void>;
       getNotePath: (noteId: string) => Promise<string>;
@@ -54,13 +54,15 @@ declare global {
       addTopLevelFolder: (folderPath: string) => Promise<string[]>;
       removeTopLevelFolder: (folderPath: string) => Promise<string[]>;
       openFolderDialog: () => Promise<string>;
-
       getDirectoryStructure: (dirPath: string) => Promise<DirectoryStructure>;
       loadNote: (dirPath: string) => Promise<Note>;
       deleteFileNode: (
         fileNodeType: string,
         fileNodePath: string
       ) => Promise<void>;
+
+      generateNoteEmbeddings: (note: Note, fileNode: DirectoryStructure) => Promise<Embedding>;
+      findSimilarNotes: (query: string, directoryStructures: DirectoryStructures) => Promise<Array<SimilarNote>>;
     };
   }
 }

@@ -57,7 +57,9 @@ if __name__ == "__main__":
     action = sys.argv[2]
     if action == "compute":
         embedding_path = sys.argv[3]
+        print(f"embedding path {embedding_path}")
         note_content = sys.argv[4]
+        print(f"note content {note_content}")
         compute_and_store_embedding(embedding_path, note_content)
         print(json.dumps({"success": True}))
     # elif action == "find_similar":

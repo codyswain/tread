@@ -37,9 +37,6 @@ export const setupFileSystem = async () => {
     try {
       const noteContent = await fs.readFile(notePath, "utf-8");
       const note: Note = JSON.parse(noteContent);
-      console.log(
-        `Note loaded successfully: id=${note.id}, title=${note.title}`
-      );
       return note;
     } catch (error) {
       console.error("Error loading note:", error);
@@ -81,10 +78,17 @@ export const setupFileSystem = async () => {
     }
   });
 
-  ipcMain.handle("save-embedding", async (_, note: Note, dirPath = "") => {
+  ipcMain.handle("save-embedding", async (_, note: Note, dirPath: string) => {
     try {
+      
       const embeddingPath = path.join(dirPath, `${note.id}.embedding.json`);
       const embeddingContent = note.title + note.content; // TODO: improve this
+
+      console.log({
+        action:"compute", 
+        embeddingPath, 
+        embeddingContent
+      })
       await runEmbeddingScript("compute", embeddingPath, embeddingContent);
     } catch (error) {
       console.error("Error saving embedding:", error);
@@ -142,6 +146,7 @@ export const setupFileSystem = async () => {
       return dirStructure;
     } catch (error) {
       console.error(`error loading directory structure for dirPath=${dirPath}`);
+      throw error;
     }
   });
 

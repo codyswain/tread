@@ -4,9 +4,17 @@ import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
 import { useNotesContext } from "../context/notesContext";
 
-const Notes: React.FC = () => {
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+const Notes: React.FC<{
+  isLeftSidebarOpen: boolean,
+  isRightSidebarOpen: boolean,
+  setIsLeftSidebarOpen: (isOpen: boolean) => void
+  setIsRightSidebarOpen: (isOpen: boolean) => void
+}> = ({
+  isLeftSidebarOpen,
+  isRightSidebarOpen,
+  setIsLeftSidebarOpen,
+  setIsRightSidebarOpen
+}) => {
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(256);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(256);
   const { saveNote, activeNote } = useNotesContext();
@@ -27,7 +35,7 @@ const Notes: React.FC = () => {
         }}
       >
         {activeNote ? (
-          <NoteEditor note={activeNote} onSave={saveNote} />
+          <NoteEditor note={activeNote} />
         ) : (
           <div className="flex w-full h-full justify-center items-center">
             Please select a note

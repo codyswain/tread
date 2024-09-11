@@ -31,12 +31,23 @@ const App: React.FC = () => {
                 <Navbar
                   toggleLeftSidebar={toggleLeftSidebar}
                   toggleRightSidebar={toggleRightSidebar}
+                  isLeftSidebarOpen={isLeftSidebarOpen}
+                  isRightSidebarOpen={isRightSidebarOpen}
                   items={navbarItems}
                 />
                 <main className="flex-grow pt-10">
                   <Routes>
                     <Route path="/" element={<Feed />} />
-                    <Route path="/notes" element={<Notes />} />
+                    <Route
+                      path="/notes"
+                      element={
+                      <Notes 
+                        isLeftSidebarOpen={isLeftSidebarOpen}
+                        isRightSidebarOpen={isRightSidebarOpen}
+                        setIsLeftSidebarOpen={setIsLeftSidebarOpen}
+                        setIsRightSidebarOpen={setIsRightSidebarOpen}
+                      />}
+                    />
                     <Route path="/settings" element={<Settings />} />
                   </Routes>
                 </main>
