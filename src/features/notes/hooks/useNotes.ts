@@ -148,7 +148,6 @@ export const useNotes = () => {
   );
 
   const toggleDirectory = useCallback((fileNode: DirectoryStructure) => {
-    setActiveFileNode(fileNode);
     setExpandedDirs((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(fileNode.fullPath)) {

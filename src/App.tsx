@@ -31,6 +31,8 @@ const App: React.FC = () => {
                 <Navbar
                   toggleLeftSidebar={toggleLeftSidebar}
                   toggleRightSidebar={toggleRightSidebar}
+                  isLeftSidebarOpen={isLeftSidebarOpen}
+                  isRightSidebarOpen={isRightSidebarOpen}
                   items={navbarItems}
                 />
                 <main className="flex-grow pt-10">
