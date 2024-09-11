@@ -31,7 +31,7 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { DirectoryStructure, Embedding, Note } from "./shared/types";
+import { DirectoryStructure, DirectoryStructures, Embedding, Note, SimilarNote } from "./shared/types";
 
 declare global {
   interface Window {
@@ -43,7 +43,7 @@ declare global {
       maximize: () => void;
       close: () => void;
       runPythonScript: <T>(scriptName: string, args: string[]) => Promise<T>;
-      findSimilarNotes: (query: string) => Promise<string[]>;
+      findSimilarNotes: (query: string, directoryStructures: DirectoryStructures) => Promise<Array<{ note: SimilarNote, score: number }>>;
       saveEmbedding: (note: Note, dirPath: string) => Promise<void>;
       getOpenAIKey: () => Promise<string>;
       setOpenAIKey: (key: string) => Promise<void>;

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { DirectoryStructure, Note } from "./shared/types";
+import { DirectoryStructure, DirectoryStructures, Note } from "./shared/types";
 
 contextBridge.exposeInMainWorld("electron", {
   loadNotes: () => ipcRenderer.invoke("load-notes"),
@@ -12,8 +12,6 @@ contextBridge.exposeInMainWorld("electron", {
   runPythonScript: (scriptName: string, args: string[]) =>
     ipcRenderer.invoke("run-python-script", scriptName, args),
   getNotePath: (noteId: string) => ipcRenderer.invoke("get-note-path", noteId),
-  findSimilarNotes: (query: string) =>
-    ipcRenderer.invoke("find-similar-notes", query),
   saveEmbedding: (note: Note, dirPath: string) =>
     ipcRenderer.invoke("save-embedding", note, dirPath),
   getOpenAIKey: () => ipcRenderer.invoke("get-openai-key"),
@@ -35,5 +33,6 @@ contextBridge.exposeInMainWorld("electron", {
   deleteFileNode: (fileNodeType: string, fileNodePath: string) =>
     ipcRenderer.invoke("delete-file-node", fileNodeType, fileNodePath),
 
-  generateNoteEmbeddings: (note: Note, fileNode: DirectoryStructure) => ipcRenderer.invoke('generate-note-embeddings', note, fileNode)
+  generateNoteEmbeddings: (note: Note, fileNode: DirectoryStructure) => ipcRenderer.invoke('generate-note-embeddings', note, fileNode),
+  findSimilarNotes: (query: string, directoryStructures: DirectoryStructures) => ipcRenderer.invoke("perform-similarity-search", query, directoryStructures),
 });

@@ -85,7 +85,7 @@ export const setupFileSystem = async () => {
       const embeddingContent = note.title + note.content; // TODO: improve this
 
       console.log({
-        action: "compute", 
+        action:"compute", 
         embeddingPath, 
         embeddingContent
       })

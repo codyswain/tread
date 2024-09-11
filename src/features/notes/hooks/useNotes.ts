@@ -42,14 +42,19 @@ export const useNotes = () => {
     string | null
   >(null);
 
+  console.log('activeNote: ', activeNote)
+  console.log('activeFileNode: ', activeFileNode)
+
   // Load the active note based on setting the active note path
   useEffect(() => {
+    console.log('setting active note')
     const loadActiveNote = async () => {
       if (activeFileNode && activeFileNode.type === "note") {
         try {
           const loadedNote = await window.electron.loadNote(
             activeFileNode.fullPath
           );
+          console.log('set active note to: ', loadedNote.id)
           setActiveNote(loadedNote);
         } catch (err) {
           console.error("Failed to load note file node with error: ", err);
@@ -153,19 +158,19 @@ export const useNotes = () => {
     [loadNotes]
   );
 
-  const findSimilarNotes = useCallback(
-    async (query: string) => {
+  const findSimilarNotes = useCallback(async () => {
+    if (!activeNote) return
       try {
-        const similarNoteIds = await window.electron.findSimilarNotes(query);
-        const similar = notes.filter((note) =>
-          similarNoteIds.includes(note.id)
-        );
-        setSimilarNotes(similar);
+        const similarNotesAndScore = await window.electron.findSimilarNotes(activeNote.content, directoryStructures);
+        for (const note of similarNotesAndScore){
+          console.log(`Note=${note.note.id}`)
+          console.log(`Score=${note.score}`)
+        }
       } catch (error) {
         console.error("Error finding similar notes:", error);
       }
     },
-    [notes]
+    [notes, activeNote, activeFileNode, directoryStructures]
   );
 
   const toggleDirectory = useCallback(

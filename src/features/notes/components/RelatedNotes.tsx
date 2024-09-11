@@ -40,7 +40,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
     toggleDirectory,
     newFolderState,
 
-    
+    findSimilarNotes,
     similarNotes,
   } = useNotesContext();
 
@@ -66,6 +66,15 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
       <div className="flex justify-between items-center p-2 h-10 border-b border-border">
         <span className="font-semibold text-sm">Related Notes</span>
       </div>
+
+      <Button
+          variant="ghost"
+          size="sm"
+          onClick={findSimilarNotes}
+          className="text-xs"
+        >
+          Find Similar
+        </Button>
       {/* <ScrollArea className="h-[calc(100%-5rem)]">
         <div className="p-4">
           {isSimilarNotesLoading ? (

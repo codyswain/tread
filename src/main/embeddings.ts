@@ -113,8 +113,11 @@ export const setupEmbeddingService = async (): Promise<void> => {
 
   ipcMain.handle("perform-similarity-search", async (_, query: string, directoryStructures: DirectoryStructures): Promise<Array<{ note: SimilarNote, score: number }>> => {
     try {
+      console.log('finding embedding paths', query, directoryStructures)
       const embeddingPaths = await similaritySearcher.findEmbeddingPaths(directoryStructures);
+      console.log(`found embedding paths=${embeddingPaths}`)
       const queryEmbedding = await embeddingCreator.createEmbedding(query);
+      console.log('found query embeddings')
       return await similaritySearcher.performSimilaritySearch(queryEmbedding, embeddingPaths);
     } catch (error) {
       console.error("Error performing similarity search:", error);
