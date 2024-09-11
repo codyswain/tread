@@ -37,9 +37,6 @@ export const setupFileSystem = async () => {
     try {
       const noteContent = await fs.readFile(notePath, "utf-8");
       const note: Note = JSON.parse(noteContent);
-      console.log(
-        `Note loaded successfully: id=${note.id}, title=${note.title}`
-      );
       return note;
     } catch (error) {
       console.error("Error loading note:", error);
@@ -142,6 +139,7 @@ export const setupFileSystem = async () => {
       return dirStructure;
     } catch (error) {
       console.error(`error loading directory structure for dirPath=${dirPath}`);
+      throw error;
     }
   });
 

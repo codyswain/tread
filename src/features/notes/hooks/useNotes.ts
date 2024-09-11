@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Note, DirectoryStructure, SimilarNote, DirectoryStructures, Directory } from "@/shared/types";
+import { getTopLevelFolders, removeTopLevelFolder } from "@/main/configManager";
 
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -46,25 +47,26 @@ export const useNotes = () => {
 
   const loadNotes = useCallback(async () => {
     setIsLoading(true);
+    let topLevelDirPaths: string[];
+    const allDirStructures: DirectoryStructures = {};
     try {
-      const topLevelDirPath = await window.electron.getTopLevelFolders();
-
-      // for each top level folder path, fetch the directory structure.
-      // this is done in the app side code so that we can later add dynamic loading
-      const allDirStructures: DirectoryStructures = {};
-      for (const dirPath of topLevelDirPath) {
+      topLevelDirPaths = await window.electron.getTopLevelFolders();
+    } catch (err){
+      console.error(`Failed to load topLevelDirPath with error=`, error)
+    }
+    for (const dirPath of topLevelDirPaths) {
+      try {
         const dirStructure = await window.electron.getDirectoryStructure(
           dirPath
         );
         allDirStructures[dirPath] = dirStructure;
-      }
-      setDirectoryStructures(allDirStructures);
-    } catch (error) {
-      console.error("Error loading notes:", error);
-    } finally {
-      setIsLoading(false);
+      } catch (err){
+        console.error(`Failed to load dirStructure for dirPath=${dirPath} with error=`, error)
+      } 
     }
-  }, []);
+    setDirectoryStructures(allDirStructures);
+    setIsLoading(false);
+  }, [setDirectoryStructures, setIsLoading]);
 
   useEffect(() => {
     loadNotes();
@@ -109,7 +111,14 @@ export const useNotes = () => {
   const deleteFileNode = useCallback(
     async (fileNode: DirectoryStructure) => {
       try {
+
         await window.electron.deleteFileNode(fileNode.type, fileNode.fullPath);
+
+        // Remove it from App Level Config File if it's a mounted top level folder
+        const topLevelFolderPaths = await window.electron.getTopLevelFolders();
+        if (topLevelFolderPaths.includes(fileNode.fullPath)){
+          await window.electron.removeTopLevelFolder(fileNode.fullPath)  
+        }
         // TODO: set active note after deletion
         await loadNotes();
       } catch (error) {

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { ScrollArea } from "@/shared/components/ScrollArea";
 import { Loader, ChevronDown, ChevronRight, Folder, File } from "lucide-react";
 import { Input } from "@/shared/components/input";
@@ -28,9 +28,23 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
   handleContextMenu,
 }) => {
   const { toggleDirectory, expandedDirs } = useNotesContext();
-  const {
-    newFolderState
-  } = useNotesContext();
+  const { newFolderState } = useNotesContext();
+
+  // For the folder that renders when creating a new folder
+  const newFolderInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (newFolderState.isCreatingFolder) {
+      newFolderInputRef.current?.focus();
+    }
+  }, [newFolderState.isCreatingFolder]);
+  const handleNewFolderKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      newFolderState.confirmCreateFolder();
+    } else if (e.key === 'Escape') {
+      newFolderState.cancelCreateFolder();
+    }
+  };
+
 
   const renderDirectoryStructure = (structure: DirectoryStructure) => {
     const fullPath = "/" + structure.fullPath.replace(/^\//, "");
@@ -47,6 +61,21 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
             {structure.children.map((child) => renderDirectoryStructure(child))}
           </div>
         )}
+        {newFolderState.isCreatingFolder &&
+          selectedFileNode.fullPath === fullPath && (
+            <div className="ml-4 px-2 py-1">
+              <Input
+                variant="minimal"
+                ref={newFolderInputRef}
+                value={newFolderState.newFolderName}
+                onChange={(e) => newFolderState.setNewFolderName(e.target.value)}
+                onKeyDown={handleNewFolderKeyDown}
+                onBlur={newFolderState.cancelCreateFolder}
+                placeholder="New folder name"
+                className="w-full"
+              />
+            </div>
+          )}
       </div>
     );
   };
@@ -101,7 +130,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
 
   return (
     <ScrollArea className="h-[calc(100%-2.5rem)]">
-      {newFolderState.isCreatingFolder && (
+      {/* {newFolderState.isCreatingFolder && (
         <div className="flex items-center mt-2 p-2">
           <Input
             value={newFolderState.newFolderName}
@@ -114,7 +143,7 @@ export const NoteExplorerContent: React.FC<NoteExplorerContentProps> = ({
             Cancel
           </Button>
         </div>
-      )}
+      )} */}
       {newFolderState.error && (
         <div className="text-red-500 text-sm p-2">{newFolderState.error}</div>
       )}

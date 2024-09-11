@@ -13,6 +13,8 @@ export const NoteExplorerHeader: React.FC<NoteExplorerHeaderProps> = ({
   onCreateFolder,
   onAddTopLevelFolder,
 }) => {
+  
+
   return (
     <div className="flex justify-between items-center p-2 h-10 border-b border-border">
       <span className="font-semibold text-sm">Files</span>
