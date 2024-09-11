@@ -243,7 +243,7 @@ export const useNotes = () => {
     loadMountedDirPaths();
   }, [loadMountedDirPaths]);
 
-  const openDialogToMountDirpath = useCallback(async () => {
+  const openDialogToMountDirpath = useCallback(async () => {``
     const result = await window.electron.openFolderDialog();
     if (result) {
       await window.electron.addTopLevelFolder(result);
@@ -253,17 +253,11 @@ export const useNotes = () => {
   }, [loadMountedDirPaths]);
 
   const createEmbedding = useCallback(async (): Promise<boolean> => {
-    // create an embedding for the active file node
-    // if the active file node is a note
     if (activeFileNode.type === "note") {
-      const embeddingDirPath = activeFileNode.fullPath.substring(
-        0,
-        activeFileNode.fullPath.lastIndexOf("/")
-      );
       try {
-        await window.electron.saveEmbedding(activeNote, embeddingDirPath);
+        await window.electron.generateNoteEmbeddings(activeNote, activeFileNode);
         return true
-      } catch (err) {
+      } catch (error){
         console.error(`Failed generating note embedding with error=${error}`);
         return false;
       }

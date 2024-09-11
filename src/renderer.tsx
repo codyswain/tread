@@ -31,7 +31,7 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { DirectoryStructure, Note } from "./shared/types";
+import { DirectoryStructure, Embedding, Note } from "./shared/types";
 
 declare global {
   interface Window {
@@ -60,6 +60,8 @@ declare global {
         fileNodeType: string,
         fileNodePath: string
       ) => Promise<void>;
+
+      generateNoteEmbeddings: (note: Note, fileNode: DirectoryStructure) => Promise<Embedding>;
     };
   }
 }

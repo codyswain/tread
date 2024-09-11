@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import { Note } from "./shared/types";
+import { DirectoryStructure, Note } from "./shared/types";
 
 contextBridge.exposeInMainWorld("electron", {
   loadNotes: () => ipcRenderer.invoke("load-notes"),
@@ -34,4 +34,6 @@ contextBridge.exposeInMainWorld("electron", {
   loadNote: (dirPath: string) => ipcRenderer.invoke("load-note", dirPath),
   deleteFileNode: (fileNodeType: string, fileNodePath: string) =>
     ipcRenderer.invoke("delete-file-node", fileNodeType, fileNodePath),
+
+  generateNoteEmbeddings: (note: Note, fileNode: DirectoryStructure) => ipcRenderer.invoke('generate-note-embeddings', note, fileNode)
 });

@@ -1,3 +1,5 @@
+import OpenAI from "openai";
+
 export interface NoteMetadata {
   id: string;
   title: string;
@@ -38,3 +40,5 @@ export interface TabInfo {
   id: string;
   title: string;
 }
+
+export type Embedding = OpenAI.Embeddings.CreateEmbeddingResponse;

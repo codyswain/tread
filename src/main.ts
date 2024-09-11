@@ -7,6 +7,7 @@ import {
   getTopLevelFolders,
   removeTopLevelFolder,
 } from "./main/configManager";
+import { setupEmbeddingService } from "./main/embeddings";
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -90,6 +91,7 @@ ipcMain.on("close-window", () => {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   await setupFileSystem();
+  await setupEmbeddingService();
   createWindow();
 });
 
