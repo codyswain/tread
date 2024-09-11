@@ -1,19 +1,21 @@
 import React from "react";
 import { Button } from "@/shared/components/Button";
 import { Pencil, FolderPlus, Plus } from "lucide-react";
+import { useNotesContext } from "../context/notesContext";
 
 interface NoteExplorerHeaderProps {
   onCreateNote: () => void;
   onCreateFolder: () => void;
-  onAddTopLevelFolder: () => void;
 }
 
 export const NoteExplorerHeader: React.FC<NoteExplorerHeaderProps> = ({
   onCreateNote,
   onCreateFolder,
-  onAddTopLevelFolder,
 }) => {
   
+  const {
+    openDialogToMountDirpath
+  } = useNotesContext();
 
   return (
     <div className="flex justify-between items-center p-2 h-10 border-b border-border">
@@ -41,7 +43,7 @@ export const NoteExplorerHeader: React.FC<NoteExplorerHeaderProps> = ({
           variant="ghost"
           size="icon"
           className="h-8 w-8"
-          onClick={onAddTopLevelFolder}
+          onClick={openDialogToMountDirpath}
           title="Add Top-Level Folder"
         >
           <Plus className="h-4 w-4" />

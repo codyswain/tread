@@ -44,7 +44,7 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
     expandedDirs,
     toggleDirectory,
     newFolderState
-  } = useNotesContext();
+  } = useNotesContext();                              
 
   const handleDelete = () => {
     if (contextMenu.fileNode) {
@@ -71,7 +71,6 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
       <NoteExplorerHeader
         onCreateNote={() => console.log('IMPLEMENT CREATE NEW NOTE')}
         onCreateFolder={() => {console.log('IMPLEMENT CREATE NEW FOLDER')}}
-        onAddTopLevelFolder={handleAddTopLevelFolder}
       />
       <NoteExplorerContent
         isLoadingFolders={isLoadingFolders}

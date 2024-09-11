@@ -25,6 +25,10 @@ export const useNotes = () => {
   const [newFolderName, setNewFolderName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // Mounted Folder States
+  const [mountedDirPaths, setMountedDirPaths] = useState<string[]>([]);
+  const [isLoadingMountedDirPaths, setIsLoadingMountedDirPaths] = useState(false);
+  const [mountedDirPathsLoadError, setMountedDirPathsLoadError] = useState<string | null>(null);
 
   // Load the active note based on setting the active note path
   useEffect(() => {
@@ -144,6 +148,7 @@ export const useNotes = () => {
   );
 
   const toggleDirectory = useCallback((fileNode: DirectoryStructure) => {
+    setActiveFileNode(fileNode);
     setExpandedDirs((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(fileNode.fullPath)) {
@@ -191,6 +196,33 @@ export const useNotes = () => {
     setError(null);
   }, []);
 
+  const loadMountedDirPaths = useCallback(async () => {
+    setIsLoadingMountedDirPaths(true);
+    setMountedDirPathsLoadError(null);
+    try {
+      const dirPaths = await window.electron.getTopLevelFolders();
+      setMountedDirPaths(dirPaths);
+    } catch (error) {
+      setMountedDirPathsLoadError("Failed to load top-level folders");
+      console.error(error);
+    } finally {
+      setIsLoadingMountedDirPaths(false);
+    }
+  }, [setIsLoadingMountedDirPaths, setMountedDirPathsLoadError]);
+
+  useEffect(() => {
+    loadMountedDirPaths();
+  }, [loadMountedDirPaths]);
+
+  const openDialogToMountDirpath = useCallback(async () => {
+    const result = await window.electron.openFolderDialog();
+    if (result) {
+      await window.electron.addTopLevelFolder(result);
+      loadMountedDirPaths();
+      loadNotes();
+    }
+  }, [loadMountedDirPaths]);
+
   return {
     notes,
     directoryStructures,
@@ -220,5 +252,7 @@ export const useNotes = () => {
       cancelCreateFolder,
       error,
     },
+
+    openDialogToMountDirpath
   };
 };
