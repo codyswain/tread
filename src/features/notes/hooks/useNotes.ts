@@ -9,6 +9,8 @@ import {
 } from "@/shared/types";
 import { getTopLevelFolders, removeTopLevelFolder } from "@/main/configManager";
 
+
+
 export const useNotes = () => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [directoryStructures, setDirectoryStructures] = useState<
@@ -25,6 +27,7 @@ export const useNotes = () => {
     useState<DirectoryStructure | null>(null);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
+  const [similarNotesIsLoading, setSimilarNotesIsLoading] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState(true);
 
   // File System Explorer State
@@ -42,19 +45,15 @@ export const useNotes = () => {
     string | null
   >(null);
 
-  console.log('activeNote: ', activeNote)
-  console.log('activeFileNode: ', activeFileNode)
-
   // Load the active note based on setting the active note path
   useEffect(() => {
-    console.log('setting active note')
+    
     const loadActiveNote = async () => {
       if (activeFileNode && activeFileNode.type === "note") {
         try {
           const loadedNote = await window.electron.loadNote(
             activeFileNode.fullPath
           );
-          console.log('set active note to: ', loadedNote.id)
           setActiveNote(loadedNote);
         } catch (err) {
           console.error("Failed to load note file node with error: ", err);
@@ -159,11 +158,12 @@ export const useNotes = () => {
   );
 
   const findSimilarNotes = useCallback(async () => {
+    setSimilarNotesIsLoading(true)
     if (!activeNote) return
       try {
-        const similarNotes = await window.electron.findSimilarNotes(activeNote.content, directoryStructures);
-        
+        const similarNotes = await window.electron.findSimilarNotes(activeNote.content, directoryStructures)
         setSimilarNotes(similarNotes.filter((note: SimilarNote) => note.id !== activeNote.id))
+        setSimilarNotesIsLoading(false);
       } catch (error) {
         console.error("Error finding similar notes:", error);
       }
@@ -270,6 +270,29 @@ export const useNotes = () => {
     }
   }, [activeFileNode, activeNote]);
 
+  const getFileNodeFromNote = useCallback(
+    (note: Note): DirectoryStructure | null => {
+      for (const dirStructure of Object.values(directoryStructures)) {
+        const findFileNode = (node: DirectoryStructure): DirectoryStructure | null => {
+          if (node.type === 'note' && node.name === note.title) {
+            return node;
+          }
+          if (node.type === 'directory' && node.children) {
+            for (const child of node.children) {
+              const result = findFileNode(child);
+              if (result) return result;
+            }
+          }
+          return null;
+        };
+
+        const fileNode = findFileNode(dirStructure);
+        if (fileNode) return fileNode;
+      }
+      return null;
+    },
+    [directoryStructures]
+  );
   return {
     notes,
     directoryStructures,
@@ -303,5 +326,7 @@ export const useNotes = () => {
     openDialogToMountDirpath,
 
     createEmbedding,
+    getFileNodeFromNote,
+    similarNotesIsLoading
   };
 };

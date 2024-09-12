@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { useEffect } from "react";
 import { Button } from "@/shared/components/Button";
 import { ScrollArea } from "@/shared/components/ScrollArea";
 import { cn } from "@/shared/utils";
-import { Loader2, Settings } from "lucide-react";
+import { Loader2, RefreshCw, Settings } from "lucide-react";
 import { toast } from "@/shared/components/Toast";
 import { SimilarNote } from "@/shared/types";
-import { useResizableSidebar } from '@/shared/hooks/useResizableSidebar';
-import { useNotesContext } from '../context/notesContext';
+import { useResizableSidebar } from "@/shared/hooks/useResizableSidebar";
+import { useNotesContext } from "../context/notesContext";
 
 interface RelatedNotesProps {
   isOpen: boolean;
@@ -17,7 +17,7 @@ interface RelatedNotesProps {
 const RelatedNotes: React.FC<RelatedNotesProps> = ({
   isOpen,
   onResize,
-  onClose
+  onClose,
 }) => {
   const { width, sidebarRef, startResizing } = useResizableSidebar({
     minWidth: 100,
@@ -30,29 +30,25 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
   });
 
   const {
-    directoryStructures,
-    createNote,
-    activeFileNode,
     setActiveFileNode,
-    deleteFileNode,
-    handleCreateFolder,
-    expandedDirs,
-    toggleDirectory,
-    newFolderState,
-
     findSimilarNotes,
     similarNotes,
+    getFileNodeFromNote,
+    similarNotesIsLoading,
+    activeFileNode,
   } = useNotesContext();
-
-  // const handleOpenNote = (noteId: string) => {
-  //   onOpenNote(noteId);
-  // };
 
   const handleSettingsClick = () => {
     toast("Settings feature is not implemented yet", {
       description: "This feature will be available in a future update.",
     });
   };
+
+  useEffect(() => {
+    if (isOpen && activeFileNode) {
+      findSimilarNotes();
+    }
+  }, [isOpen, activeFileNode, findSimilarNotes]);
 
   return (
     <div
@@ -65,53 +61,39 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
     >
       <div className="flex justify-between items-center p-2 h-10 border-b border-border">
         <span className="font-semibold text-sm">Related Notes</span>
-      </div>
-
-      <Button
+        <Button
           variant="ghost"
-          size="sm"
+          size="icon"
           onClick={findSimilarNotes}
-          className="text-xs"
+          className="h-6 w-6"
+          title="Refresh similar notes"
         >
-          Find Similar
+          <RefreshCw className="h-4 w-4" />
         </Button>
-        {
-          similarNotes.length > 0 && 
-          <ul>
-            {similarNotes.map((note) => (
-              <li
-                key={note.id}
-                className="cursor-pointer hover:bg-accent/10 p-2 rounded"
-                onClick={() => {}}
-              >
-                
-                <h3 className="font-semibold mb-1">{note.title}</h3>
-                <p className="text-green-500 text-sm">Score: {note.score}</p>
-                <div
-                  className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
-                  dangerouslySetInnerHTML={{ __html: note.content }}
-                />
-              </li>
-            ))}
-          </ul>
-        }
-      {/* <ScrollArea className="h-[calc(100%-5rem)]">
+      </div>
+      <ScrollArea className="h-[calc(100%-5rem)]">
         <div className="p-4">
-          {isSimilarNotesLoading ? (
+          {similarNotesIsLoading ? (
             <div className="flex items-center justify-center h-20">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           ) : (
             <>
               {similarNotes.length > 0 ? (
-                <ul className="space-y-4">
+                <ul>
                   {similarNotes.map((note) => (
                     <li
                       key={note.id}
                       className="cursor-pointer hover:bg-accent/10 p-2 rounded"
-                      onClick={() => handleOpenNote(note.)}
+                      onClick={async () => {
+                        const fileNode = getFileNodeFromNote(note);
+                        setActiveFileNode(fileNode);
+                      }}
                     >
                       <h3 className="font-semibold mb-1">{note.title}</h3>
+                      <p className="text-green-500 text-sm">
+                        Score: {note.score}
+                      </p>
                       <div
                         className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
                         dangerouslySetInnerHTML={{ __html: note.content }}
@@ -125,7 +107,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
             </>
           )}
         </div>
-      </ScrollArea> */}
+      </ScrollArea>
       <div className="absolute bottom-2 right-2">
         <Button
           variant="ghost"
