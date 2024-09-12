@@ -88,7 +88,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
               {similarNotes.length > 0 ? (
                 <ul>
                   {similarNotes
-                    .filter((note) => note.score > 0.6)
+
                     .map((note) => (
                       <li
                         key={note.id}

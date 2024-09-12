@@ -128,7 +128,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
         } finally {
           setIsGeneratingEmbedding(false);
         }
-      }, 30000), // 30 seconds delay
+      }, 5000),
     [createEmbedding]
   );
 

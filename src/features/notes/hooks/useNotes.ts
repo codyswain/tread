@@ -130,7 +130,7 @@ export const useNotes = () => {
         await window.electron.saveNote(updatedNote, dirPath);
         // await window.electron.saveEmbedding(updatedNote.id, updatedNote.content);
         // Reload notes to reflect any changes in the file system
-        await loadNotes();
+        
       } catch (error) {
         console.error("Error saving note:", error);
       }
@@ -162,7 +162,7 @@ export const useNotes = () => {
     if (!activeNote) return
       try {
         const similarNotes = await window.electron.findSimilarNotes(activeNote.content, directoryStructures)
-        setSimilarNotes(similarNotes.filter((note: SimilarNote) => note.id !== activeNote.id))
+        setSimilarNotes(similarNotes.filter((note: SimilarNote) => note.id !== activeNote.id && note.score >= .6))
         setSimilarNotesIsLoading(false);
       } catch (error) {
         console.error("Error finding similar notes:", error);
