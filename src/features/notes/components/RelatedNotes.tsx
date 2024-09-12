@@ -2,8 +2,14 @@ import React, { useEffect } from "react";
 import { Button } from "@/shared/components/Button";
 import { ScrollArea } from "@/shared/components/ScrollArea";
 import { cn } from "@/shared/utils";
-import { Loader2, RefreshCw, Settings } from "lucide-react";
+import { Loader2, RefreshCw, Settings, Target, Zap } from "lucide-react";
 import { toast } from "@/shared/components/Toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/shared/components/Tooltip";
 import { SimilarNote } from "@/shared/types";
 import { useResizableSidebar } from "@/shared/hooks/useResizableSidebar";
 import { useNotesContext } from "../context/notesContext";
@@ -81,25 +87,45 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
             <>
               {similarNotes.length > 0 ? (
                 <ul>
-                  {similarNotes.map((note) => (
-                    <li
-                      key={note.id}
-                      className="cursor-pointer hover:bg-accent/10 p-2 rounded"
-                      onClick={async () => {
-                        const fileNode = getFileNodeFromNote(note);
-                        setActiveFileNode(fileNode);
-                      }}
-                    >
-                      <h3 className="font-semibold mb-1">{note.title}</h3>
-                      <p className="text-green-500 text-sm">
-                        Score: {note.score}
-                      </p>
-                      <div
-                        className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
-                        dangerouslySetInnerHTML={{ __html: note.content }}
-                      />
-                    </li>
-                  ))}
+                  {similarNotes
+                    .filter((note) => note.score > 0.6)
+                    .map((note) => (
+                      <li
+                        key={note.id}
+                        className="cursor-pointer hover:bg-accent/10 p-2 rounded mb-2"
+                        onClick={async () => {
+                          const fileNode = getFileNodeFromNote(note);
+                          setActiveFileNode(fileNode);
+                        }}
+                      >
+                        <div className="flex justify-between items-center mb-1">
+                          <h3 className="font-semibold truncate mr-2">
+                            {note.title}
+                          </h3>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <span
+                                  className={`text-sm font-medium flex items-center ${getScoreColor(
+                                    note.score
+                                  )}`}
+                                >
+                                  <Target className="h-3 w-3 mr-1 opacity-60" />
+                                  {note.score.toFixed(2)}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Similarity score: {note.score.toFixed(2)}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                        <div
+                          className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
+                          dangerouslySetInnerHTML={{ __html: note.content }}
+                        />
+                      </li>
+                    ))}
                 </ul>
               ) : (
                 <p>No similar notes found</p>
@@ -125,6 +151,14 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
       />
     </div>
   );
+};
+
+const getScoreColor = (score: number): string => {
+  if (score >= 0.9) return "text-emerald-600 dark:text-emerald-400";
+  if (score >= 0.8) return "text-green-600 dark:text-green-400";
+  if (score >= 0.7) return "text-yellow-600 dark:text-yellow-400";
+  if (score >= 0.6) return "text-orange-600 dark:text-orange-400";
+  return "text-red-600 dark:text-red-400";
 };
 
 export default RelatedNotes;

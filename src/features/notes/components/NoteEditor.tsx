@@ -40,18 +40,18 @@ interface NoteEditorProps {
 }
 
 const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
-  const {
-    activeNote,
-    activeFileNode,
-    saveNote,
-    createEmbedding
-  } = useNotesContext();
+  const { activeNote, activeFileNode, saveNote, createEmbedding } =
+    useNotesContext();
 
   const [localNote, setLocalNote] = useState(note);
   const [isEditing, setIsEditing] = useState(true);
   const [isSavingEmbedding, setIsSavingEmbedding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingEmbedding, setIsGeneratingEmbedding] = useState(false);
+  const [indicatorStatus, setIndicatorStatus] = useState<
+    "green" | "yellow" | "green"
+  >("green");
 
   const editor = useEditor({
     extensions: [
@@ -82,6 +82,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
         try {
           await saveNote(updatedNote);
           setError(null);
+          setIndicatorStatus("green");
         } catch (err) {
           setError("Failed to save note. Please try again.");
           toast("Error saving note", {
@@ -91,7 +92,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
         } finally {
           setIsSaving(false);
         }
-      }, 500),  
+      }, 5000),
     [saveNote]
   );
 
@@ -99,6 +100,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newTitle = e.target.value;
       setLocalNote((prev) => ({ ...prev, title: newTitle }));
+      setIndicatorStatus("yellow");
       saveNote({ ...localNote, title: newTitle }).catch((err) => {
         setError("Failed to save note title. Please try again.");
         toast("Error saving note title", {
@@ -110,26 +112,48 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
     [localNote, saveNote]
   );
 
+  const debouncedGenerateEmbedding = useMemo(
+    () =>
+      debounce(async () => {
+        setIsGeneratingEmbedding(true);
+        try {
+          const success = await createEmbedding();
+          if (success) {
+            console.log("Embedding generated successfully");
+          } else {
+            console.error("Failed to generate embedding");
+          }
+        } catch (error) {
+          console.error("Error generating embedding:", error);
+        } finally {
+          setIsGeneratingEmbedding(false);
+        }
+      }, 30000), // 30 seconds delay
+    [createEmbedding]
+  );
+
   const handleContentChange = useCallback(() => {
     if (editor) {
       const content = editor.getHTML();
       setLocalNote((prev) => {
         if (prev.content !== content) {
           const updatedNote = { ...prev, content };
+          setIndicatorStatus("yellow");
           debouncedSaveContent(updatedNote);
+          debouncedGenerateEmbedding();
           return updatedNote;
         }
         return prev;
       });
     }
-  }, [editor, debouncedSaveContent]);
+  }, [editor, debouncedSaveContent, debouncedGenerateEmbedding]);
 
   const handleSaveEmbedding = useCallback(async () => {
     if (editor) {
       setIsSavingEmbedding(true);
-      console.log('attempting to save embedding')
+      console.log("attempting to save embedding");
       const success = await createEmbedding();
-      if (success){
+      if (success) {
         toast("Embedding saved successfully", {
           description:
             "The note's embedding has been updated for similarity search.",
@@ -228,27 +252,39 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
           {isSaving && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
         </div>
         <div className="flex items-center space-x-2">
+          {isGeneratingEmbedding && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="h-10 w-10 flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Generating embedding...</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSaveEmbedding}
-                className="h-10 w-10"
-                disabled={isSavingEmbedding}
-                aria-label="Generate embeddings for similarity search"
-              >
-                {isSavingEmbedding ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
+              <div
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  indicatorStatus === "green"
+                    ? "bg-green-500"
+                    : "bg-yellow-500 animate-pulse"
                 )}
-              </Button>
+              />
             </TooltipTrigger>
             <TooltipContent>
-              <p>Generate embeddings for similarity search</p>
+              <p>
+                {indicatorStatus === "green"
+                  ? "Embedding up to date"
+                  : "Embedding needs update"}
+              </p>
             </TooltipContent>
           </Tooltip>
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Toggle
