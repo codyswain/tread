@@ -36,12 +36,13 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
   });
 
   const {
-    setActiveFileNode,
     findSimilarNotes,
     similarNotes,
-    getFileNodeFromNote,
+
     similarNotesIsLoading,
-    activeFileNode,
+
+    activeNote,
+    openNote,
   } = useNotesContext();
 
   const handleSettingsClick = () => {
@@ -51,11 +52,10 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
   };
 
   useEffect(() => {
-    if (isOpen && activeFileNode) {
+    if (isOpen && activeNote) {
       findSimilarNotes();
     }
-  }, [isOpen, activeFileNode, findSimilarNotes]);
-
+  }, [isOpen, activeNote, findSimilarNotes]);
   return (
     <div
       ref={sidebarRef}
@@ -87,45 +87,42 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
             <>
               {similarNotes.length > 0 ? (
                 <ul>
-                  {similarNotes
-
-                    .map((note) => (
-                      <li
-                        key={note.id}
-                        className="cursor-pointer hover:bg-accent/10 p-2 rounded mb-2"
-                        onClick={async () => {
-                          const fileNode = getFileNodeFromNote(note);
-                          setActiveFileNode(fileNode);
-                        }}
-                      >
-                        <div className="flex justify-between items-center mb-1">
-                          <h3 className="font-semibold truncate mr-2">
-                            {note.title}
-                          </h3>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span
-                                  className={`text-sm font-medium flex items-center ${getScoreColor(
-                                    note.score
-                                  )}`}
-                                >
-                                  <Target className="h-3 w-3 mr-1 opacity-60" />
-                                  {note.score.toFixed(2)}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Similarity score: {note.score.toFixed(2)}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </div>
-                        <div
-                          className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
-                          dangerouslySetInnerHTML={{ __html: note.content }}
-                        />
-                      </li>
-                    ))}
+                  {similarNotes.map((note) => (
+                    <li
+                      key={note.id}
+                      className="cursor-pointer hover:bg-accent/10 p-2 rounded mb-2"
+                      onClick={async () => {
+                        openNote(note);
+                      }}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <h3 className="font-semibold truncate mr-2">
+                          {note.title}
+                        </h3>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <span
+                                className={`text-sm font-medium flex items-center ${getScoreColor(
+                                  note.score
+                                )}`}
+                              >
+                                <Target className="h-3 w-3 mr-1 opacity-60" />
+                                {note.score.toFixed(2)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Similarity score: {note.score.toFixed(2)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <div
+                        className="text-sm text-muted-foreground prose dark:prose-invert max-w-none line-clamp-3"
+                        dangerouslySetInnerHTML={{ __html: note.content }}
+                      />
+                    </li>
+                  ))}
                 </ul>
               ) : (
                 <p>No similar notes found</p>

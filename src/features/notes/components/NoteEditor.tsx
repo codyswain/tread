@@ -34,14 +34,22 @@ import {
 } from "@/shared/components/Tooltip";
 import { Note } from "@/shared/types";
 import { useNotesContext } from "../context/notesContext";
+import { useDebouncedCallback } from "use-debounce";
 
 interface NoteEditorProps {
   note: Note;
 }
 
 const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
-  const { activeNote, activeFileNode, saveNote, createEmbedding } =
-    useNotesContext();
+  const {
+    activeNote,
+    activeNotePath,
+    activeFileNode,
+    saveNote,
+    createEmbedding,
+    getFileNodeFromPath,
+    directoryStructures
+  } = useNotesContext();
 
   const [localNote, setLocalNote] = useState(note);
   const [isEditing, setIsEditing] = useState(true);
@@ -73,27 +81,27 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       editor.commands.setContent(note.content);
     }
     setLocalNote(note);
-  }, [editor, note]);
+  }, [editor, note.content, note.id]);
 
-  const debouncedSaveContent = useMemo(
-    () =>
-      debounce(async (updatedNote: Note) => {
-        setIsSaving(true);
-        try {
-          await saveNote(updatedNote);
-          setError(null);
-          setIndicatorStatus("green");
-        } catch (err) {
-          setError("Failed to save note. Please try again.");
-          toast("Error saving note", {
-            description:
-              "An error occurred while saving the note. Please try again.",
-          });
-        } finally {
-          setIsSaving(false);
-        }
-      }, 5000),
-    [saveNote]
+  const debouncedSaveContent = useDebouncedCallback(
+    async (updatedNote: Note) => {
+      setIsSaving(true);
+      try {
+        await saveNote(updatedNote);
+        setError(null);
+        setIndicatorStatus("green");
+      } catch (err) {
+        setError("Failed to save note. Please try again.");
+        toast("Error saving note", {
+          description:
+            "An error occurred while saving the note. Please try again.",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    5000,
+    { leading: false, trailing: true }
   );
 
   const handleTitleChange = useCallback(
@@ -112,24 +120,24 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
     [localNote, saveNote]
   );
 
-  const debouncedGenerateEmbedding = useMemo(
-    () =>
-      debounce(async () => {
-        setIsGeneratingEmbedding(true);
-        try {
-          const success = await createEmbedding();
-          if (success) {
-            console.log("Embedding generated successfully");
-          } else {
-            console.error("Failed to generate embedding");
-          }
-        } catch (error) {
-          console.error("Error generating embedding:", error);
-        } finally {
-          setIsGeneratingEmbedding(false);
+  const debouncedGenerateEmbedding = useDebouncedCallback(
+    async () => {
+      setIsGeneratingEmbedding(true);
+      try {
+        const success = await createEmbedding();
+        if (success) {
+          console.log("Embedding generated successfully");
+        } else {
+          console.error("Failed to generate embedding");
         }
-      }, 5000),
-    [createEmbedding]
+      } catch (error) {
+        console.error("Error generating embedding:", error);
+      } finally {
+        setIsGeneratingEmbedding(false);
+      }
+    },
+    5000,
+    { leading: false, trailing: true }
   );
 
   const handleContentChange = useCallback(() => {
