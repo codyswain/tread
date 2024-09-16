@@ -32,32 +32,39 @@ const Notes: React.FC<{
         onResize={setLeftSidebarWidth}
         onClose={() => setIsLeftSidebarOpen(false)}
       />
-      <main
+      <div
         className="flex-grow flex flex-col overflow-hidden"
         style={{
           marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : "0",
           marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : "0",
-          marginBottom: isBottomPaneOpen ? `${bottomPaneHeight}px` : "0",
           transition: "margin 0.3s ease-in-out",
         }}
       >
-        {activeNote ? (
-          <NoteEditor note={activeNote} />
-        ) : (
-          <div className="flex w-full h-full justify-center items-center">
-            Please select a note
-          </div>
-        )}
-      </main>
+        <div
+          className="flex-grow overflow-hidden"
+          style={{
+            marginBottom: isBottomPaneOpen ? `${bottomPaneHeight}px` : "0",
+            transition: "margin 0.3s ease-in-out",
+          }}
+        >
+          {activeNote ? (
+            <NoteEditor note={activeNote} />
+          ) : (
+            <div className="flex w-full h-full justify-center items-center">
+              Please select a note
+            </div>
+          )}
+        </div>
+        <BottomPane
+          isOpen={isBottomPaneOpen}
+          onResize={setBottomPaneHeight}
+          onClose={() => setIsBottomPaneOpen(false)}
+        />
+      </div>
       <RelatedNotes
         isOpen={isRightSidebarOpen}
         onResize={setRightSidebarWidth}
         onClose={() => setIsRightSidebarOpen(false)}
-      />
-      <BottomPane
-        isOpen={isBottomPaneOpen}
-        onResize={setBottomPaneHeight}
-        onClose={() => setIsBottomPaneOpen(false)}
       />
     </div>
   );

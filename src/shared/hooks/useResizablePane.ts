@@ -28,8 +28,10 @@ export const useResizablePane = ({
   }, []);
 
   const resize = useCallback((e: MouseEvent) => {
-    if (!isResizing.current) return;
-    const newHeight = window.innerHeight - e.clientY;
+    if (!isResizing.current || !paneRef.current) return;
+    const parentRect = paneRef.current.parentElement?.getBoundingClientRect();
+    if (!parentRect) return;
+    const newHeight = parentRect.bottom - e.clientY;
     if (newHeight >= minHeight && newHeight <= maxHeight) {
       setHeight(newHeight);
       onResize(newHeight);

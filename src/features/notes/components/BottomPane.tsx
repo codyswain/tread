@@ -30,7 +30,7 @@ const BottomPane: React.FC<BottomPaneProps> = ({
     <div
       ref={paneRef}
       className={cn(
-        "fixed bottom-0 left-0 right-0 bg-background border-t border-border transition-all duration-300 z-10 overflow-hidden",
+        "bg-background border-t border-border transition-all duration-300 overflow-hidden relative",
         isOpen ? `h-[${height}px]` : "h-0"
       )}
       style={{ height: isOpen ? height : 0 }}
