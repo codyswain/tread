@@ -26,15 +26,22 @@ const BottomPane: React.FC<BottomPaneProps> = ({
     onClose,
   });
 
+  if (!isOpen) return null;
+
   return (
     <div
       ref={paneRef}
       className={cn(
         "bg-background border-t border-border transition-all duration-300 overflow-hidden relative",
-        isOpen ? `h-[${height}px]` : "h-0"
+        "flex-shrink-0"
       )}
-      style={{ height: isOpen ? height : 0 }}
+      style={{ height }}
     >
+      <div
+        onMouseDown={startResizing}
+        className="absolute top-0 left-0 w-full h-1 cursor-ns-resize hover:bg-accent/50"
+        style={{ top: "-1px" }}
+      />
       <div className="flex justify-between items-center p-2 h-10 border-b border-border">
         <span className="font-semibold text-sm">Bottom Pane</span>
         <Button
@@ -52,11 +59,6 @@ const BottomPane: React.FC<BottomPaneProps> = ({
           <p>This is the content of the bottom pane.</p>
         </div>
       </ScrollArea>
-      <div
-        onMouseDown={startResizing}
-        className="absolute top-0 left-0 w-full h-1 cursor-ns-resize hover:bg-accent/50"
-        style={{ top: "-1px" }}
-      />
     </div>
   );
 };

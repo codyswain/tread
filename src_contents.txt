@@ -952,32 +952,39 @@ const Notes: React.FC<{
         onResize={setLeftSidebarWidth}
         onClose={() => setIsLeftSidebarOpen(false)}
       />
-      <main
+      <div
         className="flex-grow flex flex-col overflow-hidden"
         style={{
           marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : "0",
           marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : "0",
-          marginBottom: isBottomPaneOpen ? `${bottomPaneHeight}px` : "0",
           transition: "margin 0.3s ease-in-out",
         }}
       >
-        {activeNote ? (
-          <NoteEditor note={activeNote} />
-        ) : (
-          <div className="flex w-full h-full justify-center items-center">
-            Please select a note
-          </div>
-        )}
-      </main>
+        <div
+          className="flex-grow overflow-hidden"
+          style={{
+            marginBottom: isBottomPaneOpen ? `${bottomPaneHeight}px` : "0",
+            transition: "margin 0.3s ease-in-out",
+          }}
+        >
+          {activeNote ? (
+            <NoteEditor note={activeNote} />
+          ) : (
+            <div className="flex w-full h-full justify-center items-center">
+              Please select a note
+            </div>
+          )}
+        </div>
+        <BottomPane
+          isOpen={isBottomPaneOpen}
+          onResize={setBottomPaneHeight}
+          onClose={() => setIsBottomPaneOpen(false)}
+        />
+      </div>
       <RelatedNotes
         isOpen={isRightSidebarOpen}
         onResize={setRightSidebarWidth}
         onClose={() => setIsRightSidebarOpen(false)}
-      />
-      <BottomPane
-        isOpen={isBottomPaneOpen}
-        onResize={setBottomPaneHeight}
-        onClose={() => setIsBottomPaneOpen(false)}
       />
     </div>
   );
@@ -1755,15 +1762,22 @@ const BottomPane: React.FC<BottomPaneProps> = ({
     onClose,
   });
 
+  if (!isOpen) return null;
+
   return (
     <div
       ref={paneRef}
       className={cn(
-        "fixed bottom-0 left-0 right-0 bg-background border-t border-border transition-all duration-300 z-10 overflow-hidden",
-        isOpen ? `h-[${height}px]` : "h-0"
+        "bg-background border-t border-border transition-all duration-300 overflow-hidden relative",
+        "flex-shrink-0"
       )}
-      style={{ height: isOpen ? height : 0 }}
+      style={{ height }}
     >
+      <div
+        onMouseDown={startResizing}
+        className="absolute top-0 left-0 w-full h-1 cursor-ns-resize hover:bg-accent/50"
+        style={{ top: "-1px" }}
+      />
       <div className="flex justify-between items-center p-2 h-10 border-b border-border">
         <span className="font-semibold text-sm">Bottom Pane</span>
         <Button
@@ -1781,11 +1795,6 @@ const BottomPane: React.FC<BottomPaneProps> = ({
           <p>This is the content of the bottom pane.</p>
         </div>
       </ScrollArea>
-      <div
-        onMouseDown={startResizing}
-        className="absolute top-0 left-0 w-full h-1 cursor-ns-resize hover:bg-accent/50"
-        style={{ top: "-1px" }}
-      />
     </div>
   );
 };
@@ -3226,13 +3235,14 @@ export const useResizablePane = ({
   }, []);
 
   const resize = useCallback((e: MouseEvent) => {
-    if (!isResizing.current) return;
-    const newHeight = window.innerHeight - e.clientY;
+    if (!isResizing.current || !paneRef.current) return;
+    const paneRect = paneRef.current.getBoundingClientRect();
+    const newHeight = paneRect.bottom - e.clientY + height;
     if (newHeight >= minHeight && newHeight <= maxHeight) {
       setHeight(newHeight);
       onResize(newHeight);
     }
-  }, [minHeight, maxHeight, onResize]);
+  }, [minHeight, maxHeight, onResize, height]);
 
   const stopResizing = useCallback(() => {
     isResizing.current = false;

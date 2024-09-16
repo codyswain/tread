@@ -29,14 +29,13 @@ export const useResizablePane = ({
 
   const resize = useCallback((e: MouseEvent) => {
     if (!isResizing.current || !paneRef.current) return;
-    const parentRect = paneRef.current.parentElement?.getBoundingClientRect();
-    if (!parentRect) return;
-    const newHeight = parentRect.bottom - e.clientY;
+    const paneRect = paneRef.current.getBoundingClientRect();
+    const newHeight = paneRect.bottom - e.clientY + height;
     if (newHeight >= minHeight && newHeight <= maxHeight) {
       setHeight(newHeight);
       onResize(newHeight);
     }
-  }, [minHeight, maxHeight, onResize]);
+  }, [minHeight, maxHeight, onResize, height]);
 
   const stopResizing = useCallback(() => {
     isResizing.current = false;
