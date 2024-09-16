@@ -31,4 +31,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("generate-note-embeddings", note, fileNode),
   findSimilarNotes: (query: string, directoryStructures: DirectoryStructures) =>
     ipcRenderer.invoke("perform-similarity-search", query, directoryStructures),
+  performRAGChat: (
+    conversation: { role: string; content: string }[],
+    directoryStructures: DirectoryStructures
+  ) => ipcRenderer.invoke("perform-rag-chat", conversation, directoryStructures),
 });

@@ -406,6 +406,36 @@ export const useNotes = () => {
     [getFileNodeFromNote]
   );
 
+  const openNoteById = useCallback(
+    (noteId: string) => {
+      const fileNode = Object.values(directoryStructures.nodes).find(
+        (node) => node.type === "note" && node.noteMetadata?.id === noteId
+      );
+      if (fileNode) {
+        setActiveFileNodeId(fileNode.id);
+      } else {
+        console.error("Could not find file node for note ID", noteId);
+      }
+    },
+    [directoryStructures, setActiveFileNodeId]
+  );
+
+  const performRAGChat = useCallback(
+    async (conversation: { role: string; content: string }[]) => {
+      try {
+        const assistantMessage = await window.electron.performRAGChat(
+          conversation,
+          directoryStructures
+        );
+        return assistantMessage;
+      } catch (error) {
+        console.error("Error performing RAG Chat:", error);
+        throw error;
+      }
+    },
+    [directoryStructures]
+  );
+
   return {
     notes,
     directoryStructures,
@@ -440,6 +470,8 @@ export const useNotes = () => {
     similarNotesIsLoading,
     getFileNodeFromPath,
     openNote,
-    error
+    error,
+    performRAGChat,
+    openNoteById,
   };
 };

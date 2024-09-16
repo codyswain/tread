@@ -110,11 +110,89 @@ class SimilaritySearcher {
   }
 }
 
+class RAGChat {
+  private openai: OpenAI;
+  private embeddingCreator: EmbeddingCreator;
+  private similaritySearcher: SimilaritySearcher;
+
+  constructor(
+    openai: OpenAI,
+    embeddingCreator: EmbeddingCreator,
+    similaritySearcher: SimilaritySearcher
+  ) {
+    this.openai = openai;
+    this.embeddingCreator = embeddingCreator;
+    this.similaritySearcher = similaritySearcher;
+  }
+
+  async performRAGChat(
+    conversation: { role: string; content: string }[],
+    directoryStructures: DirectoryStructures
+  ): Promise<{ role: string; content: string }> {
+    try {
+      // Get the last user message
+      const userMessage = conversation.filter((msg) => msg.role === "user").pop();
+      if (!userMessage) throw new Error("No user message found in conversation");
+
+      // Create embedding for the query
+      const queryEmbedding = await this.embeddingCreator.createEmbedding(
+        userMessage.content
+      );
+
+      // Find relevant notes
+      const embeddingPaths = await this.similaritySearcher.findEmbeddingPaths(
+        directoryStructures
+      );
+      const similarNotes = await this.similaritySearcher.performSimilaritySearch(
+        queryEmbedding,
+        embeddingPaths
+      );
+
+      // Prepare the context for the assistant
+      let contextText = "";
+      for (const note of similarNotes) {
+        const truncatedContent = note.content.slice(0, 500); // Limit content length
+        contextText += `Note ID: ${note.id}\nTitle: ${note.title}\nContent:\n${truncatedContent}\n\n`;
+      }
+
+      // Construct the system prompt without undefined variables
+      const systemPrompt = `You are a helpful assistant. Use the provided notes to answer the user's question. When you refer to a note, include a clickable link in the format [Note Title](note://noteId).`;
+
+      // Build the messages for OpenAI API
+      const messages = [
+        { role: "system", content: systemPrompt },
+        { role: "assistant", content: `Here are some relevant notes:\n${contextText}` },
+        ...conversation,
+      ];
+
+      // Call OpenAI Chat Completion API with the correct model name
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o", // Updated model name
+        messages: messages,
+      });
+
+      const assistantMessage = completion.choices[0].message;
+      const finishReason = completion.choices[0].finish_reason;
+
+      if (finishReason === "content_filter") {
+        console.error("Assistant's reply was blocked by content filter.");
+        throw new Error("Assistant's reply was blocked due to content policy.");
+      }
+
+      return assistantMessage;
+    } catch (error) {
+      console.error("Error in RAG Chat:", error);
+      throw error;
+    }
+  }
+}
+
 export const setupEmbeddingService = async (): Promise<void> => {
   const openaiApiKey = await getOpenAIKey();
   const openai = new OpenAI({ apiKey: openaiApiKey });
   const embeddingCreator = new EmbeddingCreator(openai);
   const similaritySearcher = new SimilaritySearcher();
+  const ragChat = new RAGChat(openai, embeddingCreator, similaritySearcher);
 
   ipcMain.handle(
     "generate-note-embeddings",
@@ -155,6 +233,17 @@ export const setupEmbeddingService = async (): Promise<void> => {
         console.error("Error performing similarity search:", error);
         throw error;
       }
+    }
+  );
+
+  ipcMain.handle(
+    "perform-rag-chat",
+    async (
+      _,
+      conversation: { role: string; content: string }[],
+      directoryStructures: DirectoryStructures
+    ): Promise<{ role: string; content: string }> => {
+      return await ragChat.performRAGChat(conversation, directoryStructures);
     }
   );
 };

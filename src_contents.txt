@@ -918,12 +918,13 @@ export default NoteExplorer;
 
 --- src/features/notes/components/Notes.tsx ---
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
 import BottomPane from "./BottomPane";
 import { useNotesContext } from "../context/notesContext";
+import { useResizablePane } from "@/shared/hooks/useResizablePane";
 
 const Notes: React.FC<{
   isLeftSidebarOpen: boolean;
@@ -945,6 +946,17 @@ const Notes: React.FC<{
   const [bottomPaneHeight, setBottomPaneHeight] = useState(256);
   const { activeNote } = useNotesContext();
 
+  const bottomPaneRef = useRef<HTMLDivElement>(null);
+
+  useResizablePane({
+    minHeight: 100,
+    maxHeight: 400,
+    height: bottomPaneHeight,
+    setHeight: setBottomPaneHeight,
+    paneRef: bottomPaneRef,
+    direction: 'vertical',
+  });
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <NoteExplorer
@@ -953,20 +965,14 @@ const Notes: React.FC<{
         onClose={() => setIsLeftSidebarOpen(false)}
       />
       <div
-        className="flex-grow flex flex-col overflow-hidden"
+        className="flex-grow flex flex-col"
         style={{
           marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : "0",
           marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : "0",
           transition: "margin 0.3s ease-in-out",
         }}
       >
-        <div
-          className="flex-grow overflow-hidden"
-          style={{
-            marginBottom: isBottomPaneOpen ? `${bottomPaneHeight}px` : "0",
-            transition: "margin 0.3s ease-in-out",
-          }}
-        >
+        <div className="flex-grow flex flex-col overflow-hidden">
           {activeNote ? (
             <NoteEditor note={activeNote} />
           ) : (
@@ -975,11 +981,14 @@ const Notes: React.FC<{
             </div>
           )}
         </div>
-        <BottomPane
-          isOpen={isBottomPaneOpen}
-          onResize={setBottomPaneHeight}
-          onClose={() => setIsBottomPaneOpen(false)}
-        />
+        {isBottomPaneOpen && (
+          <BottomPane
+            height={bottomPaneHeight}
+            setHeight={setBottomPaneHeight}
+            paneRef={bottomPaneRef}
+            onClose={() => setIsBottomPaneOpen(false)}
+          />
+        )}
       </div>
       <RelatedNotes
         isOpen={isRightSidebarOpen}
@@ -1734,35 +1743,67 @@ export default RelatedNotes;
 
 --- src/features/notes/components/BottomPane.tsx ---
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import { cn } from "@/shared/utils";
-import { useResizablePane } from "@/shared/hooks/useResizablePane";
 import { ScrollArea } from "@/shared/components/ScrollArea";
 import { Button } from "@/shared/components/Button";
-import { Settings } from "lucide-react";
+import { Input } from "@/shared/components/Input";
+import { Settings, Send } from "lucide-react";
 import { toast } from "@/shared/components/Toast";
+import { useResizablePane } from "@/shared/hooks/useResizablePane";
+import { useNotesContext } from "../context/notesContext";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface BottomPaneProps {
-  isOpen: boolean;
-  onResize: (height: number) => void;
+  height: number;
+  setHeight: (height: number) => void;
+  paneRef: React.RefObject<HTMLDivElement>;
   onClose: () => void;
 }
 
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
+
 const BottomPane: React.FC<BottomPaneProps> = ({
-  isOpen,
-  onResize,
+  height,
+  setHeight,
+  paneRef,
   onClose,
 }) => {
-  const { height, paneRef, startResizing } = useResizablePane({
+  const { startResizing } = useResizablePane({
     minHeight: 100,
     maxHeight: 400,
-    defaultHeight: 256,
-    isOpen,
-    onResize,
-    onClose,
+    height,
+    setHeight,
+    paneRef,
+    direction: "vertical",
   });
 
-  if (!isOpen) return null;
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { performRAGChat, openNoteById } = useNotesContext();
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const userMessage: Message = { role: "user", content: input.trim() };
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+    try {
+      const assistantMessage = await performRAGChat([...messages, userMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error("Error in RAG Chat:", error);
+      toast.error("Failed to get response. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div
@@ -1779,7 +1820,7 @@ const BottomPane: React.FC<BottomPaneProps> = ({
         style={{ top: "-1px" }}
       />
       <div className="flex justify-between items-center p-2 h-10 border-b border-border">
-        <span className="font-semibold text-sm">Bottom Pane</span>
+        <span className="font-semibold text-sm">Chat</span>
         <Button
           variant="ghost"
           size="icon"
@@ -1790,11 +1831,84 @@ const BottomPane: React.FC<BottomPaneProps> = ({
           <Settings className="h-4 w-4" />
         </Button>
       </div>
-      <ScrollArea className="h-[calc(100%-2.5rem)]">
-        <div className="p-4">
-          <p>This is the content of the bottom pane.</p>
+      <div className="flex flex-col h-[calc(100%-2.5rem)]">
+        <ScrollArea className="flex-grow p-4">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={cn(
+                "mb-4",
+                message.role === "user" ? "text-right" : "text-left"
+              )}
+            >
+              <div
+                className={cn(
+                  "inline-block px-4 py-2 rounded-md",
+                  message.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground"
+                )}
+              >
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    a: ({ href, children, ...props }) => {
+                      if (href?.startsWith("note://")) {
+                        const noteId = href.replace("note://", "");
+                        return (
+                          <a
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              openNoteById(noteId);
+                            }}
+                            {...props}
+                          >
+                            {children}
+                          </a>
+                        );
+                      }
+                      return (
+                        <a href={href} {...props}>
+                          {children}
+                        </a>
+                      );
+                    },
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="mb-4 text-left">
+              <div className="inline-block px-4 py-2 rounded-md bg-secondary text-secondary-foreground">
+                <p>...</p>
+              </div>
+            </div>
+          )}
+        </ScrollArea>
+        <div className="p-4 border-t border-border">
+          <div className="flex items-center space-x-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Type your message..."
+              className="flex-grow"
+            />
+            <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };
@@ -2370,6 +2484,36 @@ export const useNotes = () => {
     [getFileNodeFromNote]
   );
 
+  const openNoteById = useCallback(
+    (noteId: string) => {
+      const fileNode = Object.values(directoryStructures.nodes).find(
+        (node) => node.type === "note" && node.noteMetadata?.id === noteId
+      );
+      if (fileNode) {
+        setActiveFileNodeId(fileNode.id);
+      } else {
+        console.error("Could not find file node for note ID", noteId);
+      }
+    },
+    [directoryStructures, setActiveFileNodeId]
+  );
+
+  const performRAGChat = useCallback(
+    async (conversation: { role: string; content: string }[]) => {
+      try {
+        const assistantMessage = await window.electron.performRAGChat(
+          conversation,
+          directoryStructures
+        );
+        return assistantMessage;
+      } catch (error) {
+        console.error("Error performing RAG Chat:", error);
+        throw error;
+      }
+    },
+    [directoryStructures]
+  );
+
   return {
     notes,
     directoryStructures,
@@ -2404,7 +2548,9 @@ export const useNotes = () => {
     similarNotesIsLoading,
     getFileNodeFromPath,
     openNote,
-    error
+    error,
+    performRAGChat,
+    openNoteById,
   };
 };
 
@@ -3205,27 +3351,33 @@ Input.displayName = "Input";
 export { Input };
 --- src/shared/hooks/useResizablePane.ts ---
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 interface UseResizablePaneProps {
-  minHeight: number;
-  maxHeight: number;
-  defaultHeight: number;
-  isOpen: boolean;
-  onResize: (height: number) => void;
-  onClose: () => void;
+  minHeight?: number;
+  maxHeight?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  height?: number;
+  setHeight?: (height: number) => void;
+  width?: number;
+  setWidth?: (width: number) => void;
+  paneRef: React.RefObject<HTMLDivElement>;
+  direction: 'horizontal' | 'vertical';
 }
 
 export const useResizablePane = ({
   minHeight,
   maxHeight,
-  defaultHeight,
-  isOpen,
-  onResize,
-  onClose,
+  minWidth,
+  maxWidth,
+  height,
+  setHeight,
+  width,
+  setWidth,
+  paneRef,
+  direction,
 }: UseResizablePaneProps) => {
-  const [height, setHeight] = useState(defaultHeight);
-  const paneRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
 
   const startResizing = useCallback((e: React.MouseEvent) => {
@@ -3236,13 +3388,16 @@ export const useResizablePane = ({
 
   const resize = useCallback((e: MouseEvent) => {
     if (!isResizing.current || !paneRef.current) return;
-    const paneRect = paneRef.current.getBoundingClientRect();
-    const newHeight = paneRect.bottom - e.clientY + height;
-    if (newHeight >= minHeight && newHeight <= maxHeight) {
-      setHeight(newHeight);
-      onResize(newHeight);
+    if (direction === 'vertical') {
+      const newHeight = window.innerHeight - e.clientY;
+
+      if (newHeight >= (minHeight || 0) && newHeight <= (maxHeight || Infinity)) {
+        if (setHeight) setHeight(newHeight);
+      }
+    } else if (direction === 'horizontal') {
+      // Handle horizontal resizing if needed
     }
-  }, [minHeight, maxHeight, onResize, height]);
+  }, [minHeight, maxHeight, setHeight, paneRef, direction]);
 
   const stopResizing = useCallback(() => {
     isResizing.current = false;
@@ -3257,7 +3412,7 @@ export const useResizablePane = ({
     };
   }, [resize, stopResizing]);
 
-  return { height, paneRef, startResizing };
+  return { startResizing };
 };
 
 --- src/shared/hooks/useLocalStorage.ts ---
@@ -3495,6 +3650,10 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("generate-note-embeddings", note, fileNode),
   findSimilarNotes: (query: string, directoryStructures: DirectoryStructures) =>
     ipcRenderer.invoke("perform-similarity-search", query, directoryStructures),
+  performRAGChat: (
+    conversation: { role: string; content: string }[],
+    directoryStructures: DirectoryStructures
+  ) => ipcRenderer.invoke("perform-rag-chat", conversation, directoryStructures),
 });
 
 --- src/main/configManager.ts ---
@@ -3563,6 +3722,7 @@ import fs from "fs/promises";
 import path from "path";
 import { parse } from "node-html-parser";
 import { getOpenAIKey } from "./fileSystem";
+
 
 const TEXT_EMBEDDING_MODEL = "text-embedding-ada-002";
 
@@ -3662,11 +3822,82 @@ class SimilaritySearcher {
   }
 }
 
+class RAGChat {
+  private openai: OpenAI;
+  private embeddingCreator: EmbeddingCreator;
+  private similaritySearcher: SimilaritySearcher;
+
+  constructor(
+    openai: OpenAI,
+    embeddingCreator: EmbeddingCreator,
+    similaritySearcher: SimilaritySearcher
+  ) {
+    this.openai = openai;
+    this.embeddingCreator = embeddingCreator;
+    this.similaritySearcher = similaritySearcher;
+  }
+
+  async performRAGChat(
+    conversation: { role: string; content: string }[],
+    directoryStructures: DirectoryStructures
+  ): Promise<{ role: string; content: string }> {
+    try {
+      // Get the last user message
+      const userMessage = conversation.filter((msg) => msg.role === "user").pop();
+      if (!userMessage) throw new Error("No user message found in conversation");
+
+      // Create embedding for the query
+      const queryEmbedding = await this.embeddingCreator.createEmbedding(
+        userMessage.content
+      );
+
+      // Find relevant notes
+      const embeddingPaths = await this.similaritySearcher.findEmbeddingPaths(
+        directoryStructures
+      );
+      const similarNotes = await this.similaritySearcher.performSimilaritySearch(
+        queryEmbedding,
+        embeddingPaths
+      );
+
+      // Prepare the context for the assistant
+      let contextText = "";
+      for (const note of similarNotes) {
+        contextText += `Note ID: ${note.id}\nTitle: ${note.title}\nContent:\n${note.content}\n\n`;
+      }
+
+      // Construct the prompt
+      const systemPrompt = `You are a helpful assistant. Use the provided notes to answer the user's question. When you refer to a note, include a clickable link in the format [Note Title](note://${note.id}).`;
+
+      // Build the messages for OpenAI API
+      const messages = [
+        { role: "system", content: systemPrompt },
+        { role: "system", content: `Relevant notes:\n${contextText}` },
+        ...conversation,
+      ];
+
+      // Call OpenAI Chat Completion API
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o", // Use the desired model
+        messages: messages,
+      });
+
+      const assistantMessage = completion.choices[0].message;
+
+      return assistantMessage;
+    } catch (error) {
+      console.error("Error in RAG Chat:", error);
+      throw error;
+    }
+  }
+}
+
 export const setupEmbeddingService = async (): Promise<void> => {
   const openaiApiKey = await getOpenAIKey();
   const openai = new OpenAI({ apiKey: openaiApiKey });
   const embeddingCreator = new EmbeddingCreator(openai);
   const similaritySearcher = new SimilaritySearcher();
+  const ragChat = new RAGChat(openai, embeddingCreator, similaritySearcher);
 
   ipcMain.handle(
     "generate-note-embeddings",
@@ -3707,6 +3938,17 @@ export const setupEmbeddingService = async (): Promise<void> => {
         console.error("Error performing similarity search:", error);
         throw error;
       }
+    }
+  );
+
+  ipcMain.handle(
+    "perform-rag-chat",
+    async (
+      _,
+      conversation: { role: string; content: string }[],
+      directoryStructures: DirectoryStructures
+    ): Promise<{ role: string; content: string }> => {
+      return await ragChat.performRAGChat(conversation, directoryStructures);
     }
   );
 };
