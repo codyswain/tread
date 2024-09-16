@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
 import BottomPane from "./BottomPane";
 import { useNotesContext } from "../context/notesContext";
+import { useResizablePane } from "@/shared/hooks/useResizablePane";
 
 const Notes: React.FC<{
   isLeftSidebarOpen: boolean;
@@ -25,6 +26,17 @@ const Notes: React.FC<{
   const [bottomPaneHeight, setBottomPaneHeight] = useState(256);
   const { activeNote } = useNotesContext();
 
+  const bottomPaneRef = useRef<HTMLDivElement>(null);
+
+  useResizablePane({
+    minHeight: 100,
+    maxHeight: 400,
+    height: bottomPaneHeight,
+    setHeight: setBottomPaneHeight,
+    paneRef: bottomPaneRef,
+    direction: 'vertical',
+  });
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <NoteExplorer
@@ -33,20 +45,14 @@ const Notes: React.FC<{
         onClose={() => setIsLeftSidebarOpen(false)}
       />
       <div
-        className="flex-grow flex flex-col overflow-hidden"
+        className="flex-grow flex flex-col"
         style={{
           marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : "0",
           marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : "0",
           transition: "margin 0.3s ease-in-out",
         }}
       >
-        <div
-          className="flex-grow overflow-hidden"
-          style={{
-            marginBottom: isBottomPaneOpen ? `${bottomPaneHeight}px` : "0",
-            transition: "margin 0.3s ease-in-out",
-          }}
-        >
+        <div className="flex-grow flex flex-col overflow-hidden">
           {activeNote ? (
             <NoteEditor note={activeNote} />
           ) : (
@@ -55,11 +61,14 @@ const Notes: React.FC<{
             </div>
           )}
         </div>
-        <BottomPane
-          isOpen={isBottomPaneOpen}
-          onResize={setBottomPaneHeight}
-          onClose={() => setIsBottomPaneOpen(false)}
-        />
+        {isBottomPaneOpen && (
+          <BottomPane
+            height={bottomPaneHeight}
+            setHeight={setBottomPaneHeight}
+            paneRef={bottomPaneRef}
+            onClose={() => setIsBottomPaneOpen(false)}
+          />
+        )}
       </div>
       <RelatedNotes
         isOpen={isRightSidebarOpen}

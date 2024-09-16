@@ -1,24 +1,30 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 interface UseResizablePaneProps {
-  minHeight: number;
-  maxHeight: number;
-  defaultHeight: number;
-  isOpen: boolean;
-  onResize: (height: number) => void;
-  onClose: () => void;
+  minHeight?: number;
+  maxHeight?: number;
+  minWidth?: number;
+  maxWidth?: number;
+  height?: number;
+  setHeight?: (height: number) => void;
+  width?: number;
+  setWidth?: (width: number) => void;
+  paneRef: React.RefObject<HTMLDivElement>;
+  direction: 'horizontal' | 'vertical';
 }
 
 export const useResizablePane = ({
   minHeight,
   maxHeight,
-  defaultHeight,
-  isOpen,
-  onResize,
-  onClose,
+  minWidth,
+  maxWidth,
+  height,
+  setHeight,
+  width,
+  setWidth,
+  paneRef,
+  direction,
 }: UseResizablePaneProps) => {
-  const [height, setHeight] = useState(defaultHeight);
-  const paneRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef(false);
 
   const startResizing = useCallback((e: React.MouseEvent) => {
@@ -29,13 +35,16 @@ export const useResizablePane = ({
 
   const resize = useCallback((e: MouseEvent) => {
     if (!isResizing.current || !paneRef.current) return;
-    const paneRect = paneRef.current.getBoundingClientRect();
-    const newHeight = paneRect.bottom - e.clientY + height;
-    if (newHeight >= minHeight && newHeight <= maxHeight) {
-      setHeight(newHeight);
-      onResize(newHeight);
+    if (direction === 'vertical') {
+      const newHeight = window.innerHeight - e.clientY;
+
+      if (newHeight >= (minHeight || 0) && newHeight <= (maxHeight || Infinity)) {
+        if (setHeight) setHeight(newHeight);
+      }
+    } else if (direction === 'horizontal') {
+      // Handle horizontal resizing if needed
     }
-  }, [minHeight, maxHeight, onResize, height]);
+  }, [minHeight, maxHeight, setHeight, paneRef, direction]);
 
   const stopResizing = useCallback(() => {
     isResizing.current = false;
@@ -50,5 +59,5 @@ export const useResizablePane = ({
     };
   }, [resize, stopResizing]);
 
-  return { height, paneRef, startResizing };
+  return { startResizing };
 };

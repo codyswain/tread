@@ -1,32 +1,32 @@
 import React from "react";
 import { cn } from "@/shared/utils";
-import { useResizablePane } from "@/shared/hooks/useResizablePane";
 import { ScrollArea } from "@/shared/components/ScrollArea";
 import { Button } from "@/shared/components/Button";
 import { Settings } from "lucide-react";
 import { toast } from "@/shared/components/Toast";
+import { useResizablePane } from "@/shared/hooks/useResizablePane";
 
 interface BottomPaneProps {
-  isOpen: boolean;
-  onResize: (height: number) => void;
+  height: number;
+  setHeight: (height: number) => void;
+  paneRef: React.RefObject<HTMLDivElement>;
   onClose: () => void;
 }
 
 const BottomPane: React.FC<BottomPaneProps> = ({
-  isOpen,
-  onResize,
+  height,
+  setHeight,
+  paneRef,
   onClose,
 }) => {
-  const { height, paneRef, startResizing } = useResizablePane({
+  const { startResizing } = useResizablePane({
     minHeight: 100,
     maxHeight: 400,
-    defaultHeight: 256,
-    isOpen,
-    onResize,
-    onClose,
+    height,
+    setHeight,
+    paneRef,
+    direction: 'vertical',
   });
-
-  if (!isOpen) return null;
 
   return (
     <div
