@@ -1,35 +1,38 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/shared/components/Button";
-// import { ThemeToggle } from "./ThemeToggle";
 import { NavbarItem, NavbarItemProps } from "./NavbarItem";
 import {
   Minus,
-  PanelLeft,
   PanelLeftClose,
   PanelLeftOpen,
-  PanelRight,
   PanelRightClose,
   PanelRightOpen,
   Settings,
   Square,
   X,
+  ChevronsUp,
+  ChevronsDown,
 } from "lucide-react";
 import { ThemeToggle } from "@/features/theme";
 
 interface NavbarProps {
   toggleLeftSidebar: () => void;
   toggleRightSidebar: () => void;
+  toggleBottomPane: () => void;
   isLeftSidebarOpen: boolean;
   isRightSidebarOpen: boolean;
+  isBottomPaneOpen: boolean;
   items: NavbarItemProps[];
 }
 
 const Navbar: React.FC<NavbarProps> = ({
   toggleLeftSidebar,
   toggleRightSidebar,
+  toggleBottomPane,
   isLeftSidebarOpen,
   isRightSidebarOpen,
+  isBottomPaneOpen,
   items,
 }) => {
   const location = useLocation();
@@ -98,6 +101,18 @@ const Navbar: React.FC<NavbarProps> = ({
           <PanelRightClose className="h-4 w-4" />
         ) : (
           <PanelRightOpen className="h-4 w-4" />
+        )}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={toggleBottomPane}
+      >
+        {isBottomPaneOpen ? (
+          <ChevronsDown className="h-4 w-4" />
+        ) : (
+          <ChevronsUp className="h-4 w-4" />
         )}
       </Button>
       <Link to="/settings">

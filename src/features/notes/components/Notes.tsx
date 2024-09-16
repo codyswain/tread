@@ -2,22 +2,28 @@ import React, { useState } from "react";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
+import BottomPane from "./BottomPane";
 import { useNotesContext } from "../context/notesContext";
 
 const Notes: React.FC<{
-  isLeftSidebarOpen: boolean,
-  isRightSidebarOpen: boolean,
-  setIsLeftSidebarOpen: (isOpen: boolean) => void
-  setIsRightSidebarOpen: (isOpen: boolean) => void
+  isLeftSidebarOpen: boolean;
+  isRightSidebarOpen: boolean;
+  isBottomPaneOpen: boolean;
+  setIsLeftSidebarOpen: (isOpen: boolean) => void;
+  setIsRightSidebarOpen: (isOpen: boolean) => void;
+  setIsBottomPaneOpen: (isOpen: boolean) => void;
 }> = ({
   isLeftSidebarOpen,
   isRightSidebarOpen,
+  isBottomPaneOpen,
   setIsLeftSidebarOpen,
-  setIsRightSidebarOpen
+  setIsRightSidebarOpen,
+  setIsBottomPaneOpen,
 }) => {
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(256);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(256);
-  const { saveNote, activeNote } = useNotesContext();
+  const [bottomPaneHeight, setBottomPaneHeight] = useState(256);
+  const { activeNote } = useNotesContext();
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -31,6 +37,7 @@ const Notes: React.FC<{
         style={{
           marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : "0",
           marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : "0",
+          marginBottom: isBottomPaneOpen ? `${bottomPaneHeight}px` : "0",
           transition: "margin 0.3s ease-in-out",
         }}
       >
@@ -46,6 +53,11 @@ const Notes: React.FC<{
         isOpen={isRightSidebarOpen}
         onResize={setRightSidebarWidth}
         onClose={() => setIsRightSidebarOpen(false)}
+      />
+      <BottomPane
+        isOpen={isBottomPaneOpen}
+        onResize={setBottomPaneHeight}
+        onClose={() => setIsBottomPaneOpen(false)}
       />
     </div>
   );

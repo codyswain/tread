@@ -1,5 +1,3 @@
-// App.tsx
-
 import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "@/index.css";
@@ -16,9 +14,11 @@ import { Settings, SettingsProvider } from "@/features/settings";
 const App: React.FC = () => {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+  const [isBottomPaneOpen, setIsBottomPaneOpen] = useState(true);
 
   const toggleLeftSidebar = () => setIsLeftSidebarOpen(!isLeftSidebarOpen);
   const toggleRightSidebar = () => setIsRightSidebarOpen(!isRightSidebarOpen);
+  const toggleBottomPane = () => setIsBottomPaneOpen(!isBottomPaneOpen);
 
   return (
     <ThemeProvider>
@@ -31,8 +31,10 @@ const App: React.FC = () => {
                 <Navbar
                   toggleLeftSidebar={toggleLeftSidebar}
                   toggleRightSidebar={toggleRightSidebar}
+                  toggleBottomPane={toggleBottomPane}
                   isLeftSidebarOpen={isLeftSidebarOpen}
                   isRightSidebarOpen={isRightSidebarOpen}
+                  isBottomPaneOpen={isBottomPaneOpen}
                   items={navbarItems}
                 />
                 <main className="flex-grow pt-10">
@@ -41,12 +43,15 @@ const App: React.FC = () => {
                     <Route
                       path="/notes"
                       element={
-                      <Notes 
-                        isLeftSidebarOpen={isLeftSidebarOpen}
-                        isRightSidebarOpen={isRightSidebarOpen}
-                        setIsLeftSidebarOpen={setIsLeftSidebarOpen}
-                        setIsRightSidebarOpen={setIsRightSidebarOpen}
-                      />}
+                        <Notes
+                          isLeftSidebarOpen={isLeftSidebarOpen}
+                          isRightSidebarOpen={isRightSidebarOpen}
+                          isBottomPaneOpen={isBottomPaneOpen}
+                          setIsLeftSidebarOpen={setIsLeftSidebarOpen}
+                          setIsRightSidebarOpen={setIsRightSidebarOpen}
+                          setIsBottomPaneOpen={setIsBottomPaneOpen}
+                        />
+                      }
                     />
                     <Route path="/settings" element={<Settings />} />
                   </Routes>
