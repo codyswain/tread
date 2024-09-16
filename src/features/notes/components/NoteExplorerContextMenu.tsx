@@ -1,3 +1,5 @@
+// src/features/notes/components/NoteExplorerContextMenu.tsx
+
 import React from "react";
 import ContextMenu from "@/shared/components/ContextMenu/ContextMenu";
 import ContextMenuItem from "@/shared/components/ContextMenu/ContextMenuItem";
@@ -9,19 +11,19 @@ import {
   Folder,
   Pencil,
 } from "lucide-react";
-import { DirectoryStructure } from "@/shared/types";
+import { FileNode } from "@/shared/types";
 import { useNotesContext } from "../context/notesContext";
 
 interface NoteExplorerContextMenuProps {
   contextMenu: {
     x: number;
     y: number;
-    fileNode: DirectoryStructure;
+    fileNode: FileNode;
   } | null;
   onClose: () => void;
   onDelete: () => void;
-  onCopyFilePath: (noteId: string) => void;
-  onOpenNoteInNewTab: (noteId: string) => void;
+  onCopyFilePath: (fileNode: FileNode) => void;
+  onOpenNoteInNewTab: (fileNode: FileNode) => void;
 }
 
 const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
@@ -31,7 +33,7 @@ const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
   onCopyFilePath,
   onOpenNoteInNewTab,
 }) => {
-  const { handleCreateFolder, createNote, deleteFileNode } = useNotesContext();
+  const { handleCreateFolder, createNote } = useNotesContext();
   if (!contextMenu) return null;
   const { x, y, fileNode } = contextMenu;
 
@@ -61,7 +63,7 @@ const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
         icon={Trash2}
         label="Delete"
         onClick={() => {
-          deleteFileNode(fileNode);
+          onDelete();
           onClose();
         }}
         className="text-destructive"
@@ -72,7 +74,7 @@ const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
             icon={Copy}
             label="Copy ID"
             onClick={() => {
-              navigator.clipboard.writeText(fileNode.noteMetadata.id);
+              navigator.clipboard.writeText(fileNode.noteMetadata?.id || "");
               onClose();
             }}
           />
@@ -80,7 +82,7 @@ const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
             icon={Folder}
             label="Copy File Path"
             onClick={() => {
-              onCopyFilePath(fileNode.fullPath);
+              onCopyFilePath(fileNode);
               onClose();
             }}
           />
@@ -88,7 +90,7 @@ const NoteExplorerContextMenu: React.FC<NoteExplorerContextMenuProps> = ({
             icon={Pencil}
             label="Open in New Tab"
             onClick={() => {
-              onOpenNoteInNewTab(fileNode.fullPath);
+              onOpenNoteInNewTab(fileNode);
               onClose();
             }}
           />

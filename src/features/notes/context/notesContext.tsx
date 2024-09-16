@@ -1,3 +1,5 @@
+// src/features/notes/context/notesContext.tsx
+
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useNotes } from '../hooks/useNotes';
 

@@ -43,7 +43,6 @@ interface NoteEditorProps {
 const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
   const {
     activeNote,
-    activeNotePath,
     activeFileNode,
     saveNote,
     createEmbedding,

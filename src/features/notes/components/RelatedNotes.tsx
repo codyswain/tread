@@ -38,9 +38,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
   const {
     findSimilarNotes,
     similarNotes,
-
     similarNotesIsLoading,
-
     activeNote,
     openNote,
   } = useNotesContext();
@@ -56,6 +54,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
       findSimilarNotes();
     }
   }, [isOpen, activeNote, findSimilarNotes]);
+
   return (
     <div
       ref={sidebarRef}

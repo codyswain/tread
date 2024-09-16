@@ -1,16 +1,17 @@
+// App.tsx
+
 import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import GlobalStyles from "@/styles/GlobalStyles";
-
 import "@/index.css";
+
 import { ThemeProvider } from "@/features/theme";
-import { Settings, SettingsProvider } from "@/features/settings";
-import { Notes } from "@/features/notes";
-import { Toaster } from "@/shared/components/Toast";
+import { NotesProvider } from "@/features/notes/context/notesContext";
 import { TooltipProvider } from "@/shared/components/Tooltip";
+import { Toaster } from "@/shared/components/Toast";
 import { Navbar, navbarItems } from "@/features/navbar";
 import { Feed } from "@/features/feed";
-import { NotesProvider } from "./features/notes/context/notesContext";
+import { Notes } from "@/features/notes";
+import { Settings, SettingsProvider } from "@/features/settings";
 
 const App: React.FC = () => {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
@@ -24,7 +25,6 @@ const App: React.FC = () => {
       <SettingsProvider>
         <TooltipProvider>
           <NotesProvider>
-            <GlobalStyles />
             <Toaster />
             <Router>
               <div className="flex flex-col h-screen">

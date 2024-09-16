@@ -1,7 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import path from "path";
 import { setupFileSystem } from "./main/fileSystem";
-import { runEmbeddingScript, runPythonScript } from "./main/pythonBridge";
 import {
   addTopLevelFolder,
   getTopLevelFolders,
@@ -105,7 +104,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("activate", () => {
-  // On OS X it's common to re-create a window in the app when the
+  // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
@@ -118,29 +117,7 @@ process.on("uncaughtException", (error) => {
   // Optionally, you can quit the app or show an error dialog
 });
 
-ipcMain.handle(
-  "run-python-script",
-  async (_, scriptName: string, args: string[]) => {
-    try {
-      const result = await runPythonScript(scriptName, args);
-      return result;
-    } catch (error) {
-      console.error("Error running Python script:", error);
-      throw error;
-    }
-  }
-);
-
-ipcMain.handle("find-similar-notes", async (_, query: string) => {
-  try {
-    const result = await runEmbeddingScript("find_similar", query);
-    return result.similar_notes;
-  } catch (error) {
-    console.error("Error finding similar notes:", error);
-    throw error;
-  }
-});
-
+// IPC handlers for top-level folder management
 ipcMain.handle("get-top-level-folders", getTopLevelFolders);
 ipcMain.handle("add-top-level-folder", async (_, folderPath) => {
   await addTopLevelFolder(folderPath);

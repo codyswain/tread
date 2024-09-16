@@ -1,10 +1,12 @@
-import { DirectoryStructure } from "@/shared/types";
+// src/features/notes/hooks/useNoteExplorerContextMenu.tsx
+
+import { FileNode } from "@/shared/types";
 import { useState, useCallback, useEffect } from "react";
 
 interface ContextMenuState {
   x: number;
   y: number;
-  fileNode: DirectoryStructure;
+  fileNode: FileNode;
 }
 
 export const useNoteExplorerContextMenu = () => {
@@ -13,7 +15,7 @@ export const useNoteExplorerContextMenu = () => {
   const handleContextMenu = useCallback(
     (
       e: React.MouseEvent,
-      fileNode: DirectoryStructure
+      fileNode: FileNode
     ) => {
       e.preventDefault();
       e.stopPropagation();

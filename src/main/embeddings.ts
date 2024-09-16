@@ -1,4 +1,10 @@
-import { DirectoryStructure, DirectoryStructures, Embedding, Note, SimilarNote } from "@/shared/types";
+import {
+  Note,
+  FileNode,
+  DirectoryStructures,
+  Embedding,
+  SimilarNote,
+} from "@/shared/types";
 import { ipcMain } from "electron";
 import OpenAI from "openai";
 import fs from "fs/promises";
@@ -6,7 +12,7 @@ import path from "path";
 import { parse } from "node-html-parser";
 import { getOpenAIKey } from "./fileSystem";
 
-const TEXT_EMBEDDING_MODEL = "text-embedding-3-small";
+const TEXT_EMBEDDING_MODEL = "text-embedding-ada-002";
 
 class EmbeddingCreator {
   private openai: OpenAI;
@@ -19,7 +25,6 @@ class EmbeddingCreator {
     return await this.openai.embeddings.create({
       model: TEXT_EMBEDDING_MODEL,
       input: content,
-      encoding_format: "float",
     });
   }
 
@@ -37,12 +42,16 @@ class EmbeddingCreator {
 }
 
 class SimilaritySearcher {
-  async findEmbeddingPaths(directoryStructures: DirectoryStructures): Promise<string[]> {
+  async findEmbeddingPaths(
+    directoryStructures: DirectoryStructures
+  ): Promise<string[]> {
     const embeddingPaths: string[] = [];
 
-    const traverseStructure = async (structure: DirectoryStructure) => {
-      if (structure.type === 'note' && structure.noteMetadata) {
-        const embeddingPath = `${path.dirname(structure.fullPath)}/${structure.noteMetadata.id}.embedding.json`;
+    const traverseStructure = async (fileNode: FileNode) => {
+      if (fileNode.type === "note" && fileNode.noteMetadata) {
+        const embeddingPath = `${path.dirname(fileNode.fullPath)}/${
+          fileNode.noteMetadata.id
+        }.embedding.json`;
         try {
           await fs.access(embeddingPath);
           embeddingPaths.push(embeddingPath);
@@ -50,29 +59,41 @@ class SimilaritySearcher {
           // Embedding file doesn't exist, skip
         }
       }
-      if (structure.children) {
-        for (const child of structure.children) {
-          await traverseStructure(child);
+      if (fileNode.childIds) {
+        for (const childId of fileNode.childIds) {
+          const childNode = directoryStructures.nodes[childId];
+          if (childNode) {
+            await traverseStructure(childNode);
+          }
         }
       }
     };
 
-    for (const structure of Object.values(directoryStructures)) {
-      await traverseStructure(structure);
+    for (const rootId of directoryStructures.rootIds) {
+      const rootNode = directoryStructures.nodes[rootId];
+      if (rootNode) {
+        await traverseStructure(rootNode);
+      }
     }
 
     return embeddingPaths;
   }
 
-  async performSimilaritySearch(queryEmbedding: OpenAI.Embeddings.CreateEmbeddingResponse, embeddingPaths: string[]): Promise<Array<SimilarNote>> {
-    const results: Array<SimilarNote> = [];
+  async performSimilaritySearch(
+    queryEmbedding: OpenAI.Embeddings.CreateEmbeddingResponse,
+    embeddingPaths: string[]
+  ): Promise<SimilarNote[]> {
+    const results: SimilarNote[] = [];
 
     for (const embeddingPath of embeddingPaths) {
-      const embeddingContent = await fs.readFile(embeddingPath, 'utf-8');
-      const embedding = JSON.parse(embeddingContent) as OpenAI.Embeddings.CreateEmbeddingResponse;
-      const score = this.cosineSimilarity(queryEmbedding.data[0].embedding, embedding.data[0].embedding);
-      const notePath = embeddingPath.replace('.embedding.json', '.json');
-      const noteContent = await fs.readFile(notePath, 'utf-8');
+      const embeddingContent = await fs.readFile(embeddingPath, "utf-8");
+      const embedding = JSON.parse(embeddingContent) as Embedding;
+      const score = this.cosineSimilarity(
+        queryEmbedding.data[0].embedding,
+        embedding.data[0].embedding
+      );
+      const notePath = embeddingPath.replace(".embedding.json", ".json");
+      const noteContent = await fs.readFile(notePath, "utf-8");
       const note = JSON.parse(noteContent) as SimilarNote;
 
       results.push({ ...note, score });
@@ -94,29 +115,46 @@ export const setupEmbeddingService = async (): Promise<void> => {
   const openai = new OpenAI({ apiKey: openaiApiKey });
   const embeddingCreator = new EmbeddingCreator(openai);
   const similaritySearcher = new SimilaritySearcher();
-  
 
-  ipcMain.handle("generate-note-embeddings", async (_, note: Note, fileNode: DirectoryStructure): Promise<Embedding> => {
-    try {
-      const parsedContent = await embeddingCreator.parseNoteForEmbedding(note);
-      const embedding = await embeddingCreator.createEmbedding(parsedContent);
-      const embeddingFullPath = path.join(path.dirname(fileNode.fullPath), `${note.id}.embedding.json`);
-      await embeddingCreator.saveEmbedding(embedding, embeddingFullPath);
-      return embedding;
-    } catch (error) {
-      console.error("Error generating note embeddings:", error);
-      throw error;
+  ipcMain.handle(
+    "generate-note-embeddings",
+    async (_, note: Note, fileNode: FileNode): Promise<Embedding> => {
+      try {
+        const parsedContent = await embeddingCreator.parseNoteForEmbedding(note);
+        const embedding = await embeddingCreator.createEmbedding(parsedContent);
+        const embeddingFullPath = path.join(
+          path.dirname(fileNode.fullPath),
+          `${note.id}.embedding.json`
+        );
+        await embeddingCreator.saveEmbedding(embedding, embeddingFullPath);
+        return embedding;
+      } catch (error) {
+        console.error("Error generating note embeddings:", error);
+        throw error;
+      }
     }
-  });
+  );
 
-  ipcMain.handle("perform-similarity-search", async (_, query: string, directoryStructures: DirectoryStructures): Promise<Array<SimilarNote>> => {
-    try {
-      const embeddingPaths = await similaritySearcher.findEmbeddingPaths(directoryStructures);
-      const queryEmbedding = await embeddingCreator.createEmbedding(query);
-      return await similaritySearcher.performSimilaritySearch(queryEmbedding, embeddingPaths);
-    } catch (error) {
-      console.error("Error performing similarity search:", error);
-      throw error;
+  ipcMain.handle(
+    "perform-similarity-search",
+    async (
+      _,
+      query: string,
+      directoryStructures: DirectoryStructures
+    ): Promise<SimilarNote[]> => {
+      try {
+        const queryEmbedding = await embeddingCreator.createEmbedding(query);
+        const embeddingPaths = await similaritySearcher.findEmbeddingPaths(
+          directoryStructures
+        );
+        return await similaritySearcher.performSimilaritySearch(
+          queryEmbedding,
+          embeddingPaths
+        );
+      } catch (error) {
+        console.error("Error performing similarity search:", error);
+        throw error;
+      }
     }
-  });
+  );
 };

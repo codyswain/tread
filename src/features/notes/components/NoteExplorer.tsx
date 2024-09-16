@@ -1,10 +1,11 @@
+// src/features/notes/components/NoteExplorer.tsx
+
 import React from "react";
 import { Settings } from "lucide-react";
 import { useResizableSidebar } from "@/shared/hooks/useResizableSidebar";
 import { Button } from "@/shared/components/Button";
 import { toast } from "@/shared/components/Toast";
 import { cn } from "@/shared/utils";
-import { useTopLevelFolders } from "../hooks/useNoteExplorerTopLevelFolder";
 import { useNoteExplorerContextMenu } from "../hooks/useNoteExplorerContextMenu";
 import { NoteExplorerHeader } from "./NoteExplorerHeader";
 import NoteExplorerContextMenu from "./NoteExplorerContextMenu";
@@ -32,7 +33,6 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
     side: "left",
   });
 
-  const { isLoadingFolders, loadError, handleAddTopLevelFolder } = useTopLevelFolders();
   const { contextMenu, handleContextMenu, closeContextMenu } = useNoteExplorerContextMenu();
   const {
     directoryStructures,
@@ -43,11 +43,13 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
     handleCreateFolder,
     expandedDirs,
     toggleDirectory,
-    newFolderState
+    newFolderState,
+    isLoading,
+    error
   } = useNotesContext();                              
 
   const handleDelete = () => {
-    if (contextMenu.fileNode) {
+    if (contextMenu?.fileNode) {
       deleteFileNode(contextMenu.fileNode)
     }
   }
@@ -69,12 +71,12 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         onOpenNoteInNewTab={() => {console.log('IMPLEMENT OPEN NOTE IN NEW TAB')}}
       />
       <NoteExplorerHeader
-        onCreateNote={() => console.log('IMPLEMENT CREATE NEW NOTE')}
-        onCreateFolder={() => {console.log('IMPLEMENT CREATE NEW FOLDER')}}
+        onCreateNote={() => createNote(activeFileNode?.fullPath || "/")}
+        onCreateFolder={() => handleCreateFolder(activeFileNode || null)}
       />
       <NoteExplorerContent
-        isLoadingFolders={isLoadingFolders}
-        loadError={loadError}
+        isLoadingFolders={isLoading}
+        loadError={error}
         directoryStructures={directoryStructures}
         selectedFileNode={activeFileNode}
         onSelectNote={setActiveFileNode}

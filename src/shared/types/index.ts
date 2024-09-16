@@ -1,3 +1,5 @@
+// src/shared/types/index.ts
+
 import OpenAI from "openai";
 
 export interface NoteMetadata {
@@ -9,41 +11,49 @@ export interface NoteMetadata {
 }
 
 export interface NoteContent {
-  content?: string
+  content?: string;
 }
 
 export interface Note extends NoteMetadata, NoteContent {}
 
-export interface Directory {
-  notes: Note[];
-  // Consider adding a name field:
+export interface FileNode {
+  id: string;
   name: string;
+  type: 'directory' | 'note';
+  parentId: string | null;
+  noteMetadata?: NoteMetadata;
+  fullPath: string;
+  childIds?: string[];
+}
+
+export interface FileNodeMap {
+  [id: string]: FileNode;
 }
 
 export interface DirectoryStructures {
-  [key: string]: DirectoryStructure
+  rootIds: string[];
+  nodes: FileNodeMap;
 }
-
-export interface DirectoryStructure {
-  name: string;
-  type: 'directory' | 'note';
-  children?: DirectoryStructure[];
-  noteMetadata?: NoteMetadata;
-  fullPath: string;
-}
-
 
 export interface SimilarNote extends Note {
   score: number;
 }
 
-// SimilarNote can be replaced with Note since they have the same structure
-// export type SimilarNote = Note;
-
-// Add a new type for tab information
 export interface TabInfo {
   id: string;
   title: string;
 }
 
 export type Embedding = OpenAI.Embeddings.CreateEmbeddingResponse;
+
+export interface Config {
+  openaiApiKey?: string;
+}
+
+export interface DirectoryEntry {
+  name: string;
+  type: "directory" | "note";
+  noteMetadata?: NoteMetadata;
+  fullPath: string;
+  children?: DirectoryEntry[];
+}
