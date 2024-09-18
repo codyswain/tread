@@ -2,7 +2,8 @@
 
 Notes
 
-<img width="1512" alt="image" src="https://github.com/user-attachments/assets/5b140f51-6904-48a4-aa23-c43c7b97d5c5">
+<img width="1512" alt="image" src="https://github.com/user-attachments/assets/fcab22f1-cd01-476a-be19-129e9a44231e">
+
 
 
 ## Features
