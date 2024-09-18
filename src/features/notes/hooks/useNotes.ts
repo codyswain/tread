@@ -18,8 +18,6 @@ export const useNotes = () => {
   });
   const [activeFileNodeId, setActiveFileNodeId] = useState<string | null>(null);
   const [activeNote, setActiveNote] = useState<Note | null>(null);
-  const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
-  const [similarNotesIsLoading, setSimilarNotesIsLoading] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // File System Explorer State
@@ -241,31 +239,7 @@ export const useNotes = () => {
     [loadNotes]
   );
 
-  const findSimilarNotes = useCallback(async () => {
-    if (!activeNote) {
-      console.error('no active note')
-      setSimilarNotes([]);
-      setSimilarNotesIsLoading(false);
-      return;
-    }
-    setSimilarNotesIsLoading(true);
-    try {
-      const similarNotes = await window.electron.findSimilarNotes(
-        activeNote.content,
-        directoryStructures
-      );
-      setSimilarNotes(
-        similarNotes.filter(
-          (note: SimilarNote) => note.id !== activeNote.id && note.score >= 0.6
-        )
-      );
-    } catch (error) {
-      console.error("Error finding similar notes:", error);
-      setSimilarNotes([]);
-    } finally {
-      setSimilarNotesIsLoading(false);
-    }
-  }, [activeNote?.content, activeNote?.id, directoryStructures]);
+  
 
   const toggleDirectory = useCallback((fileNode: FileNode) => {
     setExpandedDirs((prev) => {
@@ -439,11 +413,9 @@ export const useNotes = () => {
   return {
     notes,
     directoryStructures,
-    similarNotes,
     isLoading,
     createNote,
     saveNote,
-    findSimilarNotes,
     loadNotes,
     activeFileNodeId,
     setActiveFileNodeId,
@@ -467,7 +439,6 @@ export const useNotes = () => {
     openDialogToMountDirpath,
     createEmbedding,
     getFileNodeFromNote,
-    similarNotesIsLoading,
     getFileNodeFromPath,
     openNote,
     error,

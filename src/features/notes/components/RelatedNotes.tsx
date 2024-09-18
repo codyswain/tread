@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/shared/components/Button";
 import { ScrollArea } from "@/shared/components/ScrollArea";
 import { cn } from "@/shared/utils";
@@ -10,7 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/Tooltip";
-import { SimilarNote } from "@/shared/types";
+import { Note, SimilarNote } from "@/shared/types";
 import { useResizableSidebar } from "@/shared/hooks/useResizableSidebar";
 import { useNotesContext } from "../context/notesContext";
 
@@ -35,13 +35,40 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
     side: "right",
   });
 
+  const [similarNotes, setSimilarNotes] = useState<SimilarNote[]>([]);
+  const [similarNotesIsLoading, setSimilarNotesIsLoading] = useState<boolean>(false);
+
   const {
-    findSimilarNotes,
-    similarNotes,
-    similarNotesIsLoading,
     activeNote,
     openNote,
+    directoryStructures
   } = useNotesContext();
+
+  const findSimilarNotes = useCallback(async () => {
+    if (!activeNote) {
+      console.error('no active note');
+      setSimilarNotes([]);
+      setSimilarNotesIsLoading(false);
+      return;
+    }
+    setSimilarNotesIsLoading(true);
+    try {
+      const similarNotes = await window.electron.findSimilarNotes(
+        activeNote.content,
+        directoryStructures
+      );
+      setSimilarNotes(
+        similarNotes.filter(
+          (note: SimilarNote) => note.id !== activeNote.id && note.score >= 0.6
+        )
+      );
+    } catch (error) {
+      console.error("Error finding similar notes:", error);
+      setSimilarNotes([]);
+    } finally {
+      setSimilarNotesIsLoading(false);
+    }
+  }, [activeNote?.id]);
 
   const handleSettingsClick = () => {
     toast("Settings feature is not implemented yet", {
@@ -53,7 +80,8 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({
     if (isOpen && activeNote) {
       findSimilarNotes();
     }
-  }, [isOpen, activeNote, findSimilarNotes]);
+  }, [isOpen, activeNote?.id]);
+  
 
   return (
     <div

@@ -33,6 +33,8 @@ interface NoteEditorProps {
   note: Note;
 }
 
+import '@/styles/NoteEditor.css'
+
 const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
   const { saveNote, createEmbedding } = useNotesContext();
 
@@ -135,61 +137,67 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
     autofocus: true,
     editorProps: {
       attributes: {
-        class: "prose prose-sm dark:prose-invert focus:outline-none max-w-none h-full overflow-auto leading-normal cursor-text",
+        class: "prose prose-md dark:prose-invert focus:outline-none max-w-none h-full w-full overflow-auto leading-normal cursor-text",
       },
     },
   });
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground overflow-hidden p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center flex-grow mr-2">
-          <Input
-            type="text"
-            value={localNote.title}
-            onChange={handleTitleChange}
-            placeholder="Note Title"
-            className="text-2xl font-semibold border-none focus:ring-0 bg-background text-foreground flex-grow"
-            aria-label="Note title"
-          />
-          {isSaving && <Loader2 className="h-4 w-4 animate-spin ml-2 text-muted-foreground" />}
-        </div>
-        <div className="flex items-center space-x-2">
-          {isGeneratingEmbedding && (
+      <div className="flex w-full justify-center items-center">
+        <div className="flex items-center justify-between mb-4 w-full max-w-4xl">
+          <div className="flex items-center flex-grow mr-2">
+            <Input
+              type="text"
+              value={localNote.title}
+              onChange={handleTitleChange}
+              placeholder="Note Title"
+              className="text-2xl font-semibold border-none focus:ring-0 bg-background text-foreground flex-grow"
+              aria-label="Note title"
+            />
+            {isSaving && <Loader2 className="h-4 w-4 animate-spin ml-2 text-muted-foreground" />}
+          </div>
+          <div className="flex items-center space-x-2 mr-4">
+            {isGeneratingEmbedding && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="h-10 w-10 flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Generating embedding...</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="h-10 w-10 flex items-center justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
+                <div
+                  className={cn(
+                    "w-2 h-2 rounded-full",
+                    indicatorStatus === "green"
+                      ? "bg-primary"
+                      : "bg-secondary animate-pulse"
+                  )}
+                />
               </TooltipTrigger>
               <TooltipContent>
-                <p>Generating embedding...</p>
+                <p>
+                  {indicatorStatus === "green"
+                    ? "Embedding up to date"
+                    : "Embedding needs update"}
+                </p>
               </TooltipContent>
             </Tooltip>
-          )}
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className={cn(
-                  "w-2 h-2 rounded-full",
-                  indicatorStatus === "green"
-                    ? "bg-primary"
-                    : "bg-secondary animate-pulse"
-                )}
-              />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {indicatorStatus === "green"
-                  ? "Embedding up to date"
-                  : "Embedding needs update"}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+          </div>
         </div>
+
       </div>
-      <Toolbar editor={editor} />
+
+      <div className="flex w-full justify-center items-center">
+        <Toolbar editor={editor} />
+      </div>
       <div
         className="flex-grow overflow-auto"
         onClick={() => {
@@ -198,8 +206,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
           }
         }}
       >
-        <div className="min-h-full max-w-3xl mx-auto p-6 bg-card text-card-foreground rounded-lg shadow-lg">
-          <EditorContent editor={editor} />
+        <div className="min-h-full max-w-4xl mx-auto px-6 py-2 bg-card text-card-foreground rounded-lg shadow-lg">
+          <EditorContent editor={editor} className="compact-editor"/>
         </div>
       </div>
       {error && <div className="text-destructive mt-2">{error}</div>}

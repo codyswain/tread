@@ -45,7 +45,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
   };
 
   return (
-    <div className="flex items-center space-x-1 mb-4 bg-muted/50 p-2 rounded-md">
+    <div className="flex items-center space-x-1 mb-4 bg-muted/50 p-2 rounded-md max-w-4xl w-full">
       <Button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={buttonClass(editor.isActive('bold'))}
