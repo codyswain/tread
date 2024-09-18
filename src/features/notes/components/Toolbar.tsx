@@ -1,5 +1,3 @@
-// src/features/notes/components/Toolbar.tsx
-
 import React from 'react';
 import { Editor } from '@tiptap/react';
 import {
@@ -14,9 +12,16 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { Button } from '@/shared/components/Button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/components/DropdownMenu';
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -34,6 +39,10 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
         ? 'bg-primary text-primary-foreground'
         : 'hover:bg-accent hover:text-accent-foreground'
     );
+
+  const setLanguage = (language: string) => {
+    editor.chain().focus().toggleCodeBlock({ language }).run();
+  };
 
   return (
     <div className="flex items-center space-x-1 mb-4 bg-muted/50 p-2 rounded-md">
@@ -95,14 +104,32 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
       >
         <Quote className="h-4 w-4" />
       </Button>
-      <Button
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        className={buttonClass(editor.isActive('codeBlock'))}
-        variant="ghost"
-        size="icon"
-      >
-        <Code2 className="h-4 w-4" />
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            className={buttonClass(editor.isActive('codeBlock'))}
+            variant="ghost"
+            size="icon"
+          >
+            <Code2 className="h-4 w-4" />
+            <ChevronDown className="h-3 w-3 ml-1" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={() => setLanguage('plaintext')}>
+            Plain Text
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setLanguage('js')}>
+            JavaScript
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setLanguage('python')}>
+            Python
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setLanguage('css')}>
+            CSS
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-2" />
       <Button
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}

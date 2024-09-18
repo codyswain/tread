@@ -16,7 +16,18 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Markdown } from "tiptap-markdown";
 import { Placeholder } from "@tiptap/extension-placeholder";
+import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
+import { createLowlight } from "lowlight";
+import js from "highlight.js/lib/languages/javascript";
+import python from "highlight.js/lib/languages/python";
+import css from "highlight.js/lib/languages/css";
+import "highlight.js/styles/github-dark.css";
 import Toolbar from "./Toolbar";
+
+const lowlight = createLowlight();
+lowlight.register("js", js);
+lowlight.register("python", python);
+lowlight.register("css", css);
 
 interface NoteEditorProps {
   note: Note;
@@ -29,9 +40,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingEmbedding, setIsGeneratingEmbedding] = useState(false);
-  const [indicatorStatus, setIndicatorStatus] = useState<"green" | "yellow">(
-    "green"
-  );
+  const [indicatorStatus, setIndicatorStatus] = useState<"green" | "yellow">("green");
 
   useEffect(() => {
     setLocalNote(note);
@@ -50,8 +59,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       } catch (err) {
         setError("Failed to save note. Please try again.");
         toast("Error saving note", {
-          description:
-            "An error occurred while saving the note. Please try again.",
+          description: "An error occurred while saving the note. Please try again.",
         });
       } finally {
         setIsSaving(false);
@@ -110,7 +118,13 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        defaultLanguage: 'plaintext',
+      }),
       Markdown,
       Placeholder.configure({
         placeholder: "Start typing your note...",
@@ -121,8 +135,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
     autofocus: true,
     editorProps: {
       attributes: {
-        class:
-          "prose-sm dark:prose-invert focus:outline-none max-w-none h-full overflow-auto leading-normal prose-p:mt-0 prose-p:mb-0",
+        class: "prose prose-sm dark:prose-invert focus:outline-none max-w-none h-full overflow-auto leading-normal cursor-text",
       },
     },
   });
@@ -139,14 +152,14 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
             className="text-2xl font-semibold border-none focus:ring-0 bg-background text-foreground flex-grow"
             aria-label="Note title"
           />
-          {isSaving && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+          {isSaving && <Loader2 className="h-4 w-4 animate-spin ml-2 text-muted-foreground" />}
         </div>
         <div className="flex items-center space-x-2">
           {isGeneratingEmbedding && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="h-10 w-10 flex items-center justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -161,8 +174,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
                 className={cn(
                   "w-2 h-2 rounded-full",
                   indicatorStatus === "green"
-                    ? "bg-green-500"
-                    : "bg-yellow-500 animate-pulse"
+                    ? "bg-primary"
+                    : "bg-secondary animate-pulse"
                 )}
               />
             </TooltipTrigger>
@@ -177,12 +190,19 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
         </div>
       </div>
       <Toolbar editor={editor} />
-      <div className="flex-grow overflow-auto">
-        <div className="max-w-3xl h-full mx-auto p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg">
+      <div
+        className="flex-grow overflow-auto"
+        onClick={() => {
+          if (editor) {
+            editor.chain().focus().run();
+          }
+        }}
+      >
+        <div className="min-h-full max-w-3xl mx-auto p-6 bg-card text-card-foreground rounded-lg shadow-lg">
           <EditorContent editor={editor} />
         </div>
       </div>
-      {error && <div className="text-red-500 mt-2">{error}</div>}
+      {error && <div className="text-destructive mt-2">{error}</div>}
     </div>
   );
 };
