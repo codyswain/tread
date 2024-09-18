@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/shared/components/Toast';
 import { cn } from '@/shared/utils';
-import { Pencil, Eye, Loader2 } from 'lucide-react';
+import { Pencil, Eye, Loader2, Edit } from 'lucide-react';
 import { Input } from '@/shared/components/Input';
-import { Toggle } from '@/shared/components/Toggle';
+import { Button } from '@/shared/components/Button';
 import {
   Tooltip,
   TooltipContent,
@@ -22,16 +22,19 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
+import DynamicMarkdownEditor from './DynamicMarkdownEditor';
 
 interface NoteEditorProps {
   note: Note;
 }
 
+type EditorMode = 'dynamic' | 'edit' | 'view';
+
 const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
   const { saveNote, createEmbedding } = useNotesContext();
 
   const [localNote, setLocalNote] = useState(note);
-  const [isEditing, setIsEditing] = useState(true);
+  const [mode, setMode] = useState<EditorMode>('dynamic');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingEmbedding, setIsGeneratingEmbedding] = useState(false);
@@ -158,38 +161,72 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
             </TooltipContent>
           </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Toggle
-                pressed={isEditing}
-                onPressedChange={setIsEditing}
-                aria-label="Toggle edit mode"
-                className="h-10 w-10"
-              >
-                {isEditing ? (
+          {/* Mode Selector */}
+          <div className="flex space-x-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={mode === 'dynamic' ? 'default' : 'outline'}
+                  size="icon"
+                  onClick={() => setMode('dynamic')}
+                  aria-label="Dynamic Edit/View Mode"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Dynamic Edit/View Mode</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={mode === 'edit' ? 'default' : 'outline'}
+                  size="icon"
+                  onClick={() => setMode('edit')}
+                  aria-label="Markdown Edit Mode"
+                >
                   <Pencil className="h-4 w-4" />
-                ) : (
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Markdown Edit Mode</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={mode === 'view' ? 'default' : 'outline'}
+                  size="icon"
+                  onClick={() => setMode('view')}
+                  aria-label="View Mode"
+                >
                   <Eye className="h-4 w-4" />
-                )}
-              </Toggle>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {isEditing
-                  ? 'Switch to reading mode'
-                  : 'Switch to editing mode'}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>View Mode</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       </div>
       <div className="flex-grow overflow-hidden">
-        {isEditing ? (
+        {mode === 'dynamic' && (
+          <DynamicMarkdownEditor
+            value={localNote.content}
+            onChange={handleContentChange}
+          />
+        )}
+        {mode === 'edit' && (
           <MarkdownEditor
             value={localNote.content}
             onChange={handleContentChange}
           />
-        ) : (
+        )}
+        {mode === 'view' && (
           <div className="prose dark:prose-invert max-w-none border rounded-md p-4 h-full bg-muted/50 overflow-auto">
             <ReactMarkdown
               remarkPlugins={[remarkGfm, remarkMath]}
