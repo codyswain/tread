@@ -14,7 +14,6 @@ import {
   Heading1,
   Heading2,
   Heading3,
-  SeparatorHorizontal,
 } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { Button } from '@/shared/components/Button';
@@ -30,14 +29,14 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
 
   const buttonClass = (isActive: boolean) =>
     cn(
-      'p-2',
+      'p-2 rounded-md',
       isActive
         ? 'bg-primary text-primary-foreground'
-        : 'bg-secondary text-secondary-foreground'
+        : 'hover:bg-accent hover:text-accent-foreground'
     );
 
   return (
-    <div className="flex items-center space-x-1 mb-2">
+    <div className="flex items-center space-x-1 mb-4 bg-muted/50 p-2 rounded-md">
       <Button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={buttonClass(editor.isActive('bold'))}
@@ -70,7 +69,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
       >
         <Code className="h-4 w-4" />
       </Button>
-      <SeparatorHorizontal className="h-4 w-4 text-gray-400" />
+      <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-2" />
       <Button
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         className={buttonClass(editor.isActive('bulletList'))}
@@ -87,7 +86,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
       >
         <ListOrdered className="h-4 w-4" />
       </Button>
-      <SeparatorHorizontal className="h-4 w-4 text-gray-400" />
+      <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-2" />
       <Button
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         className={buttonClass(editor.isActive('blockquote'))}
@@ -104,7 +103,7 @@ const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
       >
         <Code2 className="h-4 w-4" />
       </Button>
-      <SeparatorHorizontal className="h-4 w-4 text-gray-400" />
+      <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-2" />
       <Button
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         className={buttonClass(editor.isActive('heading', { level: 1 }))}

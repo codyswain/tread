@@ -1,20 +1,22 @@
-// src/features/notes/components/NoteEditor.tsx
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { toast } from '@/shared/components/Toast';
-import { cn } from '@/shared/utils';
-import { Loader2 } from 'lucide-react';
-import { Input } from '@/shared/components/Input';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/Tooltip';
-import { Note } from '@/shared/types';
-import { useNotesContext } from '../context/notesContext';
-import { useDebouncedCallback } from 'use-debounce';
-import 'katex/dist/katex.min.css';
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import {Markdown} from 'tiptap-markdown';
-import Placeholder from '@tiptap/extension-placeholder';
-import Toolbar from '@/features/notes/components/Toolbar';
+import React, { useState, useEffect, useCallback } from "react";
+import { toast } from "@/shared/components/Toast";
+import { cn } from "@/shared/utils";
+import { Loader2 } from "lucide-react";
+import { Input } from "@/shared/components/Input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/shared/components/Tooltip";
+import { Note } from "@/shared/types";
+import { useNotesContext } from "../context/notesContext";
+import { useDebouncedCallback } from "use-debounce";
+import "katex/dist/katex.min.css";
+import { EditorContent, useEditor } from "@tiptap/react";
+import { StarterKit } from "@tiptap/starter-kit";
+import { Markdown } from "tiptap-markdown";
+import { Placeholder } from "@tiptap/extension-placeholder";
+import Toolbar from "./Toolbar";
 
 interface NoteEditorProps {
   note: Note;
@@ -27,12 +29,14 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingEmbedding, setIsGeneratingEmbedding] = useState(false);
-  const [indicatorStatus, setIndicatorStatus] = useState<'green' | 'yellow'>('green');
+  const [indicatorStatus, setIndicatorStatus] = useState<"green" | "yellow">(
+    "green"
+  );
 
   useEffect(() => {
     setLocalNote(note);
     if (editor && note.content !== editor.getHTML()) {
-      editor.commands.setContent(note.content || '');
+      editor.commands.setContent(note.content || "");
     }
   }, [note]);
 
@@ -42,11 +46,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       try {
         await saveNote(updatedNote);
         setError(null);
-        setIndicatorStatus('green');
+        setIndicatorStatus("green");
       } catch (err) {
-        setError('Failed to save note. Please try again.');
-        toast('Error saving note', {
-          description: 'An error occurred while saving the note. Please try again.',
+        setError("Failed to save note. Please try again.");
+        toast("Error saving note", {
+          description:
+            "An error occurred while saving the note. Please try again.",
         });
       } finally {
         setIsSaving(false);
@@ -60,7 +65,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newTitle = e.target.value;
       setLocalNote((prev) => ({ ...prev, title: newTitle }));
-      setIndicatorStatus('yellow');
+      setIndicatorStatus("yellow");
       debouncedSaveContent({ ...localNote, title: newTitle });
     },
     [localNote, debouncedSaveContent]
@@ -72,12 +77,12 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       try {
         const success = await createEmbedding();
         if (success) {
-          console.log('Embedding generated successfully');
+          console.log("Embedding generated successfully");
         } else {
-          console.error('Failed to generate embedding');
+          console.error("Failed to generate embedding");
         }
       } catch (error) {
-        console.error('Error generating embedding:', error);
+        console.error("Error generating embedding:", error);
       } finally {
         setIsGeneratingEmbedding(false);
       }
@@ -92,7 +97,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       setLocalNote((prev) => {
         if (prev.content !== content) {
           const updatedNote = { ...prev, content };
-          setIndicatorStatus('yellow');
+          setIndicatorStatus("yellow");
           debouncedSaveContent(updatedNote);
           debouncedGenerateEmbedding();
           return updatedNote;
@@ -108,16 +113,16 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       StarterKit,
       Markdown,
       Placeholder.configure({
-        placeholder: 'Start typing your note...',
+        placeholder: "Start typing your note...",
       }),
     ],
-    content: localNote.content || '',
+    content: localNote.content || "",
     onUpdate: handleContentChange,
     autofocus: true,
     editorProps: {
       attributes: {
         class:
-          'prose dark:prose-invert focus:outline-none max-w-none h-full overflow-auto',
+          "prose-sm dark:prose-invert focus:outline-none max-w-none h-full overflow-auto leading-normal prose-p:mt-0 prose-p:mb-0",
       },
     },
   });
@@ -154,26 +159,28 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
             <TooltipTrigger asChild>
               <div
                 className={cn(
-                  'w-2 h-2 rounded-full',
-                  indicatorStatus === 'green'
-                    ? 'bg-green-500'
-                    : 'bg-yellow-500 animate-pulse'
+                  "w-2 h-2 rounded-full",
+                  indicatorStatus === "green"
+                    ? "bg-green-500"
+                    : "bg-yellow-500 animate-pulse"
                 )}
               />
             </TooltipTrigger>
             <TooltipContent>
               <p>
-                {indicatorStatus === 'green'
-                  ? 'Embedding up to date'
-                  : 'Embedding needs update'}
+                {indicatorStatus === "green"
+                  ? "Embedding up to date"
+                  : "Embedding needs update"}
               </p>
             </TooltipContent>
           </Tooltip>
         </div>
       </div>
       <Toolbar editor={editor} />
-      <div className="flex-grow overflow-hidden">
-        <EditorContent editor={editor} />
+      <div className="flex-grow overflow-auto">
+        <div className="max-w-3xl h-full mx-auto p-6 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg">
+          <EditorContent editor={editor} />
+        </div>
       </div>
       {error && <div className="text-red-500 mt-2">{error}</div>}
     </div>
