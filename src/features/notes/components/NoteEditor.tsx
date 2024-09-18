@@ -3,25 +3,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/shared/components/Toast';
 import { cn } from '@/shared/utils';
-import { Pencil, Eye, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Input } from '@/shared/components/Input';
-import { Toggle } from '@/shared/components/Toggle';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/shared/components/Tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/Tooltip';
 import { Note } from '@/shared/types';
 import { useNotesContext } from '../context/notesContext';
 import { useDebouncedCallback } from 'use-debounce';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import MarkdownEditor from './MarkdownEditor';
 import 'katex/dist/katex.min.css';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import {Markdown} from 'tiptap-markdown';
+import Placeholder from '@tiptap/extension-placeholder';
+import Toolbar from '@/features/notes/components/Toolbar';
 
 interface NoteEditorProps {
   note: Note;
@@ -31,16 +24,16 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
   const { saveNote, createEmbedding } = useNotesContext();
 
   const [localNote, setLocalNote] = useState(note);
-  const [isEditing, setIsEditing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGeneratingEmbedding, setIsGeneratingEmbedding] = useState(false);
-  const [indicatorStatus, setIndicatorStatus] = useState<'green' | 'yellow'>(
-    'green'
-  );
+  const [indicatorStatus, setIndicatorStatus] = useState<'green' | 'yellow'>('green');
 
   useEffect(() => {
     setLocalNote(note);
+    if (editor && note.content !== editor.getHTML()) {
+      editor.commands.setContent(note.content || '');
+    }
   }, [note]);
 
   const debouncedSaveContent = useDebouncedCallback(
@@ -53,8 +46,7 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       } catch (err) {
         setError('Failed to save note. Please try again.');
         toast('Error saving note', {
-          description:
-            'An error occurred while saving the note. Please try again.',
+          description: 'An error occurred while saving the note. Please try again.',
         });
       } finally {
         setIsSaving(false);
@@ -95,7 +87,8 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
   );
 
   const handleContentChange = useCallback(
-    (content: string) => {
+    ({ editor }: { editor: any }) => {
+      const content = editor.getHTML();
       setLocalNote((prev) => {
         if (prev.content !== content) {
           const updatedNote = { ...prev, content };
@@ -109,6 +102,25 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
     },
     [debouncedSaveContent, debouncedGenerateEmbedding]
   );
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Markdown,
+      Placeholder.configure({
+        placeholder: 'Start typing your note...',
+      }),
+    ],
+    content: localNote.content || '',
+    onUpdate: handleContentChange,
+    autofocus: true,
+    editorProps: {
+      attributes: {
+        class:
+          'prose dark:prose-invert focus:outline-none max-w-none h-full overflow-auto',
+      },
+    },
+  });
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground overflow-hidden p-4">
@@ -157,48 +169,11 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
               </p>
             </TooltipContent>
           </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Toggle
-                pressed={isEditing}
-                onPressedChange={setIsEditing}
-                aria-label="Toggle edit mode"
-                className="h-10 w-10"
-              >
-                {isEditing ? (
-                  <Pencil className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Toggle>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {isEditing
-                  ? 'Switch to reading mode'
-                  : 'Switch to editing mode'}
-              </p>
-            </TooltipContent>
-          </Tooltip>
         </div>
       </div>
+      <Toolbar editor={editor} />
       <div className="flex-grow overflow-hidden">
-        {isEditing ? (
-          <MarkdownEditor
-            value={localNote.content}
-            onChange={handleContentChange}
-          />
-        ) : (
-          <div className="prose dark:prose-invert max-w-none border rounded-md p-4 h-full bg-muted/50 overflow-auto">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm, remarkMath]}
-              rehypePlugins={[rehypeKatex, rehypeRaw, rehypeSanitize]}
-            >
-              {localNote.content}
-            </ReactMarkdown>
-          </div>
-        )}
+        <EditorContent editor={editor} />
       </div>
       {error && <div className="text-red-500 mt-2">{error}</div>}
     </div>
