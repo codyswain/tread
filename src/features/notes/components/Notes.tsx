@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
@@ -23,36 +23,61 @@ const Notes: React.FC<{
 }) => {
   const [leftSidebarWidth, setLeftSidebarWidth] = useState(256);
   const [rightSidebarWidth, setRightSidebarWidth] = useState(256);
-  const [bottomPaneHeight, setBottomPaneHeight] = useState(256);
+  const [bottomPaneHeight, setBottomPaneHeight] = useState(300);
   const { activeNote } = useNotesContext();
 
+  const leftSidebarRef = useRef<HTMLDivElement>(null);
+  const rightSidebarRef = useRef<HTMLDivElement>(null);
   const bottomPaneRef = useRef<HTMLDivElement>(null);
+  const notesContainerRef = useRef<HTMLDivElement>(null);
 
   useResizablePane({
-    minHeight: 100,
-    maxHeight: 400,
-    height: bottomPaneHeight,
-    setHeight: setBottomPaneHeight,
-    paneRef: bottomPaneRef,
-    direction: 'vertical',
+    minWidth: 100,
+    maxWidth: 400,
+    width: leftSidebarWidth,
+    setWidth: setLeftSidebarWidth,
+    paneRef: leftSidebarRef,
+    direction: "horizontal",
   });
 
+  useResizablePane({
+    minWidth: 100,
+    maxWidth: 400,
+    width: rightSidebarWidth,
+    setWidth: setRightSidebarWidth,
+    paneRef: rightSidebarRef,
+    direction: "horizontal",
+  });
+
+  useEffect(() => {
+    const updateBottomPaneHeight = () => {
+      if (notesContainerRef.current && isBottomPaneOpen) {
+        const maxHeight = notesContainerRef.current.clientHeight * 0.8;
+        setBottomPaneHeight((prev) => Math.min(prev, maxHeight));
+      }
+    };
+
+    updateBottomPaneHeight();
+    window.addEventListener('resize', updateBottomPaneHeight);
+
+    return () => {
+      window.removeEventListener('resize', updateBottomPaneHeight);
+    };
+  }, [isBottomPaneOpen]);
+
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <NoteExplorer
-        isOpen={isLeftSidebarOpen}
-        onResize={setLeftSidebarWidth}
-        onClose={() => setIsLeftSidebarOpen(false)}
-      />
-      <div
-        className="flex-grow flex flex-col"
-        style={{
-          marginLeft: isLeftSidebarOpen ? `${leftSidebarWidth}px` : "0",
-          marginRight: isRightSidebarOpen ? `${rightSidebarWidth}px` : "0",
-          transition: "margin 0.3s ease-in-out",
-        }}
-      >
-        <div className="flex-grow flex flex-col overflow-hidden">
+    <div className="flex h-screen pt-12 bg-background text-foreground overflow-hidden">
+      {isLeftSidebarOpen && (
+        <div ref={leftSidebarRef} style={{ width: leftSidebarWidth, flexShrink: 0 }}>
+          <NoteExplorer
+            isOpen={isLeftSidebarOpen}
+            onResize={setLeftSidebarWidth}
+            onClose={() => setIsLeftSidebarOpen(false)}
+          />
+        </div>
+      )}
+      <div ref={notesContainerRef} className="flex-grow flex flex-col overflow-hidden">
+        <div className="flex-grow overflow-auto">
           {activeNote ? (
             <NoteEditor note={activeNote} />
           ) : (
@@ -70,11 +95,15 @@ const Notes: React.FC<{
           />
         )}
       </div>
-      <RelatedNotes
-        isOpen={isRightSidebarOpen}
-        onResize={setRightSidebarWidth}
-        onClose={() => setIsRightSidebarOpen(false)}
-      />
+      {isRightSidebarOpen && (
+        <div ref={rightSidebarRef} style={{ width: rightSidebarWidth, flexShrink: 0 }}>
+          <RelatedNotes
+            isOpen={isRightSidebarOpen}
+            onResize={setRightSidebarWidth}
+            onClose={() => setIsRightSidebarOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

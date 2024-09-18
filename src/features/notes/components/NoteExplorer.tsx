@@ -82,7 +82,8 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         onSelectNote={setActiveFileNode}
         handleContextMenu={handleContextMenu}
       />
-      <div className="absolute bottom-2 right-2">
+      {/* TODO */}
+      {/* <div className="absolute bottom-2 right-2">
         <Button
           variant="ghost"
           size="icon"
@@ -92,7 +93,7 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         >
           <Settings className="h-4 w-4" />
         </Button>
-      </div>
+      </div> */}
       <div
         onMouseDown={startResizing}
         className="absolute top-0 right-0 w-1 h-full cursor-ew-resize hover:bg-accent/50"

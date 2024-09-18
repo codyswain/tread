@@ -1,11 +1,10 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { cn } from "@/shared/utils";
 import { ScrollArea } from "@/shared/components/ScrollArea";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { Settings, Send } from "lucide-react";
 import { toast } from "@/shared/components/Toast";
-import { useResizablePane } from "@/shared/hooks/useResizablePane";
 import { useNotesContext } from "../context/notesContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -28,20 +27,44 @@ const BottomPane: React.FC<BottomPaneProps> = ({
   paneRef,
   onClose,
 }) => {
-  const { startResizing } = useResizablePane({
-    minHeight: 100,
-    maxHeight: 400,
-    height,
-    setHeight,
-    paneRef,
-    direction: "vertical",
-  });
-
+  const [isDragging, setIsDragging] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { performRAGChat, openNoteById } = useNotesContext();
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging && paneRef.current) {
+        const newHeight = window.innerHeight - e.clientY;
+        setHeight(Math.max(100, Math.min(window.innerHeight * 0.8, newHeight)));
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging, setHeight, paneRef]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -64,17 +87,16 @@ const BottomPane: React.FC<BottomPaneProps> = ({
     <div
       ref={paneRef}
       className={cn(
-        "bg-background border-t border-border transition-all duration-300 overflow-hidden relative",
-        "flex-shrink-0"
+        "bg-background border-t border-border transition-all duration-300 overflow-hidden",
+        "flex flex-col"
       )}
       style={{ height }}
     >
       <div
-        onMouseDown={startResizing}
-        className="absolute top-0 left-0 w-full h-1 cursor-ns-resize hover:bg-accent/50"
-        style={{ top: "-1px" }}
+        onMouseDown={() => setIsDragging(true)}
+        className="h-1 w-full cursor-ns-resize hover:bg-accent/50"
       />
-      <div className="flex justify-between items-center p-2 h-10 border-b border-border">
+      <div className="flex justify-between items-center p-2 border-b border-border">
         <span className="font-semibold text-sm">Chat</span>
         <Button
           variant="ghost"
@@ -86,8 +108,8 @@ const BottomPane: React.FC<BottomPaneProps> = ({
           <Settings className="h-4 w-4" />
         </Button>
       </div>
-      <div className="flex flex-col h-[calc(100%-2.5rem)]">
-        <ScrollArea className="flex-grow p-4">
+      <ScrollArea className="flex-grow" ref={scrollAreaRef}>
+        <div className="p-4">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -143,25 +165,25 @@ const BottomPane: React.FC<BottomPaneProps> = ({
               </div>
             </div>
           )}
-        </ScrollArea>
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center space-x-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder="Type your message..."
-              className="flex-grow"
-            />
-            <Button onClick={handleSend} disabled={isLoading || !input.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+        </div>
+      </ScrollArea>
+      <div className="border-t border-border">
+        <div className="flex items-center p-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder="Type your message..."
+            className="flex-grow"
+          />
+          <Button onClick={handleSend} disabled={isLoading || !input.trim()} className="ml-2">
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>

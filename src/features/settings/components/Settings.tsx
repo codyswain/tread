@@ -17,7 +17,7 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 mt-2">
+    <div className="container mx-auto mt-2 pt-12 ">
       <h2 className="text-2xl font-bold mb-4">Settings</h2>
       <div className="mb-4">
         <label htmlFor="apiKey" className="block text-sm font-medium mb-1">

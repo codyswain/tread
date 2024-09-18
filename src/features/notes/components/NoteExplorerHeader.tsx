@@ -21,7 +21,8 @@ export const NoteExplorerHeader: React.FC<NoteExplorerHeaderProps> = ({
     <div className="flex justify-between items-center p-2 h-10 border-b border-border">
       <span className="font-semibold text-sm">Files</span>
       <div className="flex">
-        <Button
+        {/* TODO: implement */}
+        {/* <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8 mr-1"
@@ -29,8 +30,8 @@ export const NoteExplorerHeader: React.FC<NoteExplorerHeaderProps> = ({
           title="New Note"
         >
           <Pencil className="h-4 w-4" />
-        </Button>
-        <Button
+        </Button> */}
+        {/* <Button
           variant="ghost"
           size="icon"
           className="h-8 w-8 mr-1"
@@ -38,7 +39,7 @@ export const NoteExplorerHeader: React.FC<NoteExplorerHeaderProps> = ({
           title="New Folder"
         >
           <FolderPlus className="h-4 w-4" />
-        </Button>
+        </Button> */}
         <Button
           variant="ghost"
           size="icon"
@@ -46,7 +47,7 @@ export const NoteExplorerHeader: React.FC<NoteExplorerHeaderProps> = ({
           onClick={openDialogToMountDirpath}
           title="Add Top-Level Folder"
         >
-          <Plus className="h-4 w-4" />
+          <FolderPlus className="h-4 w-4" />
         </Button>
       </div>
     </div>

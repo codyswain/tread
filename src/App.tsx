@@ -10,11 +10,12 @@ import { Navbar, navbarItems } from "@/features/navbar";
 import { Feed } from "@/features/feed";
 import { Notes } from "@/features/notes";
 import { Settings, SettingsProvider } from "@/features/settings";
+import useLocalStorage from "@/shared/hooks/useLocalStorage";
 
 const App: React.FC = () => {
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
-  const [isBottomPaneOpen, setIsBottomPaneOpen] = useState(true);
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useLocalStorage("isLeftSidebarOpen", true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useLocalStorage("isRightSidebarOpen", true);
+  const [isBottomPaneOpen, setIsBottomPaneOpen] = useLocalStorage("isBottomPaneOpen", true);
 
   const toggleLeftSidebar = () => setIsLeftSidebarOpen(!isLeftSidebarOpen);
   const toggleRightSidebar = () => setIsRightSidebarOpen(!isRightSidebarOpen);
@@ -27,7 +28,7 @@ const App: React.FC = () => {
           <NotesProvider>
             <Toaster />
             <Router>
-              <div className="flex flex-col h-screen">
+              <div className="flex flex-col h-screen overflow-hidden">
                 <Navbar
                   toggleLeftSidebar={toggleLeftSidebar}
                   toggleRightSidebar={toggleRightSidebar}
@@ -37,7 +38,7 @@ const App: React.FC = () => {
                   isBottomPaneOpen={isBottomPaneOpen}
                   items={navbarItems}
                 />
-                <main className="flex-grow pt-10">
+                <main className="flex-grow overflow-hidden">
                   <Routes>
                     <Route path="/" element={<Feed />} />
                     <Route
