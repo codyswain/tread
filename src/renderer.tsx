@@ -42,6 +42,10 @@ declare global {
         query: string,
         directoryStructures: DirectoryStructures
       ) => Promise<SimilarNote[]>;
+      performRAGChat: (
+        conversation: { role: string; content: string }[],
+        directoryStructures: DirectoryStructures
+      ) => Promise<{ role: string; content: string }>;
     };
   }
 }
