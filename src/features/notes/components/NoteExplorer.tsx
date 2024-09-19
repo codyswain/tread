@@ -1,11 +1,7 @@
-// src/features/notes/components/NoteExplorer.tsx
-
 import React from "react";
 import { Settings } from "lucide-react";
-import { useResizableSidebar } from "@/shared/hooks/useResizableSidebar";
 import { Button } from "@/shared/components/Button";
 import { toast } from "@/shared/components/Toast";
-import { cn } from "@/shared/utils";
 import { useNoteExplorerContextMenu } from "../hooks/useNoteExplorerContextMenu";
 import { NoteExplorerHeader } from "./NoteExplorerHeader";
 import NoteExplorerContextMenu from "./NoteExplorerContextMenu";
@@ -14,25 +10,10 @@ import { useNotesContext } from "../context/notesContext";
 
 interface NoteExplorerProps {
   isOpen: boolean;
-  onResize: (width: number) => void;
   onClose: () => void;
 }
 
-const NoteExplorer: React.FC<NoteExplorerProps> = ({
-  isOpen,
-  onResize,
-  onClose
-}) => {
-  const { width, sidebarRef, startResizing } = useResizableSidebar({
-    minWidth: 100,
-    maxWidth: 400,
-    defaultWidth: 256,
-    isOpen,
-    onResize,
-    onClose,
-    side: "left",
-  });
-
+const NoteExplorer: React.FC<NoteExplorerProps> = ({ isOpen, onClose }) => {
   const { contextMenu, handleContextMenu, closeContextMenu } = useNoteExplorerContextMenu();
   const {
     directoryStructures,
@@ -41,9 +22,6 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
     setActiveFileNode,
     deleteFileNode,
     handleCreateFolder,
-    expandedDirs,
-    toggleDirectory,
-    newFolderState,
     isLoading,
     error
   } = useNotesContext();                              
@@ -55,14 +33,7 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
   }
 
   return (
-    <div
-      ref={sidebarRef}
-      className={cn(
-        "fixed top-12 left-0 h-[calc(100vh-3rem)] bg-background border-r border-border transition-all duration-300 z-10 overflow-hidden",
-        isOpen ? `w-[${width}px]` : "w-0"
-      )}
-      style={{ width: isOpen ? width : 0 }}
-    >
+    <div className="h-full flex flex-col bg-background border-r border-border">
       <NoteExplorerContextMenu
         contextMenu={contextMenu}
         onClose={closeContextMenu}
@@ -82,8 +53,7 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         onSelectNote={setActiveFileNode}
         handleContextMenu={handleContextMenu}
       />
-      {/* TODO */}
-      {/* <div className="absolute bottom-2 right-2">
+      <div className="mt-auto p-2">
         <Button
           variant="ghost"
           size="icon"
@@ -93,12 +63,7 @@ const NoteExplorer: React.FC<NoteExplorerProps> = ({
         >
           <Settings className="h-4 w-4" />
         </Button>
-      </div> */}
-      <div
-        onMouseDown={startResizing}
-        className="absolute top-0 right-0 w-1 h-full cursor-ew-resize hover:bg-accent/50"
-        style={{ right: "-1px" }}
-      />
+      </div>
     </div>
   );
 };

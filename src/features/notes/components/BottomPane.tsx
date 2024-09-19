@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { cn } from "@/shared/utils";
 import { ScrollArea } from "@/shared/components/ScrollArea";
 import { Button } from "@/shared/components/Button";
@@ -10,9 +10,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 interface BottomPaneProps {
-  height: number;
-  setHeight: (height: number) => void;
-  paneRef: React.RefObject<HTMLDivElement>;
   onClose: () => void;
 }
 
@@ -21,44 +18,13 @@ interface Message {
   content: string;
 }
 
-const BottomPane: React.FC<BottomPaneProps> = ({
-  height,
-  setHeight,
-  paneRef,
-  onClose,
-}) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+const BottomPane: React.FC<BottomPaneProps> = ({ onClose }) => {
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [input, setInput] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { performRAGChat, openNoteById } = useNotesContext();
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging && paneRef.current) {
-        const newHeight = window.innerHeight - e.clientY;
-        setHeight(Math.max(100, Math.min(window.innerHeight * 0.8, newHeight)));
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = 'none';
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-    };
-  }, [isDragging, setHeight, paneRef]);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -74,7 +40,7 @@ const BottomPane: React.FC<BottomPaneProps> = ({
     setIsLoading(true);
     try {
       const assistantMessage = await performRAGChat([...messages, userMessage]);
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage as Message]);
     } catch (error) {
       console.error("Error in RAG Chat:", error);
       toast.error("Failed to get response. Please try again.");
@@ -85,17 +51,11 @@ const BottomPane: React.FC<BottomPaneProps> = ({
 
   return (
     <div
-      ref={paneRef}
       className={cn(
-        "bg-background border-t border-border transition-all duration-300 overflow-hidden",
-        "flex flex-col"
+        "bg-background border-t border-border",
+        "flex flex-col h-full"
       )}
-      style={{ height }}
     >
-      <div
-        onMouseDown={() => setIsDragging(true)}
-        className="h-1 w-full cursor-ns-resize hover:bg-accent/50"
-      />
       <div className="flex justify-between items-center p-2 border-b border-border">
         <span className="font-semibold text-sm">Chat</span>
         <Button
@@ -181,7 +141,11 @@ const BottomPane: React.FC<BottomPaneProps> = ({
             placeholder="Type your message..."
             className="flex-grow"
           />
-          <Button onClick={handleSend} disabled={isLoading || !input.trim()} className="ml-2">
+          <Button
+            onClick={handleSend}
+            disabled={isLoading || !input.trim()}
+            className="ml-2"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>

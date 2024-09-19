@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
 import BottomPane from "./BottomPane";
 import { useNotesContext } from "../context/notesContext";
-import { useResizablePane } from "@/shared/hooks/useResizablePane";
 
 const Notes: React.FC<{
   isLeftSidebarOpen: boolean;
@@ -21,90 +21,86 @@ const Notes: React.FC<{
   setIsRightSidebarOpen,
   setIsBottomPaneOpen,
 }) => {
-  const [leftSidebarWidth, setLeftSidebarWidth] = useState(256);
-  const [rightSidebarWidth, setRightSidebarWidth] = useState(256);
-  const [bottomPaneHeight, setBottomPaneHeight] = useState(300);
   const { activeNote } = useNotesContext();
+  const [leftSidebarSize, setLeftSidebarSize] = useState(20);
+  const [rightSidebarSize, setRightSidebarSize] = useState(20);
+  const [bottomPaneSize, setBottomPaneSize] = useState(30);
 
-  const leftSidebarRef = useRef<HTMLDivElement>(null);
-  const rightSidebarRef = useRef<HTMLDivElement>(null);
-  const bottomPaneRef = useRef<HTMLDivElement>(null);
-  const notesContainerRef = useRef<HTMLDivElement>(null);
-
-  useResizablePane({
-    minWidth: 100,
-    maxWidth: 400,
-    width: leftSidebarWidth,
-    setWidth: setLeftSidebarWidth,
-    paneRef: leftSidebarRef,
-    direction: "horizontal",
-  });
-
-  useResizablePane({
-    minWidth: 100,
-    maxWidth: 400,
-    width: rightSidebarWidth,
-    setWidth: setRightSidebarWidth,
-    paneRef: rightSidebarRef,
-    direction: "horizontal",
-  });
-
-  useEffect(() => {
-    const updateBottomPaneHeight = () => {
-      if (notesContainerRef.current && isBottomPaneOpen) {
-        const maxHeight = notesContainerRef.current.clientHeight * 0.8;
-        setBottomPaneHeight((prev) => Math.min(prev, maxHeight));
-      }
-    };
-
-    updateBottomPaneHeight();
-    window.addEventListener('resize', updateBottomPaneHeight);
-
-    return () => {
-      window.removeEventListener('resize', updateBottomPaneHeight);
-    };
-  }, [isBottomPaneOpen]);
+  const handleResize = (panelName: string) => (size: number) => {
+    switch (panelName) {
+      case 'leftSidebar':
+        setLeftSidebarSize(size);
+        break;
+      case 'rightSidebar':
+        setRightSidebarSize(size);
+        break;
+      case 'bottomPane':
+        setBottomPaneSize(size);
+        break;
+    }
+  };
 
   return (
-    <div className="flex h-screen pt-12 bg-background text-foreground overflow-hidden">
+    <PanelGroup direction="horizontal" className="h-screen pt-12">
       {isLeftSidebarOpen && (
-        <div ref={leftSidebarRef} style={{ width: leftSidebarWidth, flexShrink: 0 }}>
-          <NoteExplorer
-            isOpen={isLeftSidebarOpen}
-            onResize={setLeftSidebarWidth}
-            onClose={() => setIsLeftSidebarOpen(false)}
-          />
-        </div>
+        <>
+          <Panel
+            defaultSize={leftSidebarSize}
+            minSize={10}
+            maxSize={40}
+            onResize={handleResize('leftSidebar')}
+          >
+            <NoteExplorer
+              isOpen={isLeftSidebarOpen}
+              onClose={() => setIsLeftSidebarOpen(false)}
+            />
+          </Panel>
+          <PanelResizeHandle className="w-1 bg-border hover:bg-accent/50 cursor-ew-resize" />
+        </>
       )}
-      <div ref={notesContainerRef} className="flex-grow flex flex-col overflow-hidden">
-        <div className="flex-grow overflow-auto">
-          {activeNote ? (
-            <NoteEditor note={activeNote} />
-          ) : (
-            <div className="flex w-full h-full justify-center items-center">
-              Please select a note
-            </div>
+      <Panel>
+        <PanelGroup direction="vertical">
+          <Panel>
+            {activeNote ? (
+              <NoteEditor note={activeNote} />
+            ) : (
+              <div className="flex w-full h-full justify-center items-center">
+                Please select a note
+              </div>
+            )}
+          </Panel>
+          {isBottomPaneOpen && (
+            <>
+              <PanelResizeHandle className="h-1 bg-border hover:bg-accent/50 cursor-ns-resize" />
+              <Panel
+                defaultSize={bottomPaneSize}
+                minSize={10}
+                maxSize={80}
+                onResize={handleResize('bottomPane')}
+              >
+                <BottomPane onClose={() => setIsBottomPaneOpen(false)} />
+              </Panel>
+            </>
           )}
-        </div>
-        {isBottomPaneOpen && (
-          <BottomPane
-            height={bottomPaneHeight}
-            setHeight={setBottomPaneHeight}
-            paneRef={bottomPaneRef}
-            onClose={() => setIsBottomPaneOpen(false)}
-          />
-        )}
-      </div>
+        </PanelGroup>
+      </Panel>
       {isRightSidebarOpen && (
-        <div ref={rightSidebarRef} style={{ width: rightSidebarWidth, flexShrink: 0 }}>
-          <RelatedNotes
-            isOpen={isRightSidebarOpen}
-            onResize={setRightSidebarWidth}
-            onClose={() => setIsRightSidebarOpen(false)}
-          />
-        </div>
+        <>
+          <PanelResizeHandle className="w-1 bg-border hover:bg-accent/50 cursor-ew-resize" />
+          <Panel
+            defaultSize={rightSidebarSize}
+            minSize={10}
+            maxSize={40}
+            onResize={handleResize('rightSidebar')}
+          >
+            <RelatedNotes
+              isOpen={isRightSidebarOpen}
+              onClose={() => setIsRightSidebarOpen(false)}
+            />
+          </Panel>
+        </>
       )}
-    </div>
+    </PanelGroup>
   );
 };
 
