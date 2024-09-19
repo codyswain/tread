@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import React, { useState, useRef, useEffect } from "react";
+import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from "react-resizable-panels";
 import RelatedNotes from "./RelatedNotes";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
@@ -22,9 +22,57 @@ const Notes: React.FC<{
   setIsBottomPaneOpen,
 }) => {
   const { activeNote } = useNotesContext();
-  const [leftSidebarSize, setLeftSidebarSize] = useState(20);
-  const [rightSidebarSize, setRightSidebarSize] = useState(20);
-  const [bottomPaneSize, setBottomPaneSize] = useState(30);
+  const [leftSidebarSize, setLeftSidebarSize] = useState(18);
+  const [rightSidebarSize, setRightSidebarSize] = useState(18);
+  const [bottomPaneSize, setBottomPaneSize] = useState(34);
+
+  const leftPanelRef = useRef<ImperativePanelHandle>(null);
+  const rightPanelRef = useRef<ImperativePanelHandle>(null);
+  const bottomPanelRef = useRef<ImperativePanelHandle>(null);
+
+  const handlePanelCollapse = (panelName: string) => {
+    switch (panelName) {
+      case 'leftSidebar':
+        setIsLeftSidebarOpen(false);
+        break;
+      case 'rightSidebar':
+        setIsRightSidebarOpen(false);
+        break;
+      case 'bottomPane':
+        setIsBottomPaneOpen(false);
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (leftPanelRef.current) {
+      if (isLeftSidebarOpen) {
+        leftPanelRef.current.expand();
+      } else {
+        leftPanelRef.current.collapse();
+      }
+    }
+  }, [isLeftSidebarOpen]);
+
+  useEffect(() => {
+    if (rightPanelRef.current) {
+      if (isRightSidebarOpen) {
+        rightPanelRef.current.expand();
+      } else {
+        rightPanelRef.current.collapse();
+      }
+    }
+  }, [isRightSidebarOpen]);
+
+  useEffect(() => {
+    if (bottomPanelRef.current) {
+      if (isBottomPaneOpen) {
+        bottomPanelRef.current.expand();
+      } else {
+        bottomPanelRef.current.collapse();
+      }
+    }
+  }, [isBottomPaneOpen]);
 
   const handleResize = (panelName: string) => (size: number) => {
     switch (panelName) {
@@ -42,22 +90,21 @@ const Notes: React.FC<{
 
   return (
     <PanelGroup direction="horizontal" className="h-screen pt-12">
-      {isLeftSidebarOpen && (
-        <>
-          <Panel
-            defaultSize={leftSidebarSize}
-            minSize={10}
-            maxSize={40}
-            onResize={handleResize('leftSidebar')}
-          >
-            <NoteExplorer
-              isOpen={isLeftSidebarOpen}
-              onClose={() => setIsLeftSidebarOpen(false)}
-            />
-          </Panel>
-          <PanelResizeHandle className="w-1 bg-border hover:bg-accent/50 cursor-ew-resize" />
-        </>
-      )}
+      <Panel
+        ref={leftPanelRef}
+        defaultSize={leftSidebarSize}
+        minSize={10}
+        maxSize={40}
+        onResize={handleResize('leftSidebar')}
+        collapsible={true}
+        onCollapse={() => handlePanelCollapse('leftSidebar')}
+      >
+        <NoteExplorer
+          isOpen={isLeftSidebarOpen}
+          onClose={() => setIsLeftSidebarOpen(false)}
+        />
+      </Panel>
+      <PanelResizeHandle className="w-1 bg-border hover:bg-accent/50 cursor-ew-resize" />
       <Panel>
         <PanelGroup direction="vertical">
           <Panel>
@@ -69,37 +116,35 @@ const Notes: React.FC<{
               </div>
             )}
           </Panel>
-          {isBottomPaneOpen && (
-            <>
-              <PanelResizeHandle className="h-1 bg-border hover:bg-accent/50 cursor-ns-resize" />
-              <Panel
-                defaultSize={bottomPaneSize}
-                minSize={10}
-                maxSize={80}
-                onResize={handleResize('bottomPane')}
-              >
-                <BottomPane onClose={() => setIsBottomPaneOpen(false)} />
-              </Panel>
-            </>
-          )}
+          <PanelResizeHandle className="h-1 bg-border hover:bg-accent/50 cursor-ns-resize" />
+          <Panel
+            ref={bottomPanelRef}
+            defaultSize={bottomPaneSize}
+            minSize={10}
+            maxSize={80}
+            onResize={handleResize('bottomPane')}
+            collapsible={true}
+            onCollapse={() => handlePanelCollapse('bottomPane')}
+          >
+            <BottomPane onClose={() => setIsBottomPaneOpen(false)} />
+          </Panel>
         </PanelGroup>
       </Panel>
-      {isRightSidebarOpen && (
-        <>
-          <PanelResizeHandle className="w-1 bg-border hover:bg-accent/50 cursor-ew-resize" />
-          <Panel
-            defaultSize={rightSidebarSize}
-            minSize={10}
-            maxSize={40}
-            onResize={handleResize('rightSidebar')}
-          >
-            <RelatedNotes
-              isOpen={isRightSidebarOpen}
-              onClose={() => setIsRightSidebarOpen(false)}
-            />
-          </Panel>
-        </>
-      )}
+      <PanelResizeHandle className="w-1 bg-border hover:bg-accent/50 cursor-ew-resize" />
+      <Panel
+        ref={rightPanelRef}
+        defaultSize={rightSidebarSize}
+        minSize={10}
+        maxSize={40}
+        onResize={handleResize('rightSidebar')}
+        collapsible={true}
+        onCollapse={() => handlePanelCollapse('rightSidebar')}
+      >
+        <RelatedNotes
+          isOpen={isRightSidebarOpen}
+          onClose={() => setIsRightSidebarOpen(false)}
+        />
+      </Panel>
     </PanelGroup>
   );
 };
