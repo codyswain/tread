@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import path from "path";
+import fs from 'fs';
 import { setupFileSystem } from "./main/fileSystem";
 import {
   addTopLevelFolder,
@@ -17,18 +18,28 @@ let mainWindow: BrowserWindow | null = null;
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
+// More lenient CSP
 const CSP = [
   "default-src 'self'",
-  isDevelopment
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-    : "script-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data:",
+  "img-src 'self' data: https:",
   "font-src 'self' data:",
-  isDevelopment ? "connect-src 'self' ws:" : "connect-src 'self'",
+  "connect-src 'self' https: ws:",
+  "media-src 'self' https:",
 ];
 
+// Setup logging
+const logFile = path.join(app.getPath('userData'), 'app.log');
+const log = (message: string) => {
+  const timestamp = new Date().toISOString();
+  const logMessage = `${timestamp}: ${message}\n`;
+  console.log(logMessage);
+  fs.appendFileSync(logFile, logMessage);
+};
+
 const createWindow = () => {
+  log('Creating main window');
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -55,81 +66,105 @@ const createWindow = () => {
 
   // Load the main page (which will contain the navigation)
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    log(`Loading URL: ${MAIN_WINDOW_VITE_DEV_SERVER_URL}`);
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-    );
+    const filePath = path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`);
+    log(`Loading file: ${filePath}`);
+    mainWindow.loadFile(filePath);
   }
 
-  // Open the DevTools only in development mode
-  if (process.env.NODE_ENV === "development") {
+  // Open the DevTools in development
+  if (isDevelopment){
     mainWindow.webContents.openDevTools();
   }
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    log('Main window finished loading');
+  });
+
+  mainWindow.webContents.on('did-fail-load', (_, errorCode, errorDescription) => {
+    log(`Failed to load page: ${errorCode} - ${errorDescription}`);
+  });
 };
 
 // Set up IPC listeners for window controls
 ipcMain.on("minimize-window", () => {
+  log('Minimizing window');
   mainWindow?.minimize();
 });
 
 ipcMain.on("maximize-window", () => {
   if (mainWindow?.isMaximized()) {
+    log('Unmaximizing window');
     mainWindow.unmaximize();
   } else {
+    log('Maximizing window');
     mainWindow?.maximize();
   }
 });
 
 ipcMain.on("close-window", () => {
+  log('Closing window');
   mainWindow?.close();
 });
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+// This method will be called when Electron has finished initialization
 app.whenReady().then(async () => {
-  await setupFileSystem();
-  await setupEmbeddingService();
-  createWindow();
+  log('App is ready, setting up...');
+  try {
+    await setupFileSystem();
+    log('File system setup complete');
+    await setupEmbeddingService();
+    log('Embedding service setup complete');
+    createWindow();
+  } catch (error) {
+    log(`Error during app setup: ${error}`);
+  }
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+// Quit when all windows are closed, except on macOS
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
+    log('All windows closed, quitting app');
     app.quit();
   }
 });
 
 app.on("activate", () => {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
+    log('Activating app, creating new window');
     createWindow();
   }
 });
 
 // Add error handling
 process.on("uncaughtException", (error) => {
-  console.error("Uncaught exception:", error);
-  // Optionally, you can quit the app or show an error dialog
+  log(`Uncaught exception: ${error}`);
+  dialog.showErrorBox('An error occurred', error.message);
 });
 
 // IPC handlers for top-level folder management
-ipcMain.handle("get-top-level-folders", getTopLevelFolders);
-ipcMain.handle("add-top-level-folder", async (_, folderPath) => {
-  await addTopLevelFolder(folderPath);
-  return getTopLevelFolders(); // Return updated list
-});
-ipcMain.handle("remove-top-level-folder", async (_, folderPath) => {
-  await removeTopLevelFolder(folderPath);
-  return getTopLevelFolders(); // Return updated list
+ipcMain.handle("get-top-level-folders", async () => {
+  log('Getting top-level folders');
+  return getTopLevelFolders();
 });
 
-// Folder selection dialog handler remains the same
+ipcMain.handle("add-top-level-folder", async (_, folderPath) => {
+  log(`Adding top-level folder: ${folderPath}`);
+  await addTopLevelFolder(folderPath);
+  return getTopLevelFolders();
+});
+
+ipcMain.handle("remove-top-level-folder", async (_, folderPath) => {
+  log(`Removing top-level folder: ${folderPath}`);
+  await removeTopLevelFolder(folderPath);
+  return getTopLevelFolders();
+});
+
+// Folder selection dialog handler
 ipcMain.handle("open-folder-dialog", async () => {
+  log('Opening folder dialog');
   const result = await dialog.showOpenDialog({
     properties: ["openDirectory", "createDirectory"],
     buttonLabel: "Select Folder",
@@ -137,7 +172,9 @@ ipcMain.handle("open-folder-dialog", async () => {
   });
 
   if (!result.canceled && result.filePaths.length > 0) {
+    log(`Folder selected: ${result.filePaths[0]}`);
     return result.filePaths[0];
   }
+  log('Folder selection cancelled');
   return null;
 });

@@ -40,7 +40,7 @@ const App: React.FC = () => {
                 />
                 <main className="flex-grow overflow-hidden">
                   <Routes>
-                    <Route path="/" element={<Feed />} />
+                    {/* <Route path="/" element={<Feed />} /> */}
                     <Route
                       path="/notes"
                       element={
