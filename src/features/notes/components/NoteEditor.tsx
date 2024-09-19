@@ -139,6 +139,18 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       attributes: {
         class: "prose prose-md dark:prose-invert focus:outline-none max-w-none h-full w-full overflow-auto leading-normal cursor-text",
       },
+      handleKeyDown: (view, event) => {
+        if (event.key === 'Tab') {
+          event.preventDefault();
+          if (event.shiftKey) {
+            view.dispatch(view.state.tr.insertText('\t'));
+          } else {
+            view.dispatch(view.state.tr.insertText('\t'));
+          }
+          return true;
+        }
+        return false;
+      },
     },
   });
 
