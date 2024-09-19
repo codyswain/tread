@@ -168,16 +168,57 @@ export const useNotes = () => {
       };
       try {
         const savedNotePath = await window.electron.saveNote(newNote, dirPath);
-        await loadNotes();
-        const newFileNodeId = findFileNodeIdByFullPath(savedNotePath);
-        if (newFileNodeId) {
-          setActiveFileNodeId(newFileNodeId);
-        }
+        
+        // Create a new FileNode for the note
+        const newFileNodeId = uuidv4();
+        const newFileNode: FileNode = {
+          id: newFileNodeId,
+          name: newNote.title,
+          type: "note",
+          parentId: null, // We'll update this later
+          fullPath: savedNotePath,
+          childIds: [],
+          noteMetadata: {
+            id: newNote.id,
+            title: newNote.title,
+            // Add other metadata as needed
+          },
+        };
+  
+        // Update the directory structure
+        setDirectoryStructures((prevStructures) => {
+          const updatedNodes = { ...prevStructures.nodes };
+          
+          // Find the parent directory
+          const parentNode = Object.values(updatedNodes).find(
+            (node) => node.type === "directory" && savedNotePath.startsWith(node.fullPath + "/")
+          );
+  
+          if (parentNode) {
+            newFileNode.parentId = parentNode.id;
+            updatedNodes[parentNode.id] = {
+              ...parentNode,
+              childIds: [...parentNode.childIds, newFileNodeId],
+            };
+          } else {
+            // If no parent found, add to root
+            prevStructures.rootIds.push(newFileNodeId);
+          }
+  
+          updatedNodes[newFileNodeId] = newFileNode;
+  
+          return {
+            ...prevStructures,
+            nodes: updatedNodes,
+          };
+        });
+  
+        setActiveFileNodeId(newFileNodeId);
       } catch (error) {
         console.error("Error creating note:", error);
       }
     },
-    [loadNotes, directoryStructures]
+    [setDirectoryStructures, setActiveFileNodeId]
   );
 
   const saveNote = useCallback(
@@ -227,19 +268,65 @@ export const useNotes = () => {
     async (fileNode: FileNode) => {
       try {
         await window.electron.deleteFileNode(fileNode.type, fileNode.fullPath);
+        
+        // Update directory structures
+        setDirectoryStructures((prevStructures) => {
+          const updatedNodes = { ...prevStructures.nodes };
+          const updatedRootIds = [...prevStructures.rootIds];
+  
+          // Remove the node
+          delete updatedNodes[fileNode.id];
+  
+          // Remove from parent's childIds
+          if (fileNode.parentId) {
+            const parentNode = updatedNodes[fileNode.parentId];
+            if (parentNode) {
+              parentNode.childIds = parentNode.childIds.filter(id => id !== fileNode.id);
+            }
+          } else {
+            // Remove from rootIds if it's a top-level node
+            const rootIndex = updatedRootIds.indexOf(fileNode.id);
+            if (rootIndex !== -1) {
+              updatedRootIds.splice(rootIndex, 1);
+            }
+          }
+  
+          // Recursively remove all children
+          const removeChildren = (nodeId: string) => {
+            const node = updatedNodes[nodeId];
+            if (node) {
+              node.childIds.forEach(removeChildren);
+              delete updatedNodes[nodeId];
+            }
+          };
+          fileNode.childIds.forEach(removeChildren);
+  
+          return {
+            rootIds: updatedRootIds,
+            nodes: updatedNodes,
+          };
+        });
+  
+        // If it was a top-level folder, remove it from mountedDirPaths
         const topLevelFolderPaths = await window.electron.getTopLevelFolders();
         if (topLevelFolderPaths.includes(fileNode.fullPath)) {
           await window.electron.removeTopLevelFolder(fileNode.fullPath);
+          setMountedDirPaths(prev => prev.filter(path => path !== fileNode.fullPath));
         }
-        await loadNotes();
+  
+        // Clear active node if it was deleted
+        if (activeFileNodeId === fileNode.id) {
+          setActiveFileNodeId(null);
+          setActiveNote(null);
+        }
+  
       } catch (error) {
         console.error("Error deleting file node:", error);
+        toast.error("Failed to delete file. Please try again.");
       }
     },
-    [loadNotes]
+    [activeFileNodeId, setActiveFileNodeId, setActiveNote]
   );
-
-  
 
   const toggleDirectory = useCallback((fileNode: FileNode) => {
     setExpandedDirs((prev) => {

@@ -49,13 +49,69 @@ const BottomPane: React.FC<BottomPaneProps> = ({ onClose }) => {
     }
   };
 
-  return (
+  const renderMessage = (message: Message, index: number) => (
     <div
+      key={index}
       className={cn(
-        "bg-background border-t border-border",
-        "flex flex-col h-full"
+        "mb-4",
+        message.role === "user" ? "text-right" : "text-left"
       )}
     >
+      <div
+        className={cn(
+          "inline-block px-4 py-2 rounded-md",
+          message.role === "user"
+            ? "bg-primary text-primary-foreground"
+            : "bg-secondary text-secondary-foreground"
+        )}
+      >
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ href, children, ...props }) => {
+              if (href?.startsWith("note://")) {
+                const noteId = href.replace("note://", "");
+                return (
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      openNoteById(noteId);
+                    }}
+                    {...props}
+                  >
+                    {children}
+                  </a>
+                );
+              }
+              return (
+                <a href={href} target="_blank" rel="noopener noreferrer" {...props}>
+                  {children}
+                </a>
+              );
+            },
+          }}
+        >
+          {message.content}
+        </ReactMarkdown>
+      </div>
+    </div>
+  );
+
+  const renderLoader = () => (
+    <div className="mb-4 text-left">
+      <div className="inline-block px-4 py-2 rounded-md bg-secondary text-secondary-foreground">
+        <div className="flex space-x-2">
+          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bg-background border-t border-border flex flex-col h-full">
       <div className="flex justify-between items-center p-2 border-b border-border">
         <span className="font-semibold text-sm">Chat</span>
         <Button
@@ -70,61 +126,8 @@ const BottomPane: React.FC<BottomPaneProps> = ({ onClose }) => {
       </div>
       <ScrollArea className="flex-grow" ref={scrollAreaRef}>
         <div className="p-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={cn(
-                "mb-4",
-                message.role === "user" ? "text-right" : "text-left"
-              )}
-            >
-              <div
-                className={cn(
-                  "inline-block px-4 py-2 rounded-md",
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground"
-                )}
-              >
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: ({ href, children, ...props }) => {
-                      if (href?.startsWith("note://")) {
-                        const noteId = href.replace("note://", "");
-                        return (
-                          <a
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              openNoteById(noteId);
-                            }}
-                            {...props}
-                          >
-                            {children}
-                          </a>
-                        );
-                      }
-                      return (
-                        <a href={href} {...props}>
-                          {children}
-                        </a>
-                      );
-                    },
-                  }}
-                >
-                  {message.content}
-                </ReactMarkdown>
-              </div>
-            </div>
-          ))}
-          {isLoading && (
-            <div className="mb-4 text-left">
-              <div className="inline-block px-4 py-2 rounded-md bg-secondary text-secondary-foreground">
-                <p>...</p>
-              </div>
-            </div>
-          )}
+          {messages.map(renderMessage)}
+          {isLoading && renderLoader()}
         </div>
       </ScrollArea>
       <div className="border-t border-border">

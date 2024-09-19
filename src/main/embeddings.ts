@@ -11,6 +11,7 @@ import fs from "fs/promises";
 import path from "path";
 import { parse } from "node-html-parser";
 import { getOpenAIKey } from "./fileSystem";
+import { ChatCompletionMessageParam } from "openai/resources/chat";
 
 const TEXT_EMBEDDING_MODEL = "text-embedding-ada-002";
 
@@ -99,7 +100,7 @@ class SimilaritySearcher {
       results.push({ ...note, score });
     }
 
-    return results.sort((a, b) => b.score - a.score).slice(0, 5); // Return top 5 results
+    return results.sort((a, b) => b.score - a.score).slice(0, 10); // Return top 5 results
   }
 
   cosineSimilarity(a: number[], b: number[]): number {
@@ -151,7 +152,7 @@ class RAGChat {
       // Prepare the context for the assistant
       let contextText = "";
       for (const note of similarNotes) {
-        const truncatedContent = note.content.slice(0, 500); // Limit content length
+        const truncatedContent = note.content.slice(0, 2000); // Limit content length
         contextText += `Note ID: ${note.id}\nTitle: ${note.title}\nContent:\n${truncatedContent}\n\n`;
       }
 
@@ -159,18 +160,16 @@ class RAGChat {
       const systemPrompt = `You are a helpful assistant. Use the provided notes to answer the user's question. When you refer to a note, include a clickable link in the format [Note Title](note://noteId).`;
 
       // Build the messages for OpenAI API
-      const messages = [
+      const messages: ChatCompletionMessageParam[] = [
         { role: "system", content: systemPrompt },
         { role: "assistant", content: `Here are some relevant notes:\n${contextText}` },
-        ...conversation,
+        ...(conversation as ChatCompletionMessageParam[]),
       ];
-
-      // Call OpenAI Chat Completion API with the correct model name
+  
       const completion = await this.openai.chat.completions.create({
-        model: "gpt-4o", // Updated model name
+        model: "gpt-4", // Corrected model name
         messages: messages,
       });
-
       const assistantMessage = completion.choices[0].message;
       const finishReason = completion.choices[0].finish_reason;
 

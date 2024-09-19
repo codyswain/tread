@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import "@/index.css";
 
 import { ThemeProvider } from "@/features/theme";
@@ -41,6 +41,7 @@ const App: React.FC = () => {
                 <main className="flex-grow overflow-hidden">
                   <Routes>
                     {/* <Route path="/" element={<Feed />} /> */}
+                    <Route path="/" element={<Navigate to="/notes" replace />} />
                     <Route
                       path="/notes"
                       element={

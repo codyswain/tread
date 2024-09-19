@@ -55,7 +55,7 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({ isOpen, onClose }) => {
     } finally {
       setSimilarNotesIsLoading(false);
     }
-  }, [activeNote?.id, directoryStructures]);
+  }, [activeNote?.id]);
 
   useEffect(() => {
     if (isOpen && activeNote) {
