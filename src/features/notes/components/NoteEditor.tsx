@@ -23,17 +23,25 @@ import python from "highlight.js/lib/languages/python";
 import css from "highlight.js/lib/languages/css";
 import "highlight.js/styles/github-dark.css";
 import Toolbar from "./Toolbar";
+import { BulletList } from '@tiptap/extension-bullet-list'
+import { OrderedList } from '@tiptap/extension-ordered-list'
+import { ListItem } from '@tiptap/extension-list-item'
 
 const lowlight = createLowlight();
 lowlight.register("js", js);
 lowlight.register("python", python);
 lowlight.register("css", css);
 
+const USE_TABS = true; 
+const SPACES_PER_TAB = 4;
+
+
 interface NoteEditorProps {
   note: Note;
 }
 
 import '@/styles/NoteEditor.css'
+import { EditorView } from "@tiptap/pm/view";
 
 const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
   const { saveNote, createEmbedding } = useNotesContext();
@@ -122,6 +130,9 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
     extensions: [
       StarterKit.configure({
         codeBlock: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
       }),
       CodeBlockLowlight.configure({
         lowlight,
@@ -131,6 +142,19 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       Placeholder.configure({
         placeholder: "Start typing your note...",
       }),
+      BulletList.configure({
+        keepMarks: true,
+        keepAttributes: false,
+      }),
+      OrderedList.configure({
+        keepMarks: true,
+        keepAttributes: false,
+        itemTypeName: 'listItem',
+        HTMLAttributes: {
+          class: 'ordered-list',
+        },
+      }),
+      ListItem
     ],
     content: localNote.content || "",
     onUpdate: handleContentChange,
@@ -139,15 +163,31 @@ const NoteEditor: React.FC<NoteEditorProps> = ({ note }) => {
       attributes: {
         class: "prose prose-md dark:prose-invert focus:outline-none max-w-none h-full w-full overflow-auto leading-normal cursor-text",
       },
-      handleKeyDown: (view, event) => {
+      handleKeyDown: (view: EditorView, event: KeyboardEvent): boolean => {
         if (event.key === 'Tab') {
           event.preventDefault();
           if (event.shiftKey) {
-            view.dispatch(view.state.tr.insertText('\t'));
+            // Outdent (move left) when Shift+Tab is pressed
+            if (editor?.commands.liftListItem('listItem')) {
+              return true;
+            }
+            // If not in a list, remove indentation (not implemented)
+            return false;
           } else {
-            view.dispatch(view.state.tr.insertText('\t'));
+            // Indent (move right) when Tab is pressed
+            if (editor?.commands.sinkListItem('listItem')) {
+              return true;
+            }
+            // If not in a list, add indentation
+            const { from, to } = editor.state.selection;
+            const indentation = USE_TABS ? '\t' : ' '.repeat(SPACES_PER_TAB);
+            editor.chain()
+              .focus()
+              .insertContent({ type: 'text', text: indentation })
+              .setTextSelection(from + indentation.length)
+              .run();
+            return true;
           }
-          return true;
         }
         return false;
       },

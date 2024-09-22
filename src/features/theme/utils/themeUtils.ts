@@ -9,7 +9,14 @@ export function applyTheme(theme: Theme) {
 
 export function getInitialTheme(): Theme {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem(THEME_STORAGE_KEY) as Theme || DEFAULT_THEME
+    let theme = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
+    console.log('theme after local storage retrieval: ', theme)
+    if (!theme) {
+      console.log('failed to retrieve theme')
+      theme = DEFAULT_THEME
+    }
+    console.log('retrieved theme: ', theme)
+    return theme
   }
   return DEFAULT_THEME
 }

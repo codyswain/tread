@@ -2,7 +2,7 @@ import { PythonShell } from "python-shell";
 import path from "path";
 import { app } from "electron";
 import fs from "fs";
-import { getOpenAIKey, NOTES_DIR } from "./fileSystem";
+import { getOpenAIKey } from "./fileSystem";
 
 export function runPythonScript(
   scriptName: string,

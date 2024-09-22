@@ -1,10 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from "react-resizable-panels";
-import RelatedNotes from "./RelatedNotes";
+import {
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
+  ImperativePanelHandle,
+} from "react-resizable-panels";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
 import BottomPane from "./BottomPane";
 import { useNotesContext } from "../context/notesContext";
+import RelatedNotes from "./RelatedNotes";
 
 const Notes: React.FC<{
   isLeftSidebarOpen: boolean;
@@ -32,13 +37,13 @@ const Notes: React.FC<{
 
   const handlePanelCollapse = (panelName: string) => {
     switch (panelName) {
-      case 'leftSidebar':
+      case "leftSidebar":
         setIsLeftSidebarOpen(false);
         break;
-      case 'rightSidebar':
+      case "rightSidebar":
         setIsRightSidebarOpen(false);
         break;
-      case 'bottomPane':
+      case "bottomPane":
         setIsBottomPaneOpen(false);
         break;
     }
@@ -76,28 +81,28 @@ const Notes: React.FC<{
 
   const handleResize = (panelName: string) => (size: number) => {
     switch (panelName) {
-      case 'leftSidebar':
+      case "leftSidebar":
         setLeftSidebarSize(size);
         break;
-      case 'rightSidebar':
+      case "rightSidebar":
         setRightSidebarSize(size);
         break;
-      case 'bottomPane':
+      case "bottomPane":
         setBottomPaneSize(size);
         break;
     }
   };
 
   return (
-    <PanelGroup direction="horizontal" className="h-screen pt-12">
+    <PanelGroup direction="horizontal" className="h-screen w-screen">
       <Panel
         ref={leftPanelRef}
         defaultSize={leftSidebarSize}
         minSize={10}
         maxSize={40}
-        onResize={handleResize('leftSidebar')}
+        onResize={handleResize("leftSidebar")}
         collapsible={true}
-        onCollapse={() => handlePanelCollapse('leftSidebar')}
+        onCollapse={() => handlePanelCollapse("leftSidebar")}
       >
         <NoteExplorer
           isOpen={isLeftSidebarOpen}
@@ -122,9 +127,9 @@ const Notes: React.FC<{
             defaultSize={bottomPaneSize}
             minSize={10}
             maxSize={80}
-            onResize={handleResize('bottomPane')}
+            onResize={handleResize("bottomPane")}
             collapsible={true}
-            onCollapse={() => handlePanelCollapse('bottomPane')}
+            onCollapse={() => handlePanelCollapse("bottomPane")}
           >
             <BottomPane onClose={() => setIsBottomPaneOpen(false)} />
           </Panel>
@@ -136,9 +141,9 @@ const Notes: React.FC<{
         defaultSize={rightSidebarSize}
         minSize={10}
         maxSize={40}
-        onResize={handleResize('rightSidebar')}
+        onResize={handleResize("rightSidebar")}
         collapsible={true}
-        onCollapse={() => handlePanelCollapse('rightSidebar')}
+        onCollapse={() => handlePanelCollapse("rightSidebar")}
       >
         <RelatedNotes
           isOpen={isRightSidebarOpen}
