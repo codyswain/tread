@@ -96,35 +96,42 @@ export const useNotes = () => {
     setIsLoading(true);
     setError(null);
     try {
+      console.log('Starting to load notes...');
       const topLevelDirPaths = await window.electron.getTopLevelFolders();
+      console.log('Top level folders:', topLevelDirPaths);
+      
       const dirStructuresPromises = topLevelDirPaths.map(async (dirPath) => {
         try {
-          const dirStructure = await window.electron.getDirectoryStructure(
-            dirPath
-          );
+          console.log(`Loading directory structure for: ${dirPath}`);
+          const dirStructure = await window.electron.getDirectoryStructure(dirPath);
+          console.log(`Successfully loaded structure for ${dirPath}:`, dirStructure);
           return dirStructure;
         } catch (err) {
-          console.error(
-            `Failed to load directory structure for ${dirPath}:`,
-            err
-          );
+          console.error(`Failed to load directory structure for ${dirPath}:`, err);
           setError(err);
           return null;
         }
       });
+
       const dirStructures = await Promise.all(dirStructuresPromises);
+      console.log('All directory structures:', dirStructures);
+
       const newDirectoryStructures: DirectoryStructures = {
         rootIds: [],
         nodes: {},
       };
-      dirStructures.forEach((dirStructure) => {
+
+      dirStructures.forEach((dirStructure, index) => {
         if (dirStructure) {
+          console.log(`Building structure for directory ${index}`);
           buildDirectoryStructures(dirStructure, null, newDirectoryStructures);
         }
       });
+
+      console.log('Final directory structures:', newDirectoryStructures);
       setDirectoryStructures(newDirectoryStructures);
     } catch (err) {
-      console.error("Failed to load top-level directories:", err);
+      console.error("Failed to load notes:", err);
       setError(err);
     } finally {
       setIsLoading(false);

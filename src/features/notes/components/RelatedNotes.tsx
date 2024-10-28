@@ -61,47 +61,25 @@ const RelatedNotes: React.FC<RelatedNotesProps> = ({ isOpen, onClose }) => {
   }, [isOpen, activeNote?.id, findSimilarNotes]);
 
   return (
-    <div className="h-full flex flex-col bg-background border-l border-border w-full">
-      <div className="flex justify-between items-center p-2 h-10 border-b border-border">
-        <span className="font-semibold text-sm truncate mr-2">
-          Related Notes
-        </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={findSimilarNotes}
-          className="h-6 w-6 flex-shrink-0"
-          title="Refresh similar notes"
-        >
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-      </div>
-      <ScrollArea className="flex flex-col w-full p-4">
-        {similarNotesIsLoading ? (
-          <div className="flex items-center justify-center h-20">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        ) : similarNotes.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            {similarNotes.map((note) => 
-                <div key={note.id} className="flex flex-col overflow-hidden">
-                    {/* <div>
-                      <h3 className="font-semibold truncate mr-2">{note.title}</h3>
-                      <ScoreTooltip score={note.score} />
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {truncateContent(stripHtmlTags(note.content), 100)}
-                    </div> */}
-
-                   <NoteItem key={note.id} note={note} openNote={openNote} />
-                </div>
-              )}
-          </div>
-        ) : (
-          <p className="text-center text-muted-foreground">
-            No similar notes found
-          </p>
-        )}
+    <div className="h-full flex flex-col">
+      <ScrollArea className="flex-grow px-4">
+        <div className="py-4">
+          {similarNotesIsLoading ? (
+            <div className="flex items-center justify-center h-20">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : similarNotes.length > 0 ? (
+            <div className="space-y-4">
+              {similarNotes.map((note) => (
+                <NoteItem key={note.id} note={note} openNote={openNote} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              No similar notes found
+            </p>
+          )}
+        </div>
       </ScrollArea>
     </div>
   );

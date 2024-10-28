@@ -18,7 +18,7 @@ interface Message {
   content: string;
 }
 
-const BottomPane: React.FC<BottomPaneProps> = ({ onClose }) => {
+const ChatPane: React.FC<BottomPaneProps> = ({ onClose }) => {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [input, setInput] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -111,27 +111,15 @@ const BottomPane: React.FC<BottomPaneProps> = ({ onClose }) => {
   );
 
   return (
-    <div className="bg-background border-t border-border flex flex-col h-full">
-      <div className="flex justify-between items-center p-2 border-b border-border">
-        <span className="font-semibold text-sm">Chat</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
-          onClick={() => toast("Settings feature is not implemented yet")}
-          title="Settings"
-        >
-          <Settings className="h-4 w-4" />
-        </Button>
-      </div>
-      <ScrollArea className="flex-grow" ref={scrollAreaRef}>
-        <div className="p-4">
+    <div className="flex flex-col h-full">
+      <ScrollArea className="flex-grow px-4" ref={scrollAreaRef}>
+        <div className="py-4 space-y-4">
           {messages.map(renderMessage)}
           {isLoading && renderLoader()}
         </div>
       </ScrollArea>
-      <div className="border-t border-border">
-        <div className="flex items-center p-2">
+      <div className="border-t border-border p-4">
+        <div className="flex items-center gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -147,7 +135,7 @@ const BottomPane: React.FC<BottomPaneProps> = ({ onClose }) => {
           <Button
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
-            className="ml-2"
+            size="icon"
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -157,4 +145,4 @@ const BottomPane: React.FC<BottomPaneProps> = ({ onClose }) => {
   );
 };
 
-export default BottomPane;
+export default ChatPane;

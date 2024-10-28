@@ -7,33 +7,26 @@ import {
 } from "react-resizable-panels";
 import NoteEditor from "./NoteEditor";
 import NoteExplorer from "./NoteExplorer";
-import BottomPane from "./BottomPane";
+import RightSidebar from "./RightSidebar";
 import { useNotesContext } from "../context/notesContext";
-import RelatedNotes from "./RelatedNotes";
 
 const Notes: React.FC<{
   isLeftSidebarOpen: boolean;
   isRightSidebarOpen: boolean;
-  isBottomPaneOpen: boolean;
   setIsLeftSidebarOpen: (isOpen: boolean) => void;
   setIsRightSidebarOpen: (isOpen: boolean) => void;
-  setIsBottomPaneOpen: (isOpen: boolean) => void;
 }> = ({
   isLeftSidebarOpen,
   isRightSidebarOpen,
-  isBottomPaneOpen,
   setIsLeftSidebarOpen,
   setIsRightSidebarOpen,
-  setIsBottomPaneOpen,
 }) => {
   const { activeNote } = useNotesContext();
   const [leftSidebarSize, setLeftSidebarSize] = useState(18);
-  const [rightSidebarSize, setRightSidebarSize] = useState(18);
-  const [bottomPaneSize, setBottomPaneSize] = useState(34);
+  const [rightSidebarSize, setRightSidebarSize] = useState(25); // Increased default size for better readability
 
   const leftPanelRef = useRef<ImperativePanelHandle>(null);
   const rightPanelRef = useRef<ImperativePanelHandle>(null);
-  const bottomPanelRef = useRef<ImperativePanelHandle>(null);
 
   const handlePanelCollapse = (panelName: string) => {
     switch (panelName) {
@@ -42,9 +35,6 @@ const Notes: React.FC<{
         break;
       case "rightSidebar":
         setIsRightSidebarOpen(false);
-        break;
-      case "bottomPane":
-        setIsBottomPaneOpen(false);
         break;
     }
   };
@@ -69,16 +59,6 @@ const Notes: React.FC<{
     }
   }, [isRightSidebarOpen]);
 
-  useEffect(() => {
-    if (bottomPanelRef.current) {
-      if (isBottomPaneOpen) {
-        bottomPanelRef.current.expand();
-      } else {
-        bottomPanelRef.current.collapse();
-      }
-    }
-  }, [isBottomPaneOpen]);
-
   const handleResize = (panelName: string) => (size: number) => {
     switch (panelName) {
       case "leftSidebar":
@@ -86,9 +66,6 @@ const Notes: React.FC<{
         break;
       case "rightSidebar":
         setRightSidebarSize(size);
-        break;
-      case "bottomPane":
-        setBottomPaneSize(size);
         break;
     }
   };
@@ -111,41 +88,25 @@ const Notes: React.FC<{
       </Panel>
       <PanelResizeHandle className="w-1 bg-border hover:bg-accent/50 cursor-ew-resize" />
       <Panel>
-        <PanelGroup direction="vertical">
-          <Panel>
-            {activeNote ? (
-              <NoteEditor note={activeNote} />
-            ) : (
-              <div className="flex w-full h-full justify-center items-center">
-                Please select a note
-              </div>
-            )}
-          </Panel>
-          <PanelResizeHandle className="h-1 bg-border hover:bg-accent/50 cursor-ns-resize" />
-          <Panel
-            ref={bottomPanelRef}
-            defaultSize={bottomPaneSize}
-            minSize={10}
-            maxSize={80}
-            onResize={handleResize("bottomPane")}
-            collapsible={true}
-            onCollapse={() => handlePanelCollapse("bottomPane")}
-          >
-            <BottomPane onClose={() => setIsBottomPaneOpen(false)} />
-          </Panel>
-        </PanelGroup>
+        {activeNote ? (
+          <NoteEditor note={activeNote} />
+        ) : (
+          <div className="flex w-full h-full justify-center items-center">
+            Please select a note
+          </div>
+        )}
       </Panel>
       <PanelResizeHandle className="w-1 bg-border hover:bg-accent/50 cursor-ew-resize" />
       <Panel
         ref={rightPanelRef}
         defaultSize={rightSidebarSize}
-        minSize={10}
-        maxSize={40}
+        minSize={15}
+        maxSize={45}
         onResize={handleResize("rightSidebar")}
         collapsible={true}
         onCollapse={() => handlePanelCollapse("rightSidebar")}
       >
-        <RelatedNotes
+        <RightSidebar
           isOpen={isRightSidebarOpen}
           onClose={() => setIsRightSidebarOpen(false)}
         />
